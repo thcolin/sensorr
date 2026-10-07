@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { Badge, EpisodeStatus, EpisodeStatusOptions, Icon, Lines, Picture, Progress, ProgressPill } from '@sensorr/ui'
-import { episodeStatus, progressOf, seasonDiffusionOf } from '@sensorr/sensorr'
+import { Diffusion, episodeStatus, progressOf, seasonDiffusionOf } from '@sensorr/sensorr'
 import { Release, ReleaseAxis, ReleaseSize } from '../../../components/Sensorr/Release'
 import { useDeviceContext } from '../../../contexts/Device/Device'
 import { useTMDBRequest } from '../../../store/tmdb'
@@ -29,7 +29,6 @@ const pendingOf = (proposals, season: number) => proposals.filter(({ release }) 
 
 const NONE = []
 
-const regionOf = () => (global as any)?.config?.region || 'fr-FR'
 
 // Of the axes a release row tags, the ones an episode row has room for
 const FILED = ['encoding', 'resolution', 'language']
@@ -55,8 +54,8 @@ const bleed = {
 // `proposals` are the rows of `useProposals` (Proposals.tsx), each one shown where it applies: under "All seasons",
 // atop its season's drawer, or in its episode's unfolded row. `diffusion` is the one of the header's pill (Show.tsx),
 // and `followed` whether Sensorr follows the show, which hollows the violet of its airing pills
-const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer = null, diffusion = null, followed = true, inLibrary, ready, followEpisodes, search = null, plex = null, artworks = null, ...props }) => {
-  const { t } = useTranslation()
+const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer = null, diffusion = null as Diffusion | null, followed = true, inLibrary, ready, followEpisodes, search = null, plex = null, artworks = null, ...props }) => {
+  const { t, i18n } = useTranslation()
   const api = useAPI()
   const seasons = useMemo(() => {
     const summaries = entity?.seasons || []
@@ -76,7 +75,7 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
         episodes: list,
         progress: progressOf(list),
         // Specials have no progress pill: `seasonDiffusionOf` leaves them out
-        diffusion: seasonDiffusionOf(entity?.status, list, Date.now(), regionOf()),
+        diffusion: seasonDiffusionOf(entity?.status, list, Date.now(), i18n.language),
         // Counted in proposals, like the show's summary: a pack proposed for six episodes is one decision
         proposed: pendingOf(proposals, number).length,
         wanted: statuses.filter(status => status === 'wanted').length,
@@ -196,7 +195,7 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
             </div>
             {inLibrary && (
               <div sx={UISeasons.styles.summary}>
-                <ProgressPill {...totals.progress} airing={diffusion?.airing} followed={followed} detail={diffusion?.detail} />
+                <ProgressPill {...totals.progress} airing={diffusion?.airing} followed={followed} detail={diffusion?.code ? t(`policy.diffusion.${diffusion.code}`, diffusion.values) : ''} />
                 <Bar progress={totals.progress} />
                 <Complete progress={totals.progress} />
                 <span />
@@ -256,7 +255,7 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
                       {/* Specials are not followed by default: owned over aired would read as a gap. An empty season has nothing to count */}
                       {(specials || empty) ? <><span /><span /><span /></> : (
                         <>
-                          <ProgressPill {...season.progress} airing={season.diffusion.airing} followed={followed} detail={season.diffusion.detail} />
+                          <ProgressPill {...season.progress} airing={season.diffusion.airing} followed={followed} detail={season.diffusion.code ? t(`policy.diffusion.${season.diffusion.code}`, season.diffusion.values) : ''} />
                           <Bar progress={season.progress} />
                           <Complete progress={season.progress} />
                         </>

@@ -1,7 +1,7 @@
 import { memo, useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Badge, Icon } from '@sensorr/ui'
-import { coverageLabel, manualPickOf, swapOf, unitLabel } from '@sensorr/sensorr'
+import { coverageLabel, manualPickOf, swapOf, unitCodeOf } from '@sensorr/sensorr'
 import { useShowsMetadataContext } from '../../../contexts/ShowsMetadata/ShowsMetadata'
 import { useSensorr } from '../../../store/sensorr'
 import { useTMDBRequest } from '../../../store/tmdb'
@@ -86,11 +86,11 @@ export const useShowSearch = (entity, loading = false) => {
     const { coverage, level, swap } = manualPickOf(release, inLibrary ? (episodes || []) : [])
 
     if (!coverage.length) {
-      return level ? unitLabel({ type: level, season: release.meta?.seasons?.[0], episode: release.meta?.episodes?.[0], episodes: [] }) : null
+      return level ? t('policy.unit', { type: level, unit: unitCodeOf({ type: level, season: release.meta?.seasons?.[0], episode: release.meta?.episodes?.[0], episodes: [] }) }) : null
     }
 
     return [coverageLabel(coverage, level), reachOf(fillsOf(coverage, episodes, level), swap ? swapOf(coverage, episodes) : null)].filter(Boolean).join(' · ')
-  }, [inLibrary, episodes])
+  }, [inLibrary, episodes, t])
 
   const toggleBan = useCallback((title, banned) => (banned ? unbanShowRelease : banShowRelease)(id, title), [id])
 

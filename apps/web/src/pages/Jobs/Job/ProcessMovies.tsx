@@ -686,7 +686,7 @@ const UIRecordLogs = ({ logs, command, release: recordRelease = undefined, metad
                         {!!log.meta?.stats?.withdrawn?.length && (
                           <Fragment>
                             <code><i></i><i></i><i>➤</i> <span>🚨 <Trans t={t} i18nKey='sensorr.progress.withdrawn' values={{ count: log.meta?.stats?.withdrawn?.length }} components={[<strong />]} /></span></code>
-                            {(log.meta?.stats?.withdrawn || []).map(({ release, original, reason, link, score, size, seeders }, index) => (
+                            {(log.meta?.stats?.withdrawn || []).map(({ release, original, reason, explanation, link, score, size, seeders }, index) => (
                               <code key={index}>
                                 <i
                                   title={(metadata?.banned_releases || []).includes(release) ? t('sensorr.release.unban') : t('sensorr.release.ban')}
@@ -701,7 +701,7 @@ const UIRecordLogs = ({ logs, command, release: recordRelease = undefined, metad
                                 <i></i>
                                 <i>➤</i>
                                 <a href={safeUrl(link)} target='_blank' rel='noreferrer noopener' sx={{ variant: 'link.reset' }}> {release}</a>
-                                <span> {t('jobs.process.stats.reason', { reason, score, size: filesize.stringify(size), seeders })}</span>
+                                <span> {t('jobs.process.stats.reason', { reason: explanation ? t(`policy.reasons.${explanation.code}`, explanation.values) : reason, score, size: filesize.stringify(size), seeders })}</span>
                               </code>
                             ))}
                           </Fragment>
@@ -709,7 +709,7 @@ const UIRecordLogs = ({ logs, command, release: recordRelease = undefined, metad
                         {!!log.meta?.stats?.ignored?.length && (
                           <Fragment>
                             <code><i></i><i></i><i>➤</i> <span>🗑️  <Trans t={t} i18nKey='sensorr.progress.ignored' values={{ count: log.meta?.stats?.ignored?.length }} components={[<strong />]} /></span></code>
-                            {(log.meta?.stats?.ignored || []).map(({ release, original, reason, link, score, size, seeders }, index) => (
+                            {(log.meta?.stats?.ignored || []).map(({ release, original, reason, explanation, link, score, size, seeders }, index) => (
                               <code key={index}>
                                 <i
                                   title={(metadata?.banned_releases || []).includes(release) ? t('sensorr.release.unban') : t('sensorr.release.ban')}
@@ -724,7 +724,7 @@ const UIRecordLogs = ({ logs, command, release: recordRelease = undefined, metad
                                 <i></i>
                                 <i>➤</i>
                                 <a href={safeUrl(link)} target='_blank' rel='noreferrer noopener' sx={{ variant: 'link.reset' }}> {release}</a>
-                                <span> {t('jobs.process.stats.reason', { reason, score, size: filesize.stringify(size), seeders })}</span>
+                                <span> {t('jobs.process.stats.reason', { reason: explanation ? t(`policy.reasons.${explanation.code}`, explanation.values) : reason, score, size: filesize.stringify(size), seeders })}</span>
                               </code>
                             ))}
                           </Fragment>
