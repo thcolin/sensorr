@@ -6,6 +6,7 @@ import { join } from 'node:path'
 import puppeteer, { Browser, BrowserContext } from 'puppeteer-core'
 import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleDestroy, ServiceUnavailableException } from '@nestjs/common'
 import { WRAPPED_THEME_NAMES, WRAPPED_TIME_ZONE as TIME_ZONE, WrappedTheme } from '@sensorr/sensorr'
+import { LANGUAGES } from '@sensorr/i18n/server'
 import { WrappedService } from './wrapped.service'
 
 // Every story is composed at 396 × 704 and shared at 1080 × 1920: whole CSS pixels at both sizes, a capture rounds to them
@@ -44,8 +45,9 @@ export class CardsService implements OnModuleDestroy {
 
   constructor(private readonly wrappedService: WrappedService) {}
 
-  async card(token: string, look: string, story: string, year?: number) {
-    if (!Object.hasOwn(WRAPPED_THEME_NAMES, look) || typeof story !== 'string' || !STORY.test(story)) {
+  // `lang`: the language the friend's page speaks, the browser that draws the card would speak its own
+  async card(token: string, look: string, story: string, lang: string, year?: number) {
+    if (!Object.hasOwn(WRAPPED_THEME_NAMES, look) || typeof story !== 'string' || !STORY.test(story) || !LANGUAGES.includes(lang)) {
       throw new BadRequestException()
     }
 
@@ -57,7 +59,7 @@ export class CardsService implements OnModuleDestroy {
     }
 
     const day = new Date().toLocaleDateString('en-CA', { timeZone: TIME_ZONE })
-    const key = createHash('sha256').update(JSON.stringify([token, look, story, day, share])).digest('hex')
+    const key = createHash('sha256').update(JSON.stringify([token, look, story, lang, day, share])).digest('hex')
     const file = join(FOLDER, `${key}.jpg`)
     const cached = await readFile(file).catch((error) => error.code === 'ENOENT' ? null : Promise.reject(error))
 
@@ -71,7 +73,7 @@ export class CardsService implements OnModuleDestroy {
       }
 
       this.busy.set(token, (this.busy.get(token) || 0) + 1)
-      const drawn = this.queue.then(() => this.draw(token, share.year, look, story)).then(async (buffer) => {
+      const drawn = this.queue.then(() => this.draw(token, share.year, look, story, lang)).then(async (buffer) => {
         // The card is sent all the same, only the next ask draws it again
         await this.keep(file, buffer).catch((error) => this.logger.warn(`Card not kept: ${error.code || error.message}`))
         return buffer
@@ -106,9 +108,9 @@ export class CardsService implements OnModuleDestroy {
     return share
   }
 
-  private async draw(token: string, year: number, look: string, story: string) {
+  private async draw(token: string, year: number, look: string, story: string, lang: string) {
     const url = new URL(`/wrapped/${encodeURIComponent(token)}/${year}`, ORIGIN)
-    url.search = new URLSearchParams({ card: story, look }).toString()
+    url.search = new URLSearchParams({ card: story, look, lang }).toString()
     let context: BrowserContext | null = null
 
     try {

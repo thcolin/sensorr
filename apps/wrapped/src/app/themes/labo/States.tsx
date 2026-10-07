@@ -1,4 +1,5 @@
 import type { NoticeProps } from '../types'
+import { t } from '../../sheets'
 import { Edges, Scorch } from './Labo'
 import './labo.css'
 
@@ -16,7 +17,7 @@ export const Loading = () => (
           <path className="labo-leader-sweep" d="M200 150 L200 32 A118 118 0 0 1 318 150 Z" />
         </svg>
       </div>
-      <p className="visually-hidden">Chargement de la rétrospective</p>
+      <p className="visually-hidden">{t('wrapped.loading')}</p>
     </section>
   </main>
 )

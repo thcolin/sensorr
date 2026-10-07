@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { animate, MotionValue, useMotionValue, useReducedMotion } from 'framer-motion'
-import { MONTHS, THIN, number, plural, type Colophon, type SheetModel } from '../../sheets'
+import { months, number, t, type Colophon, type SheetModel } from '../../sheets'
+import { Sentence } from '../../Sentence'
 import type { Art, StoryProps } from '../types'
 import { Opening, Rank, Stats, Strip, Tally, Twins, figures } from './Affiche'
 import { AtOnce, Painted } from './Painted'
@@ -92,7 +93,7 @@ const Months = ({ sheet, art, progress }: { sheet: Of<'months'> } & Page) => {
       <Brushed lines={sheet.lines} seed={7} />
       <p className="lede">{sheet.lede}</p>
       <ol className="affiche-story-strips" role="img" aria-label={sheet.alt}>
-        {MONTHS.map((month, index) => {
+        {months().map((month, index) => {
           const show = index < elapsed ? shows[index] : null
           return (
             <li key={month} style={{ '--share': show ? Math.max(0.08, show.episodes / max) : 0 } as React.CSSProperties}>
@@ -102,11 +103,11 @@ const Months = ({ sheet, art, progress }: { sheet: Of<'months'> } & Page) => {
         })}
       </ol>
       <ol className="year-months" aria-hidden="true">
-        {MONTHS.map((name, index) => <li key={name} className={index >= elapsed ? 'year-month-future' : undefined}>{name[0]}</li>)}
+        {months().map((name, index) => <li key={name} className={index >= elapsed ? 'year-month-future' : undefined}>{name[0]}</li>)}
       </ol>
       {peak && (
         <p className="year-peak">
-          En <span className="year-peak-month">{peak.month}</span>, {figures(peak.text)}
+          <Sentence i18nKey="wrapped.sheets.months.peak.then" values={{ month: peak.month }} tag={<span className="year-peak-month" />} text={peak.text} figures={figures} />
         </p>
       )}
     </Sheet>
@@ -155,11 +156,11 @@ const Night = ({ sheet, art, progress }: { sheet: Of<'night'> } & Page) => {
       <div className="night-text">
         <Brushed lines={sheet.lines} seed={8} />
         <p className="night-date">{sheet.date}</p>
-        <p className="night-figures">Tu éteins à <strong>{sheet.end}</strong>{figures(sheet.after)}.</p>
+        <p className="night-figures"><Sentence i18nKey="wrapped.sheets.night.off" values={{ end: sheet.end }} tag={<strong />} text={sheet.after} figures={figures} /></p>
         {sheet.listing
           ? (
             <>
-              <p className="affiche-story-listing">{sheet.listing}{before > 0 && `${THIN}: les ${shown.length} dernières lignes, ${plural(before, 'autre', 'autres')} avant`}</p>
+              <p className="affiche-story-listing">{before > 0 ? t('wrapped.sheets.night.listed', { listing: sheet.listing, shown: shown.length, before }) : sheet.listing}</p>
               <ol className="night-schedule">
                 {shown.map((line, index) => (
                   <li key={`${line.start}-${index}`} className={index === shown.length - 1 ? 'night-schedule-last' : undefined}>
@@ -277,7 +278,7 @@ const Finale = ({ sheet, art, progress }: { sheet: Of<'finale'> } & Page) => (
       <Brushed lines={sheet.lines} seed={12} />
       <Lettering as="p" className="finale-title" text={sheet.title} seed={13} />
       <p className="finale-next">{sheet.date}</p>
-      {!sheet.closed && <p className="stamp stamp-finale">Provisoire</p>}
+      {!sheet.closed && <p className="stamp stamp-finale">{t('wrapped.common.draft')}</p>}
       <p className="finale-end">{sheet.end}</p>
     </div>
   </Sheet>

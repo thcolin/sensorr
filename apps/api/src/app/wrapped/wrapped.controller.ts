@@ -32,8 +32,8 @@ export class WrappedController {
   // A story as the 1080 × 1920 image a friend shares; drawn once a day, in a look this friend may wear
   @Public()
   @Get('share/:token/cards/:look/:story')
-  async card(@Param('token') token: string, @Param('look') look: string, @Param('story') story: string, @Query('year') year: string, @Res() res: Response) {
-    const buffer = await this.cardsService.card(token, look, story, year ? Number(year) || undefined : undefined)
+  async card(@Param('token') token: string, @Param('look') look: string, @Param('story') story: string, @Query('lang') lang: string, @Query('year') year: string, @Res() res: Response) {
+    const buffer = await this.cardsService.card(token, look, story, lang, year ? Number(year) || undefined : undefined)
     res.set({ 'Content-Type': 'image/jpeg', 'Cache-Control': 'private, max-age=600', 'X-Content-Type-Options': 'nosniff' }).send(buffer)
   }
 

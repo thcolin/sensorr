@@ -4,6 +4,8 @@ import en from './translations/en/mail'
 import fr from './translations/fr/mail'
 import { LANGUAGES, languageOf } from './language'
 
+export { LANGUAGES }
+
 // The API has no browser to ask: it writes in the language set in Settings, else the one of the TMDB region
 const i18n = i18next.createInstance()
 

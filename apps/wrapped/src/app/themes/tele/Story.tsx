@@ -1,7 +1,10 @@
 import { ReactNode, useEffect, useState } from 'react'
 import { animate, useReducedMotion } from 'framer-motion'
 import type { WrappedPoster } from '@sensorr/sensorr'
-import { MONTHS, THIN, plural, type Colophon, type SheetModel } from '../../sheets'
+import { Trans } from 'react-i18next'
+import i18n from '@sensorr/i18n/wrapped'
+import { months, t, type Colophon, type SheetModel } from '../../sheets'
+import { Sentence } from '../../Sentence'
 import type { Art, StoryModel, StoryProps } from '../types'
 import { TestCard } from './States'
 import { Big, Cover, Folio, Headline, Photo, Ratings, Review, Sign, Stats, Venn, Letter, figures, rubric, sentences } from './Tele'
@@ -94,14 +97,17 @@ const Summary = ({ sheets, colophon, label, ...page }: { sheets: SheetModel[], c
       sheet={{ ...opening, label }}
       {...page}
       colophon={colophon}
-      sticker={rank && <p className="tele-sticker tele-sticker-rank"><span>Audience<b>{rank.rank}<sup>{rank.suffix}</sup></b>sur {rank.users}</span></p>}
+      sticker={rank && <p className="tele-sticker tele-sticker-rank"><span><Trans i18nKey="wrapped.tele.place" values={{ users: rank.users }} components={[<Place rank={rank.rank} suffix={rank.suffix} />]} /></span></p>}
     />
   )
 }
 
+// The reader's place on the sticker, kept whole by Trans as `<0/>`
+const Place = ({ rank, suffix }: { rank: number, suffix: string }) => <b>{rank}<sup>{suffix}</sup></b>
+
 const Rank = ({ sheet, ...page }: { sheet: Of<'rank'> } & Page) => (
   <Sheet story={sheet} {...page}>
-    <Band text="Audience" />
+    <Band text={t('wrapped.tele.rubrics.rank')} />
     <div className="tele-story-figure">
       <Count value={sheet.rank} suffix={sheet.suffix} spoken={`${sheet.rank}${sheet.suffix}`} />
       <p className="tele-unit">{sheet.unit}</p>
@@ -127,7 +133,7 @@ const Days = ({ from, to }: { from: string, to: string }) => {
     <div className="tele-days" aria-hidden="true">
       {months.slice(0, 3).map((month) => (
         <div key={month.getTime()} className="tele-days-month">
-          <p>{month.toLocaleDateString('fr-FR', { month: 'short', timeZone: 'UTC' })}</p>
+          <p>{month.toLocaleDateString(i18n.language, { month: 'short', timeZone: 'UTC' })}</p>
           <ol>
             {Array.from({ length: new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + 1, 0, 12)).getUTCDate() }, (_, day) => {
               const time = month.getTime() + day * DAY
@@ -143,7 +149,7 @@ const Days = ({ from, to }: { from: string, to: string }) => {
 
 const Streak = ({ sheet, art, ...page }: { sheet: Of<'streak'> } & Page) => (
   <Sheet story={sheet} {...page}>
-    <Band text="Feuilleton" />
+    <Band text={t('wrapped.tele.rubrics.streak')} />
     <p className="tele-standfirst">{sheet.intro}</p>
     <div className="tele-story-figure">
       <Count value={sheet.evenings} spoken={sheet.spoken} />
@@ -163,7 +169,7 @@ const Months = ({ sheet, art, ...page }: { sheet: Of<'months'> } & Page) => {
     <Sheet story={sheet} {...page}>
       <Headline lines={sheet.lines} />
       <ol className="tele-grid">
-        {MONTHS.map((month, at) => {
+        {months().map((month, at) => {
           const show = shows[at]
           const future = at >= elapsed
           return (
@@ -174,10 +180,10 @@ const Months = ({ sheet, art, ...page }: { sheet: Of<'months'> } & Page) => {
                 {show
                   ? <>
                     <span className="tele-slot-title">{show.title}</span>
-                    <span className="tele-slot-episodes">{plural(show.episodes, 'épisode', 'épisodes')}</span>
+                    <span className="tele-slot-episodes">{t('wrapped.count.episodes', { count: show.episodes })}</span>
                     <span className="tele-slot-bar" style={{ '--share': show.episodes / max } as React.CSSProperties} aria-hidden="true" />
                   </>
-                  : <span className="tele-slot-none">{future ? 'À suivre' : 'Pas de série'}</span>}
+                  : <span className="tele-slot-none">{t(future ? 'wrapped.tele.upcoming' : 'wrapped.tele.none')}</span>}
               </span>
             </li>
           )
@@ -195,7 +201,7 @@ const Binge = ({ sheet, art, ...page }: { sheet: Of<'binge'> } & Page) => {
       <Headline lines={sheet.lines} />
       <figure className="tele-still">
         <Photo poster={sheet.poster} art={art} kind="art" width={1280} />
-        <span className="tele-tag" aria-hidden="true">Soirée spéciale</span>
+        <span className="tele-tag" aria-hidden="true">{t('wrapped.tele.rubrics.binge')}</span>
       </figure>
       <h3 className="tele-title">{sheet.title}</h3>
       {sheet.date && <p className="tele-standfirst">{sheet.date}</p>}
@@ -220,10 +226,10 @@ const Night = ({ sheet, art, ...page }: { sheet: Of<'night'> } & Page) => {
         <p className="tele-unit">{sheet.date}</p>
         <p className="tele-clock" aria-hidden="true">{sheet.end}</p>
       </div>
-      <p className="tele-body">Tu éteins à <strong>{sheet.end}</strong>{figures(sheet.after)}.</p>
+      <p className="tele-body"><Sentence i18nKey="wrapped.sheets.night.off" values={{ end: sheet.end }} tag={<strong />} text={sheet.after} figures={figures} /></p>
       {sheet.listing
         ? <>
-          <p className="tele-box-title">{sheet.listing}{before > 0 && `${THIN}: les ${shown.length} dernières lignes, ${plural(before, 'autre', 'autres')} avant`}</p>
+          <p className="tele-box-title">{before > 0 ? t('wrapped.sheets.night.listed', { listing: sheet.listing, shown: shown.length, before }) : sheet.listing}</p>
           <ol className="tele-listing">
             {shown.map((line, at) => (
               <li key={`${line.start}-${at}`} className={at === shown.length - 1 ? 'tele-listing-last' : undefined}>
@@ -246,7 +252,7 @@ const Server = ({ sheet, art, ...page }: { sheet: Of<'server'> } & Page) => {
     <Sheet story={sheet} className="tele-story-full" {...page}>
       <figure className="tele-exclusive">
         <Photo poster={sheet.poster} art={art} kind="art" width={1280} className="tele-full-poster" />
-        <span className="tele-ribbon" aria-hidden="true">Exclusivité</span>
+        <span className="tele-ribbon" aria-hidden="true">{t('wrapped.tele.rubrics.server')}</span>
       </figure>
       <Headline lines={sheet.lines} />
       <h3 className="tele-title">{sheet.title}</h3>
@@ -263,7 +269,7 @@ const Figure = ({ sheet, art, ...page }: { sheet: Of<'figure'> } & Page) => {
 
   return (
     <Sheet story={sheet} {...page}>
-      {sheet.lines ? <Headline lines={sheet.lines} /> : <Band text="Rareté" />}
+      {sheet.lines ? <Headline lines={sheet.lines} /> : <Band text={t('wrapped.tele.rubrics.onlyYou')} />}
       {twin && sheet.highlight && sheet.sides
         ? <Venn name={sheet.highlight} count={sheet.count} spoken={sheet.spoken} sides={sheet.sides} />
         : <Count value={sheet.count} spoken={sheet.spoken} />}
@@ -301,12 +307,12 @@ const Genre = ({ sheet, art, ...page }: { sheet: Of<'genre'> } & Page) => {
       <Headline lines={sheet.lines} />
       <div className="tele-sign">
         <Sign />
-        <p><span className="tele-sign-label" aria-hidden="true">Ton signe</span><span className="tele-sign-name">{sheet.name}</span></p>
+        <p><span className="tele-sign-label" aria-hidden="true">{t('wrapped.tele.sign')}</span><span className="tele-sign-name">{sheet.name}</span></p>
       </div>
       <p className="tele-standfirst">{figures(sheet.count)}</p>
       <Row posters={sheet.posters} art={art} titles={false} small />
       {lead && <dl className="tele-reading">
-        <dt aria-hidden="true">Ascendant</dt>
+        <dt aria-hidden="true">{t('wrapped.tele.rising')}</dt>
         <dd><b className="tele-reading-name">{lead.name}</b> {figures(lead.role)}</dd>
       </dl>}
       {lead && !!lead.posters.length && <Row posters={lead.posters} art={art} titles={false} small />}
@@ -321,7 +327,7 @@ const Finale = ({ sheet, art, ...page }: { sheet: Of<'finale'> } & Page) => (
     <Headline lines={sheet.lines} />
     <h3 className="tele-title">{sheet.title}</h3>
     <p className="tele-standfirst">{sheet.date}</p>
-    {!sheet.closed && <p className="tele-stamp">Provisoire</p>}
+    {!sheet.closed && <p className="tele-stamp">{t('wrapped.common.draft')}</p>}
     <div className="tele-story-end">
       <TestCard />
       <p className="tele-end">{sheet.end}</p>

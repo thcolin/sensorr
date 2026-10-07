@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { StoryModel } from './themes/types'
 
 // The size every story is composed at: about a phone's width, in the 9:16 of the 1080 × 1920 image it is shared as
@@ -26,6 +27,7 @@ export const Stories = ({ count, index, onIndex, label, children, bar }: {
   children: ReactNode
   bar?: ReactNode
 }) => {
+  const { t } = useTranslation()
   const [{ scale, roomy }, setFit] = useState(fitOf)
   const go = useRef(onIndex)
   go.current = onIndex
@@ -69,16 +71,16 @@ export const Stories = ({ count, index, onIndex, label, children, bar }: {
         <ol className="stories-segments" aria-hidden="true">
           {Array.from({ length: count }, (_, at) => <li key={at} data-done={at < index || undefined} data-current={at === index || undefined} />)}
         </ol>
-        <div ref={frame} className="stories-frame" role="group" tabIndex={-1} aria-roledescription="story" aria-label={`${index + 1} sur ${count}, ${label}`}>
+        <div ref={frame} className="stories-frame" role="group" tabIndex={-1} aria-roledescription="story" aria-label={t('wrapped.stories.position', { index: index + 1, count, label })}>
           <div className="stories-page">{children}</div>
           {/* Touch zones over the page, kept away from screen readers exploring it: the bar has the same steps as buttons */}
           <button type="button" className="stories-tap stories-tap-previous" tabIndex={-1} aria-hidden="true" disabled={index === 0} onClick={() => onIndex(index - 1)} />
           <button type="button" className="stories-tap stories-tap-next" tabIndex={-1} aria-hidden="true" disabled={index === count - 1} onClick={() => onIndex(index + 1)} />
         </div>
         <div className="stories-bar">
-          <button type="button" className="stories-step" aria-disabled={index === 0} onClick={() => index > 0 && onIndex(index - 1)}>Story précédente</button>
+          <button type="button" className="stories-step" aria-disabled={index === 0} onClick={() => index > 0 && onIndex(index - 1)}>{t('wrapped.stories.previous')}</button>
           {bar}
-          <button type="button" className="stories-step" aria-disabled={index === count - 1} onClick={() => index < count - 1 && onIndex(index + 1)}>Story suivante</button>
+          <button type="button" className="stories-step" aria-disabled={index === count - 1} onClick={() => index < count - 1 && onIndex(index + 1)}>{t('wrapped.stories.next')}</button>
         </div>
       </div>
     </main>
@@ -159,7 +161,9 @@ const send = async (file: File) => {
 }
 
 // Asks for its image as soon as it shows, so the tap that shares it finds it ready
-export const ShareImage = ({ url, name, label = 'Partager', compact }: { url: string, name: string, label?: string, compact?: boolean }) => {
+export const ShareImage = ({ url, name, label: asked, compact }: { url: string, name: string, label?: string, compact?: boolean }) => {
+  const { t } = useTranslation()
+  const label = asked || t('wrapped.share.label')
   const [shared, setShared] = useState<Shared>({ status: 'loading' })
   const [attempt, setAttempt] = useState(0)
 
@@ -185,7 +189,7 @@ export const ShareImage = ({ url, name, label = 'Partager', compact }: { url: st
       type="button"
       className="stories-share"
       data-compact={compact || undefined}
-      aria-label={shared.status === 'ready' ? `${label}, en image` : undefined}
+      aria-label={shared.status === 'ready' ? t('wrapped.share.image', { label }) : undefined}
       // Not `disabled`: a retry tapped would drop focus while the image is drawn again
       aria-disabled={shared.status === 'loading'}
       aria-busy={shared.status === 'loading'}
@@ -194,7 +198,7 @@ export const ShareImage = ({ url, name, label = 'Partager', compact }: { url: st
       {compact && shared.status === 'error'
         ? <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v5h-5" /></svg>
         : <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5M8 11H6v10h12V11h-2" /></svg>}
-      <span className={compact ? 'visually-hidden' : undefined}>{shared.status === 'loading' ? 'Préparation…' : shared.status === 'error' ? 'Réessayer' : label}</span>
+      <span className={compact ? 'visually-hidden' : undefined}>{shared.status === 'loading' ? t('wrapped.share.preparing') : shared.status === 'error' ? t('wrapped.share.retry') : label}</span>
     </button>
   )
 }

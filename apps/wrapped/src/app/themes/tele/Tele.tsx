@@ -1,7 +1,10 @@
 import { ReactNode } from 'react'
+import i18n from '@sensorr/i18n/wrapped'
 import { motion, useReducedMotion } from 'framer-motion'
 import type { WrappedPoster } from '@sensorr/sensorr'
-import { MONTHS, THIN, number, plural, type Colophon, type SheetModel, type Stat } from '../../sheets'
+import { Trans } from 'react-i18next'
+import { QUOTED, months, number, quantity, suffix, t, type Colophon, type SheetModel, type Stat } from '../../sheets'
+import { Sentence } from '../../Sentence'
 import type { Art, ThemeProps } from '../types'
 import { TestCard } from './States'
 import { anchor } from '../../anchor'
@@ -13,18 +16,18 @@ type Page = { name: string, page: number, art: Art }
 // The magazine's sections, printed in the running head of each page
 export const rubric = (sheet: SheetModel) => {
   switch (sheet.kind) {
-    case 'opening': return 'Couverture'
-    case 'rank': return 'Audience'
-    case 'streak': return 'Feuilleton'
-    case 'months': return 'Grille de l’année'
-    case 'binge': return 'Soirée spéciale'
-    case 'night': return 'Dernière partie de soirée'
-    case 'server': return 'Exclusivité'
-    case 'figure': return sheet.variant === 'twin' ? 'Ils ont aimé' : 'Rareté'
-    case 'duo': return 'Courrier des lecteurs'
-    case 'posters': return sheet.variant === 'dropped' ? 'Zapping' : 'Critiques'
-    case 'genre': return 'Horoscope'
-    case 'finale': return 'Fin des programmes'
+    case 'opening': return t('wrapped.tele.rubrics.opening')
+    case 'rank': return t('wrapped.tele.rubrics.rank')
+    case 'streak': return t('wrapped.tele.rubrics.streak')
+    case 'months': return t('wrapped.tele.rubrics.months')
+    case 'binge': return t('wrapped.tele.rubrics.binge')
+    case 'night': return t('wrapped.tele.rubrics.night')
+    case 'server': return t('wrapped.tele.rubrics.server')
+    case 'figure': return t(sheet.variant === 'twin' ? 'wrapped.tele.rubrics.twin' : 'wrapped.tele.rubrics.onlyYou')
+    case 'duo': return t('wrapped.tele.rubrics.duo')
+    case 'posters': return t(sheet.variant === 'dropped' ? 'wrapped.tele.rubrics.dropped' : 'wrapped.tele.rubrics.outliers')
+    case 'genre': return t('wrapped.tele.rubrics.genre')
+    case 'finale': return t('wrapped.tele.rubrics.finale')
   }
 }
 
@@ -75,9 +78,9 @@ const Spread = ({ sheet, name, page, left, right, tone }: { sheet: SheetModel, n
 
 export const Folio = ({ name, rubric, page }: { name: string, rubric: string, page: number }) => (
   <p className="tele-folio" aria-hidden="true">
-    <span>Télé {name}</span>
+    <span>{t('wrapped.tele.brand')} {name}</span>
     <b>{rubric}</b>
-    <span>p. {page}</span>
+    <span>{t('wrapped.tele.page', { page })}</span>
   </p>
 )
 
@@ -112,14 +115,11 @@ export const Big = ({ value, spoken, suffix }: { value: number, spoken: string, 
 export const Barcode = () => <span className="tele-barcode" aria-hidden="true"><i /></span>
 
 // A quantity stands out with its unit: not a date, nor the digits of a name or of a title in quotes
-const UNIT = 'jours?\\sd’écart|films?\\set\\sséries|(?:soirs?|jours?|épisodes?|films?|séries?|titres?|fois|heures?|personnes?|spectateurs?)(?![\\p{L}])|par jour'
-const MONTH = '(?:er)?\\s(?:janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)'
-const QUANTITY = new RegExp(`(?<![\\p{L}\\d._])(S\\d+E\\d+|\\d+(?:\\s\\d{3})*(?:\\sh\\s\\d+|\\s?%)?)(?![\\p{L}\\d])(?!${MONTH})(?:\\s(${UNIT}))?`, 'gu')
-export const figures = (text: string) => text.split(/(«[^»]*»)/).flatMap((part, index) => {
+export const figures = (text: string) => text.split(QUOTED).flatMap((part, index) => {
   if (index % 2) return [part]
   const bits: ReactNode[] = []
   let from = 0
-  for (const match of part.matchAll(QUANTITY)) {
+  for (const match of part.matchAll(quantity())) {
     bits.push(part.slice(from, match.index), (
       <b key={`${index}-${match.index}`} className="tele-figure">
         <span className="tele-figure-n">{match[1]}</span>{match[2] && <> {match[2]}</>}
@@ -139,10 +139,10 @@ export const Cover = ({ sheet, name, art, sticker, colophon }: { sheet: Of<'open
     <div className="tele-cover">
       {star && <div className="tele-cover-star"><Photo poster={star} art={art} width={1280} eager /></div>}
       <header className="tele-mast" aria-hidden="true">
-        <p className="tele-logo" style={{ '--letters': name.length + 4 } as React.CSSProperties}>Télé<span>{name}</span></p>
-        <p className="tele-issue">N°<b>{sheet.year}</b>Édition annuelle</p>
+        <p className="tele-logo" style={{ '--letters': name.length + t('wrapped.tele.brand').length } as React.CSSProperties}>{t('wrapped.tele.brand')}<span>{name}</span></p>
+        <p className="tele-issue"><Trans i18nKey="wrapped.tele.issue" values={{ year: sheet.year }} components={[<b />]} /></p>
       </header>
-      {sticker || <p className="tele-sticker" aria-hidden="true"><span>Numéro<b>spécial</b>rétro</span></p>}
+      {sticker || <p className="tele-sticker" aria-hidden="true"><span><Trans i18nKey="wrapped.tele.sticker" components={[<b />]} /></span></p>}
       <div className="tele-cover-lines">
         {sheet.lede && <p className="tele-cover-lede">{sheet.lede}</p>}
         <h1 className="tele-cover-title">{sheet.title}</h1>
@@ -174,9 +174,9 @@ const Opening = ({ sheet, sheets, name, art }: { sheet: Of<'opening'>, sheets: S
       transition={{ duration: 0.9, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
     >
       <Cover sheet={sheet} name={name} art={art} />
-      <nav className="tele-contents" aria-label="Sommaire">
-        <p className="tele-folio" aria-hidden="true"><span>Télé {name}</span><b>Sommaire</b><span>p. 1</span></p>
-        <p className="tele-headline" aria-hidden="true">Au <span className="tele-band">sommaire</span></p>
+      <nav className="tele-contents" aria-label={t('wrapped.tele.contents.label')}>
+        <p className="tele-folio" aria-hidden="true"><span>{t('wrapped.tele.brand')} {name}</span><b>{t('wrapped.tele.contents.label')}</b><span>{t('wrapped.tele.page', { page: 1 })}</span></p>
+        <p className="tele-headline" aria-hidden="true"><Trans i18nKey="wrapped.tele.contents.title" components={[<span className="tele-band" />]} /></p>
         <ol>
           {sheets.slice(1).map((other, index) => (
             <li key={index}>
@@ -200,7 +200,7 @@ const Rank = ({ sheet, name, page }: { sheet: Of<'rank'> } & Page) => (
     name={name}
     page={page}
     left={<>
-      <h2 className="tele-headline"><span className="tele-band">Audience</span></h2>
+      <h2 className="tele-headline"><span className="tele-band">{t('wrapped.tele.rubrics.rank')}</span></h2>
       <Big value={sheet.rank} suffix={sheet.suffix} spoken={`${sheet.rank}${sheet.suffix}`} />
       <p className="tele-unit">{sheet.unit}</p>
       <p className="tele-standfirst">{figures(sheet.detail)}</p>
@@ -224,12 +224,12 @@ export const Ratings = ({ sheet }: { sheet: Of<'rank'> }) => {
           return [
             index > 0 && rank - ranks[index - 1] > 1 && <tr key={`gap-${rank}`} className="tele-ratings-gap"><td colSpan={2}>…</td></tr>,
             <tr key={rank} className={rank === sheet.rank ? 'tele-ratings-you' : undefined}>
-              <th>{rank}<sup>{rank === 1 ? 'er' : 'e'}</sup></th>
+              <th>{rank}<sup>{suffix(rank)}</sup></th>
               <td>
-                {rank === sheet.rank && <b>Toi</b>}
-                {rank !== sheet.rank && rank === middle && <span className="tele-ratings-label">Médiane</span>}
+                {rank === sheet.rank && <b>{t('wrapped.common.you')}</b>}
+                {rank !== sheet.rank && rank === middle && <span className="tele-ratings-label">{t('wrapped.common.median')}</span>}
                 {hours !== null
-                  ? <span className="tele-ratings-bar" style={{ '--share': Math.max(hours / top, 0.04) } as React.CSSProperties}><span>{number.format(hours)} h</span></span>
+                  ? <span className="tele-ratings-bar" style={{ '--share': Math.max(hours / top, 0.04) } as React.CSSProperties}><span>{t('wrapped.common.hours', { hours: number.format(hours) })}</span></span>
                   : rank !== sheet.rank && <span className="tele-ratings-blank" />}
               </td>
             </tr>,
@@ -246,7 +246,7 @@ const Streak = ({ sheet, art, ...page }: { sheet: Of<'streak'> } & Page) => (
     sheet={sheet}
     {...page}
     left={<>
-      <h2 className="tele-headline"><span className="tele-band">Feuilleton</span></h2>
+      <h2 className="tele-headline"><span className="tele-band">{t('wrapped.tele.rubrics.streak')}</span></h2>
       <p className="tele-standfirst">{sheet.intro}</p>
       <Big value={sheet.evenings} spoken={sheet.spoken} />
       <p className="tele-unit">{sheet.unit}</p>
@@ -270,7 +270,7 @@ const Streak = ({ sheet, art, ...page }: { sheet: Of<'streak'> } & Page) => (
           return (
             <li key={episode} className={episode - (episodes[index - 1] || 0) > 1 ? 'tele-episodes-later' : undefined}>
               {poster && <Photo poster={poster} art={art} width={320} className="tele-episodes-poster" />}
-              <b>Soir {episode}</b>
+              <b>{t('wrapped.common.evening', { evening: episode })}</b>
               <span className="tele-episodes-day">{day}</span>
               {poster && <span className="tele-episodes-title">{poster.title}</span>}
             </li>
@@ -300,9 +300,10 @@ const Calendar = ({ from, to }: { from: string, to: string }) => {
         const offset = (month.getUTCDay() + 6) % 7
         return (
           <div key={month.getTime()} className="tele-calendar-month">
-            <p className="tele-calendar-name">{month.toLocaleDateString('fr-FR', { month: 'long', timeZone: 'UTC' })}</p>
+            <p className="tele-calendar-name">{month.toLocaleDateString(i18n.language, { month: 'long', timeZone: 'UTC' })}</p>
             <ol>
-              {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((day, index) => <li key={`h${index}`} className="tele-calendar-head">{day}</li>)}
+              {/* Monday first: 1 January 2024 was one */}
+              {Array.from({ length: 7 }, (_, index) => <li key={`h${index}`} className="tele-calendar-head">{new Date(Date.UTC(2024, 0, 1 + index)).toLocaleDateString(i18n.language, { weekday: 'narrow', timeZone: 'UTC' })}</li>)}
               {Array.from({ length: days }, (_, index) => {
                 const time = month.getTime() + index * DAY
                 const on = time >= start && time <= end
@@ -329,18 +330,18 @@ const Months = ({ sheet, art, ...page }: { sheet: Of<'months'> } & Page) => {
         <p className="tele-standfirst">{sheet.lede}</p>
         {peak && (
           <article className="tele-pick">
-            <span className="tele-tag" aria-hidden="true">Coup de cœur</span>
+            <span className="tele-tag" aria-hidden="true">{t('wrapped.tele.pick')}</span>
             <Photo poster={peak.show} art={art} />
             <div>
               <h3 className="tele-pick-title">{peak.show.title}</h3>
-              <p>En <b>{peak.month}</b>{THIN}: {figures(peak.bare)}</p>
+              <p><Sentence i18nKey="wrapped.sheets.months.peak.month" values={{ month: peak.month }} tag={<b />} text={peak.bare} figures={figures} /></p>
             </div>
           </article>
         )}
       </>}
       right={
         <ol className="tele-grid">
-          {MONTHS.map((month, index) => {
+          {months().map((month, index) => {
             const show = shows[index]
             const future = index >= elapsed
             return (
@@ -351,10 +352,10 @@ const Months = ({ sheet, art, ...page }: { sheet: Of<'months'> } & Page) => {
                   {show
                     ? <>
                       <span className="tele-slot-title">{show.title}</span>
-                      <span className="tele-slot-episodes">{plural(show.episodes, 'épisode', 'épisodes')}</span>
+                      <span className="tele-slot-episodes">{t('wrapped.count.episodes', { count: show.episodes })}</span>
                       <span className="tele-slot-bar" style={{ '--share': show.episodes / max } as React.CSSProperties} aria-hidden="true" />
                     </>
-                    : <span className="tele-slot-none">{future ? 'À suivre' : 'Pas de série'}</span>}
+                    : <span className="tele-slot-none">{t(future ? 'wrapped.tele.upcoming' : 'wrapped.tele.none')}</span>}
                 </span>
               </li>
             )
@@ -366,7 +367,7 @@ const Months = ({ sheet, art, ...page }: { sheet: Of<'months'> } & Page) => {
 }
 
 // A paragraph of the model cut at its sentences, so each can take its own place on the page
-export const sentences = (text: string) => text.split(/(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Ý0-9«])/)
+export const sentences = (text: string) => text.split(/(?<=[.!?])\s+(?=[A-ZÀ-ÖØ-Ý0-9«“])/)
 
 // A photo with its caption and a credit line, as a magazine prints them
 // A still can carry its poster inset, so the title reads at a glance
@@ -382,7 +383,7 @@ const Pictured = ({ poster, art, kind = 'thumb', width = 640, line, inset, class
       : <Photo poster={poster} art={art} kind={kind} width={width} />}
     <figcaption>
       <b>{poster.title}</b>{line && <> · {line}</>}
-      <span className="tele-credit" aria-hidden="true">Photo DR</span>
+      <span className="tele-credit" aria-hidden="true">{t('wrapped.tele.credit')}</span>
     </figcaption>
   </figure>
 )
@@ -429,7 +430,7 @@ const Binge = ({ sheet, art, ...page }: { sheet: Of<'binge'> } & Page) => {
         <Headline lines={sheet.lines} />
         <figure className="tele-still">
           <Photo poster={sheet.poster} art={art} kind="art" width={1280} />
-          <span className="tele-tag" aria-hidden="true">Soirée spéciale</span>
+          <span className="tele-tag" aria-hidden="true">{t('wrapped.tele.rubrics.binge')}</span>
         </figure>
         <h3 className="tele-title">{sheet.title}</h3>
         {sheet.date && <p className="tele-standfirst">{sheet.date}</p>}
@@ -457,7 +458,7 @@ const Night = ({ sheet, art, ...page }: { sheet: Of<'night'> } & Page) => (
       <Headline lines={sheet.lines} />
       <p className="tele-unit">{sheet.date}</p>
       <p className="tele-clock" aria-hidden="true">{sheet.end}</p>
-      <p className="tele-body">Tu éteins à <strong>{sheet.end}</strong>{figures(sheet.after)}.</p>
+      <p className="tele-body"><Sentence i18nKey="wrapped.sheets.night.off" values={{ end: sheet.end }} tag={<strong />} text={sheet.after} figures={figures} /></p>
       {sheet.listing
         ? <>
           <p className="tele-box-title">{sheet.listing}</p>
@@ -486,9 +487,9 @@ const Server = ({ sheet, art, ...page }: { sheet: Of<'server'> } & Page) => {
       left={<>
         <figure className="tele-exclusive">
           <Photo poster={sheet.poster} art={art} width={1280} className="tele-full-poster" />
-          <span className="tele-ribbon" aria-hidden="true">Exclusivité</span>
+          <span className="tele-ribbon" aria-hidden="true">{t('wrapped.tele.rubrics.server')}</span>
         </figure>
-        <p className="tele-caption"><b>{sheet.poster.title}</b><span className="tele-credit" aria-hidden="true">Photo DR</span></p>
+        <p className="tele-caption"><b>{sheet.poster.title}</b><span className="tele-credit" aria-hidden="true">{t('wrapped.tele.credit')}</span></p>
       </>}
       right={<>
         <Headline lines={sheet.lines} />
@@ -511,7 +512,7 @@ const Figure = ({ sheet, art, ...page }: { sheet: Of<'figure'> } & Page) => {
       sheet={sheet}
       {...page}
       left={<>
-        {sheet.lines ? <Headline lines={sheet.lines} /> : <h2 className="tele-headline"><span className="tele-band">Rareté</span></h2>}
+        {sheet.lines ? <Headline lines={sheet.lines} /> : <h2 className="tele-headline"><span className="tele-band">{t('wrapped.tele.rubrics.onlyYou')}</span></h2>}
         {twin && sheet.highlight && sheet.sides
           ? <Venn name={sheet.highlight} count={sheet.count} spoken={sheet.spoken} sides={sheet.sides} />
           : <Big value={sheet.count} spoken={sheet.spoken} />}
@@ -539,7 +540,7 @@ const Figure = ({ sheet, art, ...page }: { sheet: Of<'figure'> } & Page) => {
 // Two viewers as two circles, the titles they share where they cross
 export const Venn = ({ name, count, spoken, sides }: { name: string, count: number, spoken: string, sides: { you: number, them: number | null } }) => (
   <div className="tele-venn">
-    <p className="tele-venn-side tele-venn-you" aria-hidden="true"><b>Toi</b><span>{number.format(sides.you)}</span></p>
+    <p className="tele-venn-side tele-venn-you" aria-hidden="true"><b>{t('wrapped.common.you')}</b><span>{number.format(sides.you)}</span></p>
     <p className="tele-venn-side tele-venn-them" aria-hidden="true"><b>{name}</b>{sides.them !== null && <span>{number.format(sides.them)}</span>}</p>
     <p className="tele-venn-shared"><span aria-hidden="true">{number.format(count)}</span><span className="visually-hidden">{spoken}</span></p>
   </div>
@@ -641,14 +642,14 @@ const Genre = ({ sheet, art, ...page }: { sheet: Of<'genre'> } & Page) => {
         <Headline lines={sheet.lines} />
         <div className="tele-sign">
           <Sign />
-          <p><span className="tele-sign-label" aria-hidden="true">Ton signe</span><span className="tele-sign-name">{sheet.name}</span></p>
+          <p><span className="tele-sign-label" aria-hidden="true">{t('wrapped.tele.sign')}</span><span className="tele-sign-name">{sheet.name}</span></p>
         </div>
         <p className="tele-standfirst">{figures(sheet.count)}</p>
         <Gallery posters={sheet.posters} art={art} />
       </>}
       right={lead ? <>
         <dl className="tele-reading">
-          <dt aria-hidden="true">Ascendant</dt>
+          <dt aria-hidden="true">{t('wrapped.tele.rising')}</dt>
           <dd><b className="tele-reading-name">{lead.name}</b> {figures(lead.role)}</dd>
         </dl>
         {lead.posters.length ? <Gallery posters={lead.posters} art={art} /> : <Sign className="tele-sign-wheel" />}
@@ -664,13 +665,13 @@ const Finale = ({ sheet, art, ...page }: { sheet: Of<'finale'> } & Page) => (
     {...page}
     left={<>
       <Photo poster={sheet.poster} art={art} width={1280} className="tele-full-poster" />
-      <p className="tele-caption"><b>{sheet.poster.title}</b><span className="tele-credit" aria-hidden="true">Photo DR</span></p>
+      <p className="tele-caption"><b>{sheet.poster.title}</b><span className="tele-credit" aria-hidden="true">{t('wrapped.tele.credit')}</span></p>
     </>}
     right={<>
       <Headline lines={sheet.lines} />
       <h3 className="tele-title">{sheet.title}</h3>
       <p className="tele-standfirst">{sheet.date}</p>
-      {!sheet.closed && <p className="tele-stamp">Provisoire</p>}
+      {!sheet.closed && <p className="tele-stamp">{t('wrapped.common.draft')}</p>}
       {sheet.poster.art && <Pictured poster={sheet.poster} art={art} kind="art" width={1280} />}
       <TestCard />
       <p className="tele-end">{sheet.end}</p>

@@ -602,6 +602,11 @@ html[data-theme='scenario'] {
   font-size: 13px;
 }
 
+/* `@sensorr/i18n/wrapped` sets the page's lang */
+.scenario-nights li[data-gap]:lang(en)::before {
+  content: '(cont’d)';
+}
+
 .scenario-nights p {
   display: flex;
   flex-direction: column;

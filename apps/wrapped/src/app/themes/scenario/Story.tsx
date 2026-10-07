@@ -1,5 +1,6 @@
 import { ReactNode, useLayoutEffect, useRef } from 'react'
-import { MONTHS, THIN, number, plural, type Colophon, type SheetModel } from '../../sheets'
+import { months, number, t, type Colophon, type SheetModel } from '../../sheets'
+import { Sentence } from '../../Sentence'
 import type { Art, StoryProps } from '../types'
 import { Act, Binge, Caps, Duo, Figure, Finale, Genre, Insert, Mark, Opening, Page, Pencil, Rank, Shout, Slug, TRANSITIONS, Tally, figures, scenesOf, sentences } from './Scenario'
 import './scenario.css'
@@ -138,8 +139,8 @@ const Streak = ({ sheet, scene, art }: { sheet: Of<'streak'> } & Scene) => {
   return (
     <>
       <Act>{sheet.label}</Act>
-      <Slug scene={scene}>Int. salon – soir</Slug>
-      <p className="scenario-action">{sheet.intro}{THIN}:</p>
+      <Slug scene={scene}>{t('wrapped.scenario.slugs.evening')}</Slug>
+      <p className="scenario-action">{t('wrapped.common.colon', { text: sheet.intro })}</p>
       <div className={`scenario-beside${sheet.lead ? '' : ' scenario-beside-alone'}`}>
         {sheet.lead && <Insert poster={sheet.poster} art={art} width={320} caption={<Caps>{sheet.poster.title}</Caps>} />}
         <div className="scenario-story-run">
@@ -155,7 +156,7 @@ const Streak = ({ sheet, scene, art }: { sheet: Of<'streak'> } & Scene) => {
             <li key={at} data-gap={position > 0 && at - shown[position - 1] > 1 ? '' : undefined}>
               {poster && <Insert poster={poster} art={art} width={320} className="scenario-insert-thumb" />}
               <p>
-                <span className="scenario-night-slug">Soir {at + 1} – {day}</span>
+                <span className="scenario-night-slug">{t('wrapped.common.evening', { evening: at + 1 })} – {day}</span>
                 {poster && <Caps>{poster.title}</Caps>}
               </p>
             </li>
@@ -175,12 +176,12 @@ const Months = ({ sheet, scene, art }: { sheet: Of<'months'> } & Scene) => (
       {sheet.shows.slice(0, sheet.elapsed).map((show, at) => (
         <li key={at} className={sheet.peak?.index === at ? 'scenario-month-peak' : undefined} style={{ '--at': at } as React.CSSProperties}>
           <span className="scenario-scene" aria-hidden="true">{scene + at}</span>
-          <span className="scenario-story-month">{MONTHS[at]}</span>
+          <span className="scenario-story-month">{months()[at]}</span>
           <span className="scenario-story-line">
             <span className="scenario-story-said">
               {show
-                ? <><span className="scenario-story-title"><Caps>{show.title}</Caps></span><span>, {figures(plural(show.episodes, 'épisode', 'épisodes'))}.</span></>
-                : 'Rien.'}
+                ? <><span className="scenario-story-title"><Caps>{show.title}</Caps></span><span>, {figures(t('wrapped.count.episodes', { count: show.episodes }))}.</span></>
+                : t('wrapped.scenario.nothing')}
             </span>
             {show && <span className="scenario-swipe" aria-hidden="true" style={{ '--share': show.episodes / sheet.max } as React.CSSProperties} />}
           </span>
@@ -201,14 +202,14 @@ const Night = ({ sheet, scene, art }: { sheet: Of<'night'> } & Scene) => {
   return (
     <>
       <Act>{sheet.lines.join(' ')}</Act>
-      <Slug scene={scene}>{sheet.late ? 'Int. salon – nuit' : 'Int. salon – soir'}</Slug>
+      <Slug scene={scene}>{t(sheet.late ? 'wrapped.scenario.slugs.night' : 'wrapped.scenario.slugs.evening')}</Slug>
       <p className="scenario-action scenario-date">{sheet.date}.</p>
       <Shout figure={sheet.end} className="scenario-shout-time" />
-      <p className="scenario-action scenario-centred">Tu éteins à {sheet.end}{figures(sheet.after)}.</p>
+      <p className="scenario-action scenario-centred"><Sentence i18nKey="wrapped.sheets.night.off" values={{ end: sheet.end }} text={sheet.after} figures={figures} /></p>
       {sheet.listing
         ? (
           <div>
-            <p className="scenario-log-title">{sheet.listing}{before > 0 && `${THIN}: les ${shown.length} dernières lignes, ${plural(before, 'autre', 'autres')} avant`}</p>
+            <p className="scenario-log-title">{before > 0 ? t('wrapped.sheets.night.listed', { listing: sheet.listing, shown: shown.length, before }) : sheet.listing}</p>
             <ol className="scenario-log">
               {shown.map((line, at) => (
                 <li key={`${line.start}-${at}`} className={at === shown.length - 1 ? 'scenario-log-last' : undefined}>
@@ -234,10 +235,10 @@ const Night = ({ sheet, scene, art }: { sheet: Of<'night'> } & Scene) => {
 const Server = ({ sheet, scene, art }: { sheet: Of<'server'> } & Scene) => (
   <>
     <Act>{sheet.lines.join(' ')}</Act>
-    <Slug scene={scene}>Int. salle de projection – soir</Slug>
+    <Slug scene={scene}>{t('wrapped.scenario.slugs.screening')}</Slug>
     <div className="scenario-beside">
       <Insert poster={sheet.poster} art={art} caption={<Caps>{sheet.title}</Caps>} />
-      {sheet.first && <Pencil className="scenario-pencil-side">Première projection</Pencil>}
+      {sheet.first && <Pencil className="scenario-pencil-side">{t('wrapped.scenario.premiere')}</Pencil>}
     </div>
     {sentences(sheet.bare).map((sentence) => <p key={sentence} className="scenario-action">{figures(sentence)}</p>)}
   </>
@@ -249,7 +250,7 @@ const Posters = ({ sheet, scene, art }: { sheet: Of<'posters'> } & Scene) => (
     <Act>{sheet.lines.join(' ')}</Act>
     {sheet.items.slice(0, 3).map(({ what, poster, detail, when }, at) => (
       <div key={poster.key} className="scenario-story-item">
-        <Slug scene={scene + at}>Int. salon – soir</Slug>
+        <Slug scene={scene + at}>{t('wrapped.scenario.slugs.evening')}</Slug>
         <div className="scenario-beside">
           <div className="scenario-verdict">
             <Pencil>{what}</Pencil>

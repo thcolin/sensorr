@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useRef, useState, useSyncExternalStore } from 'react'
-import { WRAPPED_THEME_NAMES, type WrappedTheme } from '@sensorr/sensorr'
+import type { WrappedTheme } from '@sensorr/sensorr'
+import { useTranslation } from 'react-i18next'
 import type { Share } from './App'
 import { sheetsOf } from './sheets'
 import { DEFAULT_THEME, LOADERS, STORIES, STORY_LOADERS, THEMES, THEME_COLORS } from './themes'
@@ -19,23 +20,27 @@ const subscribe = (change: () => void) => {
 }
 const usePhone = () => useSyncExternalStore(subscribe, () => window.matchMedia(PHONE).matches)
 
-// Set by the API's browser when it renders a story as an image: `?card=<story>&look=<look>`
+// Set by the API's browser when it renders a story as an image: `?card=<story>&look=<look>&lang=<language>`
 const query = new URLSearchParams(window.location.search)
 const card = { story: query.get('card'), look: query.get('look') }
 
-const Switch = ({ at, theme, looks, onChoose }: { at: At, theme: WrappedTheme, looks: WrappedTheme[], onChoose: (theme: WrappedTheme, at: At, from: HTMLElement) => void }) => (
-  <label className="theme-switch" data-at={at}>
-    <span>{at === 'start' ? 'Voir en' : 'Revoir en'}</span>
-    <select name={`theme-${at}`} value={theme} onChange={(event) => onChoose(event.target.value as WrappedTheme, at, event.currentTarget)}>
-      {looks.map((id) => <option key={id} value={id}>{WRAPPED_THEME_NAMES[id]}</option>)}
-    </select>
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" /></svg>
-  </label>
-)
+const Switch = ({ at, theme, looks, onChoose }: { at: At, theme: WrappedTheme, looks: WrappedTheme[], onChoose: (theme: WrappedTheme, at: At, from: HTMLElement) => void }) => {
+  const { t } = useTranslation()
+  return (
+    <label className="theme-switch" data-at={at}>
+      <span>{t(`wrapped.switch.${at}`)}</span>
+      <select name={`theme-${at}`} value={theme} onChange={(event) => onChoose(event.target.value as WrappedTheme, at, event.currentTarget)}>
+        {looks.map((id) => <option key={id} value={id}>{t(`wrapped.themes.${id}`)}</option>)}
+      </select>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" /></svg>
+    </label>
+  )
+}
 
 // Another year is another page: it opens on its first sheet, and the browser's back returns to this one
 const Edition = ({ token, year, editions, compact }: { token: string, year: number, editions: number[], compact?: boolean }) => {
   // The year chosen while its page loads; a page restored by the back button starts over from its own
+  const { t } = useTranslation()
   const [pending, setPending] = useState<number | null>(null)
 
   useEffect(() => {
@@ -51,7 +56,7 @@ const Edition = ({ token, year, editions, compact }: { token: string, year: numb
 
   return (
     <label className="theme-switch edition-switch" aria-busy={pending !== null}>
-      <span className={compact ? 'visually-hidden' : undefined}>Année</span>
+      <span className={compact ? 'visually-hidden' : undefined}>{t('wrapped.switch.year')}</span>
       <select name="edition" value={pending ?? year} onChange={(event) => choose(Number(event.target.value))}>
         {[...editions].reverse().map((edition) => <option key={edition} value={edition}>{edition}</option>)}
       </select>
@@ -61,6 +66,7 @@ const Edition = ({ token, year, editions, compact }: { token: string, year: numb
 }
 
 export const WrappedPage = ({ share, token }: { share: Share, token: string }) => {
+  const { t, i18n } = useTranslation()
   const { look } = share
   // In the order of the list, whatever order the config keeps them in
   const looks = (Object.keys(THEMES) as WrappedTheme[]).filter((id) => !look.looks || look.looks.includes(id))
@@ -78,13 +84,13 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
     window.history.replaceState(null, '', hrefOf(String(next + 1)))
   }
   const { sheets, colophon, closed } = sheetsOf(share)
-  const stories: StoryModel[] = [...sheets, { kind: 'summary', label: `Rétrospective de ${share.name} ${share.year}` }]
+  const stories: StoryModel[] = [...sheets, { kind: 'summary', label: t('wrapped.title', { name: share.name, year: share.year }) }]
   // An address from another day can name a story this one no longer has
   const current = Math.min(index, stories.length - 1)
   const art: Art = (item, kind = 'thumb', width = 640) => item[kind]
     ? `/api/wrapped/share/${encodeURIComponent(token)}/images/${kind}?key=${encodeURIComponent(item.key)}&width=${width}`
     : undefined
-  const cardOf = (id: string) => `/api/wrapped/share/${encodeURIComponent(token)}/cards/${theme}/${id}?year=${share.year}`
+  const cardOf = (id: string) => `/api/wrapped/share/${encodeURIComponent(token)}/cards/${theme}/${id}?year=${share.year}&lang=${i18n.language}`
   const nameOf = (id: string) => `retrospective-${share.name}-${share.year}-${id}.jpg`.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^a-z0-9.-]+/g, '-')
   // Where the switch that was used sat on screen, so the new look opens at the same place
   const anchor = useRef<{ at: At, top: number } | null>(null)
@@ -191,7 +197,7 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
           {years && <Edition token={token} year={share.year} editions={share.editions} />}
         </div>
       )}
-      {Story && <div className="theme-share"><ShareImage url={cardOf('summary')} name={nameOf('summary')} label="Partager ma rétrospective" /></div>}
+      {Story && <div className="theme-share"><ShareImage url={cardOf('summary')} name={nameOf('summary')} label={t('wrapped.share.summary')} /></div>}
     </>
   )
 }

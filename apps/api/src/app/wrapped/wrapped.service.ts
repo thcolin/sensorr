@@ -279,6 +279,9 @@ export class WrappedService {
       editions: await this.editionsOf(viewer._id),
       names: await this.namesOf(shown.wrapped),
       look: { ...this.lookOf(edition), looks: this.configService.config.get('wrapped.looks') },
+      // The page speaks the language set in Settings, else the friend's browser's, else the one of the TMDB region
+      language: this.configService.config.get('language'),
+      region: this.configService.config.get('region'),
       ...shown,
     }
   }

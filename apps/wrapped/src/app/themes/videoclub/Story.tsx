@@ -1,5 +1,6 @@
 import { ReactNode } from 'react'
-import { MONTHS, THIN, number, plural, type Colophon, type SheetModel } from '../../sheets'
+import { months, number, t, type Colophon, type SheetModel } from '../../sheets'
+import { Sentence } from '../../Sentence'
 import type { Art, StoryProps } from '../types'
 import { Binge, Box, Duo, Finale, Genre, Neon, Nobody, Opening, Posters, Rank, Server, Spines, Twin, figures } from './Videoclub'
 import './videoclub.css'
@@ -60,7 +61,7 @@ const Streak = ({ sheet, art }: { sheet: Of<'streak'>, art: Art }) => (
     <div className="videoclub-pair">
       <Box poster={sheet.poster} art={art} className="videoclub-box-large" tilt={-8} />
       <div className="videoclub-ticket videoclub-ticket-stamps">
-        <p className="videoclub-ticket-head" aria-hidden="true">Ticket de location</p>
+        <p className="videoclub-ticket-head" aria-hidden="true">{t('wrapped.videoclub.rentalTicket')}</p>
         <p className="videoclub-ticket-figure">
           <span aria-hidden="true">{number.format(sheet.evenings)}</span>
           <span className="visually-hidden">{sheet.spoken}</span>
@@ -84,13 +85,13 @@ const Months = ({ sheet, art }: { sheet: Of<'months'>, art: Art }) => {
       <Neon lines={sheet.lines} tone="cyan" />
       <p className="videoclub-lede">{sheet.lede}</p>
       <ol className="videoclub-rack" role="img" aria-label={sheet.alt}>
-        {MONTHS.map((month, index) => {
+        {months().map((month, index) => {
           const show = index < elapsed ? shows[index] : null
           return (
             <li key={month} className={`videoclub-rack-row ${index >= elapsed ? 'videoclub-rack-future' : ''} ${peak?.index === index ? 'videoclub-rack-peak' : ''}`} style={{ '--at': index } as React.CSSProperties}>
               <span className="videoclub-rack-tag">
                 {month}
-                {show && <small><b>{number.format(show.episodes)}</b> {show.episodes > 1 ? 'épisodes' : 'épisode'}</small>}
+                {show && <small><b>{number.format(show.episodes)}</b> {t('wrapped.units.episodes', { count: show.episodes })}</small>}
               </span>
               {show && (
                 <>
@@ -120,15 +121,15 @@ const Night = ({ sheet, art }: { sheet: Of<'night'>, art: Art }) => {
         <div className="videoclub-returns-slot">
           <Box poster={sheet.poster} art={art} className="videoclub-box-returned" />
         </div>
-        <p className="videoclub-returns-plate" aria-hidden="true">Retours</p>
+        <p className="videoclub-returns-plate" aria-hidden="true">{t('wrapped.videoclub.returns')}</p>
       </div>
       <div className="videoclub-night-text">
         <p className="videoclub-night-date">{sheet.date}</p>
-        <p className="videoclub-lede">Tu éteins à <strong className="videoclub-time">{sheet.end}</strong>{figures(sheet.after)}.</p>
+        <p className="videoclub-lede"><Sentence i18nKey="wrapped.sheets.night.off" values={{ end: sheet.end }} tag={<strong className="videoclub-time" />} text={sheet.after} figures={figures} /></p>
         {sheet.listing
           ? (
             <div className="videoclub-ticket videoclub-ticket-returns">
-              <p className="videoclub-ticket-head">{sheet.listing}{before > 0 && `${THIN}: les ${shown.length} dernières lignes, ${plural(before, 'autre', 'autres')} avant`}</p>
+              <p className="videoclub-ticket-head">{before > 0 ? t('wrapped.sheets.night.listed', { listing: sheet.listing, shown: shown.length, before }) : sheet.listing}</p>
               <ol>
                 {shown.map((line, index) => (
                   <li key={`${line.start}-${index}`}>

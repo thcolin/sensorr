@@ -1,4 +1,5 @@
 import type { NoticeProps } from '../types'
+import { t } from '../../sheets'
 import { Brushed, Sheet } from './Sheet'
 import './affiche.css'
 
@@ -8,7 +9,7 @@ export const Loading = () => (
       <svg className="loading-stroke" viewBox="0 0 200 40" aria-hidden="true">
         <path d="M6 28 C 40 6, 70 34, 104 18 S 170 8, 194 22" />
       </svg>
-      <p className="visually-hidden">Chargement de la rétrospective</p>
+      <p className="visually-hidden">{t('wrapped.loading')}</p>
     </Sheet>
   </main>
 )
@@ -16,7 +17,7 @@ export const Loading = () => (
 export const Notice = ({ lines, text, action }: NoticeProps) => (
   <main className="wall">
     <Sheet className="sheet-notice">
-      <Brushed as="h1" lines={lines} seed={lines.length === 2 && lines[0] === 'Séance' ? 14 : 15} />
+      <Brushed as="h1" lines={lines} seed={action ? 15 : 14} />
       <p className="notice">{text}</p>
       {action && <button className="retry" type="button" onClick={action.onClick}>{action.label}</button>}
     </Sheet>

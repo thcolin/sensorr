@@ -1,8 +1,9 @@
 import { ReactNode, useEffect, useState } from 'react'
 import { useReducedMotion } from 'framer-motion'
-import { MONTHS, THIN, number, plural, type Colophon, type SheetModel } from '../../sheets'
+import { months, number, t, type Colophon, type SheetModel } from '../../sheets'
+import { Sentence } from '../../Sentence'
 import type { Art, StoryModel, StoryProps } from '../types'
-import { Cells, Counter, Edges, Exposure, FicheHead, Frame, Lights, Ring, Scorch, Scrawl, Still, Strip, Title, figures, gestureOf, hash, rng, sentences } from './Labo'
+import { Cells, Counter, Edges, Exposure, FicheHead, Frame, Hour, Lights, Ring, Scorch, Scrawl, Still, Strip, Title, figures, gestureOf, hash, rng, sentences } from './Labo'
 import './labo.css'
 
 type Of<K extends SheetModel['kind']> = Extract<SheetModel, { kind: K }>
@@ -140,7 +141,7 @@ const Rank = ({ sheet, ...page }: { sheet: Of<'rank'> } & Page) => (
     </div>
     <ol className="labo-crowd" aria-hidden="true">
       {Array.from({ length: sheet.users }, (_, seat) => seat === sheet.rank - 1
-        ? <li key={seat} className="labo-crowd-you"><Ring /><span className="labo-grease">toi</span></li>
+        ? <li key={seat} className="labo-crowd-you"><Ring /><span className="labo-grease">{t('wrapped.labo.you')}</span></li>
         : <li key={seat} />)}
     </ol>
   </Sheet>
@@ -188,7 +189,7 @@ const Months = ({ sheet, art, ...page }: { sheet: Of<'months'> } & Page) => (
     <p className="labo-lede">{sheet.lede}</p>
     <div className="labo-paper">
       <div className="labo-planche" role="img" aria-label={sheet.alt}>
-        {MONTHS.map((month, row) => {
+        {months().map((month, row) => {
           const show = sheet.shows[row]
           const future = row >= sheet.elapsed
           return (
@@ -196,7 +197,7 @@ const Months = ({ sheet, art, ...page }: { sheet: Of<'months'> } & Page) => (
               <p className="labo-planche-head">
                 <span>{month}</span>
                 {show && !future && <strong>{show.title}</strong>}
-                {show && !future && <span>{plural(show.episodes, 'épisode', 'épisodes')}</span>}
+                {show && !future && <span>{t('wrapped.count.episodes', { count: show.episodes })}</span>}
               </p>
               {show && !future
                 ? <Cells count={show.episodes} src={art(show, 'art', 640) || art(show, 'thumb', 320)} seed={row * 97 + show.episodes} columns={show.episodes} className="labo-story-band" />
@@ -258,17 +259,17 @@ const Night = ({ sheet, art, ...page }: { sheet: Of<'night'> } & Page) => {
       <div className="labo-tail">
         <Frame poster={sheet.poster} art={art} width={320} code="99A" />
         <div className="labo-tail-leader" aria-hidden="true">
-          <span className="labo-tail-mark">Queue</span>
+          <span className="labo-tail-mark">{t('wrapped.labo.tail')}</span>
           <span className="labo-tail-hour">{sheet.end}</span>
-          <span className="labo-tail-mark">Fin de bobine</span>
+          <span className="labo-tail-mark">{t('wrapped.labo.reelEnd')}</span>
         </div>
       </div>
       <p className="labo-intro">{sheet.date}</p>
-      <p className="labo-body">Tu éteins à <b className="labo-fig"><span className="labo-fig-n">{sheet.end}</span></b>{figures(sheet.after)}.</p>
+      <p className="labo-body"><Sentence i18nKey="wrapped.sheets.night.off" values={{ end: sheet.end }} tag={<Hour />} text={sheet.after} figures={figures} /></p>
       {sheet.listing
         ? (
           <div className="labo-log">
-            <p className="labo-intro">{sheet.listing}{before > 0 && `${THIN}: les ${shown.length} dernières lignes, ${plural(before, 'autre', 'autres')} avant`}</p>
+            <p className="labo-intro">{before > 0 ? t('wrapped.sheets.night.listed', { listing: sheet.listing, shown: shown.length, before }) : sheet.listing}</p>
             <ol>
               {shown.map((line, play) => (
                 <li key={`${line.start}-${play}`} className={play === shown.length - 1 ? 'labo-log-last' : undefined}>
@@ -291,7 +292,7 @@ const Server = ({ sheet, art, ...page }: { sheet: Of<'server'> } & Page) => (
     <div className="labo-ringed">
       <Frame poster={sheet.poster} art={art} width={640} code="0A" />
       <Ring />
-      {sheet.first && <span className="labo-stamp labo-stamp-copy" aria-hidden="true">Copie zéro</span>}
+      {sheet.first && <span className="labo-stamp labo-stamp-copy" aria-hidden="true">{t('wrapped.labo.zeroCopy')}</span>}
     </div>
     <h3 className="labo-name">{sheet.title}</h3>
     <div>{sentences(sheet.bare).map((sentence) => <p key={sentence} className="labo-body">{figures(sentence)}</p>)}</div>
@@ -385,7 +386,7 @@ const Genre = ({ sheet, art, ...page }: { sheet: Of<'genre'> } & Page) => {
         <Title lines={sheet.lines} className="labo-fiche-title" />
         <dl className="labo-fiche-values">
           <div>
-            <dt aria-hidden="true">Dominante</dt>
+            <dt aria-hidden="true">{t('wrapped.labo.dominant')}</dt>
             <dd className="labo-felt labo-felt-large">{sheet.name}</dd>
           </div>
         </dl>
@@ -397,7 +398,7 @@ const Genre = ({ sheet, art, ...page }: { sheet: Of<'genre'> } & Page) => {
           </p>
         )}
         {lead && !!lead.posters.length && <Strip posters={lead.posters.slice(0, 4)} art={art} start={page.index * 4 + 4} titled={false} />}
-        <span className="labo-stamp labo-stamp-ok" aria-hidden="true">Bon à tirer</span>
+        <span className="labo-stamp labo-stamp-ok" aria-hidden="true">{t('wrapped.labo.approved')}</span>
       </div>
     </Sheet>
   )
@@ -412,7 +413,7 @@ const Finale = ({ sheet, art, ...page }: { sheet: Of<'finale'> } & Page) => (
       <div>
         <h3 className="labo-name">{sheet.title}</h3>
         <p className="labo-intro">{sheet.date}</p>
-        {!sheet.closed && <span className="labo-stamp labo-stamp-draft" aria-hidden="true">Provisoire</span>}
+        {!sheet.closed && <span className="labo-stamp labo-stamp-draft" aria-hidden="true">{t('wrapped.common.draft')}</span>}
       </div>
     </div>
     <div className="labo-burn">
