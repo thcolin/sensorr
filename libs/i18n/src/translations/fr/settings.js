@@ -107,7 +107,7 @@ export default {
       },
     },
     tmdb: {
-      intro: 'Sensorr s’appuie sur l’API de <0>The Movie Database</0>, qui a besoin de quelques réglages pour fonctionner',
+      intro: 'Sensorr s’appuie sur l’API de <0>The Movie Database</0>, qui a besoin de quelques paramètres pour fonctionner',
       key: {
         label: 'Clé d’API',
         help: '<0>Inscrivez-vous</0> et renseignez <1>votre propre <2>API Key</2> (v3 auth)</1>',
@@ -128,7 +128,7 @@ export default {
       },
       shows: {
         title: 'Séries',
-        intro: 'Les fichiers <0>.torrent</0> des séries vont dans leur propre blackhole, et une release de série qui n’a qu’un lien magnet est retirée. Votre client de téléchargement enregistre leurs fichiers dans le dossier de transit, d’où Sensorr crée des liens physiques des épisodes voulus vers la bibliothèque : les trois doivent être sur le même point de montage',
+        intro: 'Les fichiers <0>.torrent</0> des séries vont dans leur propre blackhole, et une release de série qui n’a qu’un lien magnet est retirée. Votre client de téléchargement enregistre leurs fichiers dans le dossier de transit, d’où Sensorr crée des liens physiques des épisodes recherchés vers la bibliothèque : les trois doivent être sur le même point de montage',
         staging: 'Dossier de transit',
         library: 'Dossier de la bibliothèque',
         docker: 'Sensorr tourne actuellement depuis des images <0>Docker</0>, les dossiers des séries se trouvent sous <1>/tvshows</1> : pour les déplacer, modifiez la variable d’environnement <2>SENSORR_TVSHOWS</2> de votre fichier <3>.env</3>',
@@ -264,7 +264,7 @@ export default {
       and: ' et ',
     },
     data: {
-      intro: 'Votre bibliothèque et ses réglages dans un <0>.zip</0> de JSON brut : films, séries, épisodes et stars, puis tous les réglages sauf les clés et mots de passe, qui ne quittent jamais ce Sensorr.',
+      intro: 'Votre bibliothèque et ses paramètres dans un <0>.zip</0> de JSON brut : films, séries, épisodes et stars, puis tous les paramètres sauf les clés et mots de passe, qui ne quittent jamais ce Sensorr.',
       counts: {
         movies: '{count, plural, one {# film} other {# films}}',
         shows: '{count, plural, one {# série} other {# séries}}',
@@ -300,7 +300,7 @@ export default {
       },
       import: {
         title: 'Importer',
-        help: 'Un dump de ce Sensorr ou d’un autre remplace la bibliothèque et les réglages de ce Sensorr. Ses clés et mots de passe restent.',
+        help: 'Un dump de ce Sensorr ou d’un autre remplace la bibliothèque et les paramètres de ce Sensorr. Ses clés et mots de passe restent.',
         file: 'Dump à importer',
         label: 'Importer {name}',
         action: 'Importer',
@@ -407,7 +407,7 @@ export default {
         record: 'Le job <0>📹 Record</0> traite les films <1>🍿 Wished</1> : il trouve et télécharge la version au meilleur score pour les faire passer en <2>📼 Archived</2>.',
         refine: 'Une release <0>📼 Archived</0> qui ne respecte pas les règles <1>* Required</1> de sa policy est considérée comme <2>🪨 Unrefined</2> et sera traitée par le job <3>✨ Refine</3>, qui cherchera pour elle une version <4>💎 Refined</4> au meilleur score. Ensuite, le job <5>✂️ Shrink</5> optimise les releases <6>💎 Refined</6> en trouvant des versions <7>💍 Shrinked</7> plus légères.',
         pinned: 'Un film <0>📍 Pinned</0> n’est traité par aucun job. Un film <1>🔕 Ignored</1> est entièrement exclu du système.',
-        shows: 'Pour les séries, le job <0>📹 Record shows</0> cherche les épisodes voulus des séries <1>📺 Followed</1>, par série complète, puis par pack de saison, puis par épisode ; <2>📡 Airing shows</2> cherche les épisodes diffusés ces 7 derniers jours. <3>📥 Import shows</3> crée des liens physiques des fichiers terminés depuis le dossier de transit vers la bibliothèque et marque ces épisodes <4>📼 Owned</4>.',
+        shows: 'Pour les séries, le job <0>📹 Record shows</0> cherche les épisodes recherchés des séries <1>📺 Followed</1>, par série complète, puis par pack de saison, puis par épisode ; <2>📡 Airing shows</2> cherche les épisodes diffusés ces 7 derniers jours. <3>📥 Import shows</3> crée des liens physiques des fichiers terminés depuis le dossier de transit vers la bibliothèque et marque ces épisodes <4>📼 Owned</4>.',
       },
       intro: 'Sensorr planifie des jobs en arrière-plan pour faire tourner l’application, utilisez la syntaxe <0>cron</0> pour régler leur fréquence. Utilisez le bouton « lecture » pour lancer un job à la main',
       requires: {
@@ -454,7 +454,7 @@ export default {
       },
       token: {
         label: 'Jeton',
-        unregister: 'Désenregistrer',
+        unregister: 'Dissocier',
       },
       steps: {
         url: {
@@ -495,7 +495,7 @@ export default {
         title: 'Score',
         base: 'Sensorr classe les releases avec un système de points simple. Une release gagne d’abord un score de base de <0>1000 points</0> si elle correspond au titre du film (original ou localisé).',
         prefer: 'Elle cumule ensuite des points selon vos tags <0>⭐ prefer</0>. Le tag le mieux classé vaut <1>100 points</1>, les suivants de la même liste valent de moins en moins. Des tags de même rang valent autant de points.',
-        tie: 'La release au score total le plus élevé est toujours choisie. En cas d’égalité, le réglage <0>sort</0> les départage.',
+        tie: 'La release au score total le plus élevé est toujours choisie. En cas d’égalité, le paramètre <0>sort</0> les départage.',
       },
       sandbox: {
         title: 'Bac à sable',
