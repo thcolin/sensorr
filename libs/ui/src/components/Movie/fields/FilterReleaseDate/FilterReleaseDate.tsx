@@ -41,8 +41,8 @@ const UIFilterReleaseDate = ({ display = 'range', statistics, ...props }) => {
 
 export const FilterReleaseDate = memo(UIFilterReleaseDate)
 
-const UICalendarMonthPicker = ({ ...props }: FilterReleaseDateProps) => (
-  <div sx={UICalendarMonthPicker.styles.element}>
+const UICalendarMonthPicker = ({ style, ...props }: FilterReleaseDateProps & { style?: React.CSSProperties }) => (
+  <div sx={UICalendarMonthPicker.styles.element} style={style}>
     <FilterReleaseDate {...props as any} display='datePicker' />
   </div>
 )

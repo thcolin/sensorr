@@ -43,11 +43,11 @@ const FollowedPersons = compose(
     layout: {
       nav: {
         display: 'grid',
-        gridTemplateColumns: ['1fr min-content min-content', '1fr min-content min-content min-content'],
+        gridTemplateColumns: ['1fr min-content', '1fr min-content min-content min-content'],
         gridTemplateRows: 'auto',
         gap: '2em',
         gridTemplateAreas: [
-          `"results toggle sort_by"`,
+          `"results toggle"`,
           `"title results toggle sort_by"`,
         ],
         '>h4': {
@@ -59,13 +59,11 @@ const FollowedPersons = compose(
         gridTemplateColumns: 'minmax(0, 1fr)',
         gridTemplateRows: 'auto',
         gap: '2em',
-        gridTemplateAreas: `
-          "head"
-          "known_for_department"
-          "gender"
-          "birthday"
-          "popularity"
-        `,
+        // A phone has no room for the sorting in the bar: it moves to the top of the filters, as on the swaps
+        gridTemplateAreas: [
+          `"sort_by" "head" "known_for_department" "gender" "birthday" "popularity"`,
+          `"head" "known_for_department" "gender" "birthday" "popularity"`,
+        ],
       },
     },
     fields: {

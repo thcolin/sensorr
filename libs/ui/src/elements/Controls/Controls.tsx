@@ -40,17 +40,26 @@ export interface ControlsProps {
       gridTemplateRows?: any
       gap?: any
     },
-    aside?: {
-      [key: string]: string
+    // A second green bar under the nav, for what a phone has no room for in it
+    strip?: {
+      [key: string]: any
       display: 'grid'
-      gridTemplateAreas: string
+      gridTemplateAreas: any
+      gridTemplateColumns?: any
+      gridTemplateRows?: any
+      gap?: any
+    },
+    aside?: {
+      [key: string]: any
+      display: 'grid'
+      gridTemplateAreas: string | string[]
       gridTemplateColumns?: string
       gridTemplateRows?: string
       gap?: string
     } | {
-      [key: string]: string
+      [key: string]: any
       display: 'grid'
-      gridTemplateAreas: string
+      gridTemplateAreas: string | string[]
       gridTemplateColumns?: string
       gridTemplateRows?: string
       gap?: string
@@ -102,7 +111,7 @@ const UIControls = ({ title, components, fields, values, onChange, layout, stati
   }))
 
   const nav = useLayoutFields(layout.nav, fields, {
-    ...Object.keys(components || {}).filter(component => new RegExp(component).test(layout.nav?.gridTemplateAreas)).reduce((acc, key) => ({
+    ...Object.keys(components || {}).filter(component => new RegExp(component).test(`${layout.nav?.gridTemplateAreas} ${layout.strip?.gridTemplateAreas || ''}`)).reduce((acc, key) => ({
       ...acc,
       [key]: {
         initial: null,
@@ -135,9 +144,12 @@ const UIControls = ({ title, components, fields, values, onChange, layout, stati
     } : {}),
   })
 
+  // Every field of the strip comes from the nav: they share its form
+  const strip = useLayoutFields(layout.strip, { ...fields, ...nav })
+
   const group = useMemo(() => ({
     nav: {
-      fields: nav,
+      fields: { ...nav, ...strip },
       defaultValues: Object.keys(values)
         .filter(key => Object.keys(nav).includes(key))
         .reduce((acc, key) => ({ ...acc, [key]: values[key] }), {})
@@ -148,7 +160,7 @@ const UIControls = ({ title, components, fields, values, onChange, layout, stati
         .filter(key => Object.keys(aside).includes(key))
         .reduce((acc, key) => ({ ...acc, [key]: values[key] }), {})
     })),
-  }), [nav, asides, values])
+  }), [nav, strip, asides, values])
 
   return (
     <>
@@ -156,6 +168,8 @@ const UIControls = ({ title, components, fields, values, onChange, layout, stati
         <Nav
           {...group.nav}
           layout={layout.nav}
+          strip={layout.strip}
+          stripped={Object.keys(strip)}
           onChange={(next) => handleChange(next, () => closePortal(false))}
           statistics={statistics}
         />

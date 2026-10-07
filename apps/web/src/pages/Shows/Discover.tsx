@@ -108,8 +108,8 @@ export const FIELDS = {
     initial: false,
     hideFromFiltersCount: true,
     serialize: () => ({}),
-    component: ({ value, onChange, ...props }) => (
-      <div sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '8em' }}>
+    component: ({ value, onChange, style }) => (
+      <div style={style} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '8em' }}>
         <Option
           id='hide_library'
           type='checkbox'
@@ -229,6 +229,25 @@ export const FIELDS = {
   },
 }
 
+// A phone has no room for the sorting in the bar: it moves to the top of the filters, as on the swaps
+const ASIDE = `
+  "head"
+  "with_genres"
+  "without_genres"
+  "with_type"
+  "with_status"
+  "first_air_date"
+  "vote_average"
+  "vote_count"
+  "with_networks"
+  "with_companies"
+  "with_keywords"
+  "without_keywords"
+  "with_original_language"
+  "with_origin_country"
+  "with_runtime"
+`
+
 // The filters panel, Settings › Lists opens it on a saved list too
 export const CONTROLS: withControlsArgs = {
   get title() { return i18n.t('pages.discover.title') },
@@ -239,39 +258,29 @@ export const CONTROLS: withControlsArgs = {
   layout: {
     nav: {
       display: 'grid',
-      gridTemplateColumns: ['1fr min-content min-content', '1fr min-content min-content min-content'],
+      gridTemplateColumns: ['1fr min-content', '1fr min-content min-content min-content'],
       gridTemplateRows: 'auto',
       gap: '2em',
       gridTemplateAreas: [
-        `"results hide_library toggle sort_by"`,
+        `"results toggle"`,
         `"title results hide_library toggle sort_by"`,
       ],
       '>h4': {
         display: ['none', 'block'],
       },
     },
+    strip: {
+      display: 'grid',
+      gridTemplateColumns: 'minmax(0, 1fr)',
+      gap: '0em 2em',
+      gridTemplateAreas: [`"hide_library"`, ''],
+    },
     aside: {
       display: 'grid',
       gridTemplateColumns: 'minmax(0, 1fr)',
       gridTemplateRows: 'auto',
       gap: '2em',
-      gridTemplateAreas: `
-        "head"
-        "with_genres"
-        "without_genres"
-        "with_type"
-        "with_status"
-        "first_air_date"
-        "vote_average"
-        "vote_count"
-        "with_networks"
-        "with_companies"
-        "with_keywords"
-        "without_keywords"
-        "with_original_language"
-        "with_origin_country"
-        "with_runtime"
-      `,
+      gridTemplateAreas: [`"sort_by" ${ASIDE}`, ASIDE],
     },
   },
   fields: FIELDS,

@@ -79,8 +79,8 @@ export const Trending = (resource) => compose(
         initial: false,
         hideFromFiltersCount: true,
         serialize: () => ({}),
-        component: ({ value, onChange, ...props }) => (
-          <div sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '8em' }}>
+        component: ({ value, onChange, style }) => (
+          <div style={style} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '8em' }}>
             <Option
               id='hide_library'
               type='checkbox'

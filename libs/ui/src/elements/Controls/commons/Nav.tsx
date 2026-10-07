@@ -6,13 +6,16 @@ import { Inputs, InputsProps } from './Inputs'
 
 export interface NavProps extends Omit<InputsProps, 'control'> {
   title?: string
+  strip?: InputsProps['layout']
+  // The fields laid out in the strip rather than in the bar
+  stripped?: string[]
   defaultValues: {
     [key: string]: any
   }
   onChange: (values: { [key: string]: any }) => void
 }
 
-const UINav = ({ layout, fields, defaultValues, onChange, statistics, ...props }: NavProps) => {
+const UINav = ({ layout, strip, stripped = [], fields, defaultValues, onChange, statistics, ...props }: NavProps) => {
   const { control, watch, reset } = useForm({ defaultValues })
   const next = watch()
 
@@ -30,8 +33,13 @@ const UINav = ({ layout, fields, defaultValues, onChange, statistics, ...props }
   return (
     <nav sx={UINav.styles.element}>
       <div sx={UINav.styles.container}>
-        <Inputs layout={layout} fields={fields} statistics={statistics} control={control} />
+        <Inputs layout={layout} fields={pick(fields, (key) => !stripped.includes(key))} statistics={statistics} control={control} />
       </div>
+      {!!stripped.length && (
+        <div sx={UINav.styles.strip}>
+          <Inputs layout={strip} fields={pick(fields, (key) => stripped.includes(key))} statistics={statistics} control={control} />
+        </div>
+      )}
     </nav>
   )
 }
@@ -59,7 +67,26 @@ UINav.styles = {
     overflowY: 'hidden',
     scrollbarWidth: 'none',
   },
+  // The strip of the swaps (Proposals.tsx), under the bar
+  strip: {
+    display: 'flex',
+    minHeight: '3em',
+    // The bar's `paddingX: 0` reads the first step of the scale, 2em
+    paddingX: '2em',
+    backgroundColor: 'primary',
+    borderTop: '1px solid',
+    borderColor: 'hsla(0, 0%, 0%, 0.12)',
+    fontSize: 5,
+    color: 'white !important',
+    '>*': {
+      flex: 1,
+    },
+  },
 }
+
+const pick = (fields, keep: (key: string) => boolean) => Object.keys(fields)
+  .filter(keep)
+  .reduce((acc, key) => ({ ...acc, [key]: fields[key] }), {})
 
 export const Nav = memo(UINav)
 

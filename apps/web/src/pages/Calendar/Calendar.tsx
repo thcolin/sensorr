@@ -70,8 +70,8 @@ const FIELDS = {
     initial: false,
     hideFromFiltersCount: true,
     serialize: () => ({}),
-    component: ({ value, onChange, ...props }) => (
-      <div sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '8em' }}>
+    component: ({ value, onChange, style }) => (
+      <div style={style} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '8em' }}>
         <Option
           id='hide_library'
           type='checkbox'
@@ -243,34 +243,42 @@ const ASIDE = {
   `,
 }
 
-// The bar of the Theatres page: the view beside the library toggle, the sort only where the order is not the date
-const nav = (areas: string[]) => ({
+// The bar of the Theatres page: the view beside the library toggle, the sort only where the order is not the date.
+// A phone gives the month the whole bar, the rest to the strip, and the sort to the top of the filters.
+const nav = (areas: string) => ({
   display: 'grid' as const,
   gridTemplateColumns: [
-    `1fr ${'min-content '.repeat(areas[0].split(' ').length - 1).trim()}`,
-    `min-content 1fr ${'min-content '.repeat(areas[1].split(' ').length - 2).trim()}`,
+    'minmax(0, 1fr)',
+    `min-content 1fr ${'min-content '.repeat(areas.split(' ').length - 2).trim()}`,
   ],
   gridTemplateRows: 'auto',
   gap: '2em',
-  gridTemplateAreas: areas,
+  gridTemplateAreas: [`"primary_release_date"`, areas],
   '>h4': {
     display: ['none', 'block'],
   },
 })
+
+const STRIP = {
+  display: 'grid' as const,
+  gridTemplateColumns: 'min-content minmax(0, 1fr) min-content',
+  gap: '0em 2em',
+  gridTemplateAreas: [`"results toggle toggle" "hide_library hide_library view"`, ''],
+  '>[style*="grid-area: toggle"]': {
+    justifySelf: 'end',
+  },
+}
 
 const controls = ({ release, sort = false, hooks = {}, useStatistics }) => withControls({
   get title() { return i18n.t('pages.calendar.title') },
   useStatistics,
   hooks,
   layout: {
-    nav: nav(sort ? [
-      `"primary_release_date results hide_library view toggle sort_by"`,
-      `"title primary_release_date results hide_library view toggle sort_by"`,
-    ] : [
-      `"primary_release_date results hide_library view toggle"`,
-      `"title primary_release_date results hide_library view toggle"`,
-    ]),
-    aside: ASIDE,
+    nav: nav(sort
+      ? `"title primary_release_date results hide_library view toggle sort_by"`
+      : `"title primary_release_date results hide_library view toggle"`),
+    strip: STRIP,
+    aside: sort ? { ...ASIDE, gridTemplateAreas: [`"sort_by" ${ASIDE.gridTemplateAreas}`, ASIDE.gridTemplateAreas] } : ASIDE,
   },
   components: {
     toggle: Toggle,
