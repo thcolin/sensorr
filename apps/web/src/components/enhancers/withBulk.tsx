@@ -19,8 +19,8 @@ export const MOVIE_STATES = [
 ]
 
 export const SHOW_STATES = [
-  { value: true, icon: FOLLOWED.emoji, label: FOLLOWED.label },
-  { value: false, icon: UNFOLLOWED.emoji, label: UNFOLLOWED.label },
+  { value: true, icon: FOLLOWED.emoji, get label() { return FOLLOWED.label } },
+  { value: false, icon: UNFOLLOWED.emoji, get label() { return UNFOLLOWED.label } },
 ]
 
 export const movies = (count) => i18n.t('enhancers.bulk.movies', { count })
