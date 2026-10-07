@@ -165,9 +165,9 @@ export default {
     home: {
       language: {
         title: 'Language',
-        help: 'Auto follows your browser, else the language of the TMDB region. A language set here also applies to the mails and the wrapped of your friends.',
+        help: 'Auto follows your browser, else the language of the TMDB region. A language set here also applies to the mails and the wrapped your friends receive.',
+        auto: 'Auto ({language})',
         options: {
-          auto: 'Auto',
           en: 'English',
           fr: 'Français',
         },

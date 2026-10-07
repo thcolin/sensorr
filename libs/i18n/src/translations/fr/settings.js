@@ -166,8 +166,8 @@ export default {
       language: {
         title: 'Langue',
         help: 'Auto suit votre navigateur, sinon la langue de la région TMDB. Une langue choisie ici vaut aussi pour les mails et le wrapped de vos amis.',
+        auto: 'Auto ({language})',
         options: {
-          auto: 'Auto',
           en: 'English',
           fr: 'Français',
         },
