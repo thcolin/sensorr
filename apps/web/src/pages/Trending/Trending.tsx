@@ -17,7 +17,7 @@ import { EntitiesHideable } from '../../components/Entities/Hideable'
 import withBulk from '../../components/enhancers/withBulk'
 
 export const Trending = (resource) => compose(
-  withTitle(resource === 'shows' ? i18n.t('pages.shows.trending.title') : i18n.t({ movies: 'pages.trending.movies.document', persons: 'pages.trending.persons.document' }[resource])),
+  withTitle(resource === 'shows' ? 'pages.shows.trending.title' : { movies: 'pages.trending.movies.document', persons: 'pages.trending.persons.document' }[resource]),
   withProps({
     id: 'trending',
     display: 'grid',

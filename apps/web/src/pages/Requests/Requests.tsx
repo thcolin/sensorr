@@ -78,7 +78,7 @@ const components = {
 }
 
 const Requests = compose(
-  withTitle(i18n.t('pages.requests.title')),
+  withTitle('pages.requests.title'),
   withProps({
     id: 'requests',
     display: 'grid',
@@ -96,7 +96,7 @@ const Requests = compose(
   }),
   withFetchQuery(APIQuery.movies.getMovies({}), 1, useAPI, () => useHistoryState('controls', { uri: '', params: {} }) as any),
   withControls({
-    title: i18n.t('pages.requests.title'),
+    get title() { return i18n.t('pages.requests.title') },
     hooks: {
       onChange: () => scrollToTop(),
     },
@@ -123,15 +123,15 @@ const Requests = compose(
         },
         serialize: (key, raw) => ({ [key]: `${raw.value}.${{ true: 'desc', false: 'asc' }[raw.sort]}` }),
         component: withProps({
-          label: i18n.t('ui.sorting'),
+          get label() { return i18n.t('ui.sorting') },
           options: [
-            { label: i18n.t('ui.sortings.requested_at'), value: 'requested_at' },
-            { label: i18n.t('ui.sortings.updated_at'), value: 'updated_at' },
-            { label: i18n.t('ui.sortings.popularity'), value: 'popularity' },
-            { label: i18n.t('ui.sortings.primary_release_date'), value: 'release_date' },
-            { label: i18n.t('ui.sortings.revenue'), value: 'revenue' },
-            { label: i18n.t('ui.sortings.vote_average'), value: 'vote_average' },
-            { label: i18n.t('ui.sortings.vote_count'), value: 'vote_count' },
+            { get label() { return i18n.t('ui.sortings.requested_at') }, value: 'requested_at' },
+            { get label() { return i18n.t('ui.sortings.updated_at') }, value: 'updated_at' },
+            { get label() { return i18n.t('ui.sortings.popularity') }, value: 'popularity' },
+            { get label() { return i18n.t('ui.sortings.primary_release_date') }, value: 'release_date' },
+            { get label() { return i18n.t('ui.sortings.revenue') }, value: 'revenue' },
+            { get label() { return i18n.t('ui.sortings.vote_average') }, value: 'vote_average' },
+            { get label() { return i18n.t('ui.sortings.vote_count') }, value: 'vote_count' },
           ]
         })(Sorting)
       },
@@ -226,7 +226,7 @@ const withUnfulfilledShows = () => (WrappedComponent) => {
 }
 
 export const ShowsRequests = compose(
-  withTitle(i18n.t('pages.shows.requests.title')),
+  withTitle('pages.shows.requests.title'),
   withProps({
     id: 'shows-requests',
     display: 'grid',
@@ -246,7 +246,7 @@ export const ShowsRequests = compose(
   withFetchQuery(APIQuery.shows.getShows({ params: { limit: '', progress: 'true' } }), 1, useAPI, () => useHistoryState('controls', { uri: '', params: {} }) as any),
   withUnfulfilledShows(),
   withControls({
-    title: i18n.t('pages.requests.title'),
+    get title() { return i18n.t('pages.requests.title') },
     hooks: {
       onChange: () => scrollToTop(),
     },
@@ -273,15 +273,15 @@ export const ShowsRequests = compose(
         },
         serialize: (key, raw) => ({ [key]: `${raw.value}.${{ true: 'desc', false: 'asc' }[raw.sort]}` }),
         component: withProps({
-          label: i18n.t('ui.sorting'),
+          get label() { return i18n.t('ui.sorting') },
           options: [
-            { label: i18n.t('ui.sortings.requested_at'), value: 'requested_at' },
-            { label: i18n.t('ui.sortings.refreshed_at'), value: 'refreshed_at' },
-            { label: i18n.t('ui.sortings.popularity'), value: 'popularity' },
-            { label: i18n.t('ui.sortings.first_air_date'), value: 'first_air_date' },
-            { label: i18n.t('ui.sortings.vote_average'), value: 'vote_average' },
-            { label: i18n.t('ui.sortings.vote_count'), value: 'vote_count' },
-            { label: i18n.t('ui.sortings.name'), value: 'name', sort: false },
+            { get label() { return i18n.t('ui.sortings.requested_at') }, value: 'requested_at' },
+            { get label() { return i18n.t('ui.sortings.refreshed_at') }, value: 'refreshed_at' },
+            { get label() { return i18n.t('ui.sortings.popularity') }, value: 'popularity' },
+            { get label() { return i18n.t('ui.sortings.first_air_date') }, value: 'first_air_date' },
+            { get label() { return i18n.t('ui.sortings.vote_average') }, value: 'vote_average' },
+            { get label() { return i18n.t('ui.sortings.vote_count') }, value: 'vote_count' },
+            { get label() { return i18n.t('ui.sortings.name') }, value: 'name', sort: false },
           ]
         })(Sorting)
       },

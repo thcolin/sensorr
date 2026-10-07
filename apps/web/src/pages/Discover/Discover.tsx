@@ -77,13 +77,13 @@ export const FIELDS = {
     },
     serialize: (key, raw) => ({ [key]: `${raw.value}.${{ true: 'desc', false: 'asc' }[raw.sort]}` }),
     component: withProps({
-      label: i18n.t('ui.sorting'),
+      get label() { return i18n.t('ui.sorting') },
       options: [
-        { label: i18n.t('ui.sortings.popularity'), value: 'popularity' },
-        { label: i18n.t('ui.sortings.primary_release_date'), value: 'primary_release_date' },
-        { label: i18n.t('ui.sortings.revenue'), value: 'revenue' },
-        { label: i18n.t('ui.sortings.vote_average'), value: 'vote_average' },
-        { label: i18n.t('ui.sortings.vote_count'), value: 'vote_count' },
+        { get label() { return i18n.t('ui.sortings.popularity') }, value: 'popularity' },
+        { get label() { return i18n.t('ui.sortings.primary_release_date') }, value: 'primary_release_date' },
+        { get label() { return i18n.t('ui.sortings.revenue') }, value: 'revenue' },
+        { get label() { return i18n.t('ui.sortings.vote_average') }, value: 'vote_average' },
+        { get label() { return i18n.t('ui.sortings.vote_count') }, value: 'vote_count' },
       ]
     })(Sorting)
   },
@@ -113,7 +113,7 @@ export const FIELDS = {
     component: compose(
       withProps({
         display: 'select',
-        label: <span>{i18n.t('ui.filters.genres')} <small>({i18n.t('without')})</small></span>,
+        get label() { return <span>{i18n.t('ui.filters.genres')} <small>({i18n.t('without')})</small></span> },
       }),
       withTMDB()
     )(FilterGenres),
@@ -182,7 +182,7 @@ export const FIELDS = {
     },
     component: compose(
       withProps({
-        label: <span>{i18n.t('ui.filters.keywords')} <small>({i18n.t('without')})</small></span>,
+        get label() { return <span>{i18n.t('ui.filters.keywords')} <small>({i18n.t('without')})</small></span> },
       }),
       withTMDB(),
     )(FilterKeywords),
@@ -205,7 +205,7 @@ export const FIELDS = {
 
 // The filters panel, Settings › Lists opens it on a saved list too
 export const CONTROLS: withControlsArgs = {
-  title: i18n.t('pages.discover.title'),
+  get title() { return i18n.t('pages.discover.title') },
   useStatistics,
   hooks: {
     onChange: () => scrollToTop(),
@@ -255,7 +255,7 @@ export const CONTROLS: withControlsArgs = {
 }
 
 export const Discover = compose(
-  withTitle(i18n.t('pages.discover.title')),
+  withTitle('pages.discover.title'),
   withProps({
     display: 'grid',
     child: MovieWithCreditsAndReviews,

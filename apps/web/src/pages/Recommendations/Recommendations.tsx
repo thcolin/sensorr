@@ -15,7 +15,7 @@ import Body from '../../layout/Body/Body'
 import withBulk from '../../components/enhancers/withBulk'
 
 export const Recommendations = (id) => compose(
-  withTitle(i18n.t('pages.recommendations.title')),
+  withTitle('pages.recommendations.title'),
   withProps({
     id: 'recommendations',
     display: 'grid',

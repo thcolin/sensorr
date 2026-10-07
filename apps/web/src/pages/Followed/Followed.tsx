@@ -36,7 +36,7 @@ const FollowedPersons = compose(
   }),
   withFetchQuery(APIQuery.persons.getPersons({}), 1, useAPI, () => useHistoryState('controls', { uri: '', params: {} }) as any),
   withControls({
-    title: i18n.t('pages.followed.title'),
+    get title() { return i18n.t('pages.followed.title') },
     hooks: {
       onChange: () => scrollToTop(),
     },
@@ -95,11 +95,11 @@ const FollowedPersons = compose(
         },
         serialize: (key, raw) => ({ [key]: `${raw.value}.${{ true: 'desc', false: 'asc' }[raw.sort]}` }),
         component: withProps({
-          label: i18n.t('ui.sorting'),
+          get label() { return i18n.t('ui.sorting') },
           options: [
-            { label: i18n.t('ui.sortings.updated_at'), value: 'updated_at' },
-            { label: i18n.t('ui.sortings.popularity'), value: 'popularity' },
-            { label: i18n.t('ui.sortings.birthday'), value: 'birthday' },
+            { get label() { return i18n.t('ui.sortings.updated_at') }, value: 'updated_at' },
+            { get label() { return i18n.t('ui.sortings.popularity') }, value: 'popularity' },
+            { get label() { return i18n.t('ui.sortings.birthday') }, value: 'birthday' },
           ]
         })(Sorting)
       },

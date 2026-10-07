@@ -1199,7 +1199,7 @@ UIProposals.styles = {
 }
 
 const Proposals = compose(
-  withTitle('Swaps'),
+  withTitle('proposals.title'),
   withBody(),
   withFetchQuery(APIQuery.movies.getMovies({ params: { 'releases.proposal': true, limit: 10000, fields: FIELDS.join('|') } }), 1, useAPI, undefined, 10000),
 )(UIProposals)

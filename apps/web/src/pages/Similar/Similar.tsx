@@ -15,7 +15,7 @@ import Body from '../../layout/Body/Body'
 import withBulk from '../../components/enhancers/withBulk'
 
 export const Similar = (id) => compose(
-  withTitle(i18n.t('pages.similar.title')),
+  withTitle('pages.similar.title'),
   withProps({
     id: 'similar',
     display: 'grid',
