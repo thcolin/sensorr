@@ -42,6 +42,8 @@ jobs:
           path: dist/apps/web-demo
 
   deploy:
+    # A run dispatched from another branch builds, and publishes nothing
+    if: github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-24.04
     permissions:
