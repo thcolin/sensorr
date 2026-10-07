@@ -15,6 +15,7 @@ A `[]` in a name stands for one item of the array above it.
 | `blackhole` | `string` | `/tmp` | Blackhole absolute path to store downloaded .torrent or .nzb files |
 | `magnet` | `boolean` | `false` | Write the magnet link of a movie release to the blackhole as a .magnet file, for a download client that reads them from its watched folder |
 | `region` | `string` | `fr-FR` | Sensorr region (usefull for TMDB requests) |
+| `language` | `auto`, `en`, `fr` | `auto` | Language of the interface, the mails and the wrapped; auto follows the browser, then the region |
 | `adult` | `boolean` | `false` | Allow adult content from TMDB on Sensorr |
 
 ## Onboarding
