@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
+import { Trans, useTranslation } from 'react-i18next'
 import {
   Entities,
   withControls,
@@ -50,10 +51,10 @@ export const FIELDS = {
       <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 }, gridArea: 'head_main' }}>
         <Warning
           emoji="📚"
-          title="Library"
+          title={<Trans i18nKey='pages.library.title' />}
           subtitle={(
             <span>
-              Explore shows from your library with various filters about shows like <strong>state</strong>, <strong>genres</strong>, <strong>networks</strong>, <strong>first air date</strong>, etc...
+              <Trans i18nKey='shows.library.head' components={[<strong />, <strong />, <strong />, <strong />]} />
             </span>
           )}
         />
@@ -63,6 +64,7 @@ export const FIELDS = {
   bulk: {
     initial: null,
     component: function BulkField({ total, statistics, ...props }) {
+      const { t } = useTranslation()
       const { setShowMetadata } = useShowsMetadataContext() as any
       const { selection, setSelection } = useBulkContext()
       const sensorr = useSensorr()
@@ -97,7 +99,7 @@ export const FIELDS = {
             disabled={!entities && selected.length === 0}
             onChange={() => setSelection(selection => ({ ...selection, [location.key]: selected.length === 0 ? (entities || []) : [] }))}
           >
-            {selected.length === 0 ? 'Select All' : `${selected.length} Selected`}
+            {selected.length === 0 ? t('shows.library.selectAll') : t('shows.library.selected', { count: selected.length })}
           </Option>
           <Bulk
             count={selected.length}
@@ -106,16 +108,16 @@ export const FIELDS = {
               {
                 key: 'monitored',
                 icon: '📚',
-                label: 'State',
+                label: t('enhancers.bulk.state'),
                 options: SHOW_STATES,
-                onChange: ({ value, label }) => apply('monitored', value, `Do you want to change the state of ${shows(selected.length)} to "${label}"?`),
+                onChange: ({ value, label }) => apply('monitored', value, t('enhancers.bulk.confirm', { selection: shows(selected.length), state: label })),
               },
               {
                 key: 'policy',
                 icon: '🚨',
-                label: 'Policy',
+                label: t('sensorr.policy.label'),
                 options: sensorr.policies.map(policy => ({ value: policy.name, label: policy.name })),
-                onChange: ({ value }) => apply('policy', value, `Do you want to change the policy of ${shows(selected.length)} to ${value}?`),
+                onChange: ({ value }) => apply('policy', value, t('shows.library.confirmPolicy', { selection: shows(selected.length), policy: value })),
               },
               lists,
             ]}
@@ -182,7 +184,7 @@ export const FIELDS = {
     ...fields.original_languages,
     initial: { values: [], behavior: 'or' },
     serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join({ or: '|', and: ',' }[raw.behavior]) } : {},
-    component: withProps({ label: 'ui.filters.languages', labelize: (_id) => `${languages[_id]?.emoji || '🏳️'}  ${languages[_id]?.name || `Unknwon (${_id})`}` })(FilterStatistics),
+    component: withProps({ label: 'ui.filters.languages', labelize: (_id) => `${languages[_id]?.emoji || '🏳️'}  ${languages[_id]?.name || i18n.t('showFields.unknown', { id: _id })}` })(FilterStatistics),
   },
   origin_country,
   first_air_date: untouched({
@@ -287,7 +289,7 @@ export const CONTROLS: withControlsArgs = {
         .catch((e) => {
           if (e.name !== 'AbortError') {
             console.warn(e)
-            toast.error('Error while loading library statistics')
+            toast.error(i18n.t('shows.library.errors.statistics'))
           }
         })
 
@@ -307,7 +309,7 @@ export const CONTROLS: withControlsArgs = {
         .catch((e) => {
           if (e.name !== 'AbortError') {
             console.warn(e)
-            toast.error('Error while loading library statistics')
+            toast.error(i18n.t('shows.library.errors.statistics'))
           }
         })
 
@@ -327,10 +329,10 @@ const Library = compose(
     extra: FOOTER_HEIGHT,
     empty: {
       emoji: '📺',
-      title: "Oh no, your request didn't return results",
+      title: <Trans i18nKey='entities.empty.title' />,
       subtitle: (
         <span>
-          No show of your library matches these filters, try with fewer of them
+          <Trans i18nKey='shows.library.empty' />
         </span>
       ),
     },

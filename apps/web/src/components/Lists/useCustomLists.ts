@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { nanoid } from 'nanoid'
+import { useTranslation } from 'react-i18next'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { useSaveConfig } from '../../pages/Settings/Settings'
 import { listsOf } from '../../pages/Home/rows'
@@ -24,18 +25,19 @@ export const useCustomLists = (media: 'movie' | 'tv') => {
 }
 
 export const useListsAction = (media: 'movie' | 'tv', apply: (key: string, value: any, question: string | null) => Promise<any>, selection: string) => {
+  const { t } = useTranslation()
   const { lists, idsOf } = useCustomLists(media)
 
   return {
     key: 'lists',
     icon: '🗂️',
-    label: 'Lists',
+    label: t('lists.action.label'),
     options: [
       ...lists.map((list) => ({ value: list.id, label: list.name })),
-      { value: '', label: 'New list…' },
+      { value: '', label: t('lists.action.new') },
     ],
     onChange: async ({ value, label }) => {
-      const name = value ? label : window.prompt(`Name of the list to add ${selection} to`)?.trim()
+      const name = value ? label : window.prompt(t('lists.action.prompt', { selection }))?.trim()
 
       if (!name) {
         return
@@ -43,10 +45,10 @@ export const useListsAction = (media: 'movie' | 'tv', apply: (key: string, value
 
       // A list with a policy hands it to them, and an archived movie is refined again with it
       const policy = lists.find((list) => list.id === value)?.policy
-      const handed = policy ? ` Their policy becomes ${policy}${media === 'movie' ? ', and the archived ones are refined again' : ''}.` : ''
+      const handed = policy ? t('lists.action.policy', { policy, media }) : ''
 
       // Asked before a new list is made, so a refusal leaves no empty list behind
-      if (!window.confirm(`Do you want to add ${selection} to "${name}"?${handed}`)) {
+      if (!window.confirm([t('lists.action.confirm', { selection, name }), handed].filter(Boolean).join(' '))) {
         return
       }
 

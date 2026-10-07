@@ -1,9 +1,11 @@
 import { memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Icon } from '@sensorr/ui'
 import { platformsOf } from './platforms'
 import { safeUrl } from '../../../components/Sensorr/Release'
 
 const UIExternals = ({ entity, metadata, additional, meaningful, links = true, reviews = true }) => {
+  const { t, i18n: { language } } = useTranslation()
   const watch = (entity || {})['watch/providers']?.results[((global as any)?.config?.region || 'fr-FR').split('-')[1]]
   const platforms = platformsOf(watch?.flatrate)
 
@@ -21,8 +23,8 @@ const UIExternals = ({ entity, metadata, additional, meaningful, links = true, r
               key={review.source}
               sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
               title={{
-                'Rotten Tomatoes': `Rotten Tomatoes Critic Rating from ${review.count} reviews`,
-                'Metacritic': `Metascrore based on ${review.count} critic reviews`,
+                'Rotten Tomatoes': t('details.externals.rottenTomatoes', { count: review.count }),
+                'Metacritic': t('details.externals.metacritic', { count: review.count }),
               }[review.source]}
             >
               <Icon
@@ -44,7 +46,7 @@ const UIExternals = ({ entity, metadata, additional, meaningful, links = true, r
               target='_blank'
               rel='noopener noreferrer'
               sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
-              title={`Available on your own Plex server`}
+              title={t('details.externals.plex')}
             >
               {/* Plex's tile, as the platforms' logos: bare, its yellow reads on no light background */}
               <Icon value='plex' width='2em' height='2em' style={{ display: 'block' }} />
@@ -57,7 +59,7 @@ const UIExternals = ({ entity, metadata, additional, meaningful, links = true, r
               rel='noreferrer noopener'
               key={provider.provider_id}
               sx={{ variant: 'link.reset', display: 'inline-flex', alignItems: 'center' }}
-              title={`Available for streaming on ${new Intl.ListFormat('en').format([provider, ...offers].map(({ provider_name }) => `"${provider_name}"`))} (source JustWatch)`}
+              title={t('details.externals.streaming', { providers: new Intl.ListFormat(language).format([provider, ...offers].map(({ provider_name }) => t('details.externals.quoted', { name: provider_name }))) })}
             >
               <img src={`https://image.tmdb.org/t/p/w92/${provider.logo_path}`} sx={{ height: '2em', width: '2em', borderRadius: '0.25em' }} />
             </a>

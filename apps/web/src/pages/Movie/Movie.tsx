@@ -66,7 +66,7 @@ export const MovieContent = ({ id: drawn = null, variant = 'page', palette = nul
   const tabs = useMemo(() => {
     const saga = {
       id: `saga-${id}`,
-      label: t('items.movies.belongs_to_collection.label', { collection: movie.data?.belongs_to_collection?.name || 'Saga' }),
+      label: t('items.movies.belongs_to_collection.label', { collection: movie.data?.belongs_to_collection?.name || t('collection.saga') }),
       entities: movie.data?.belongs_to_collection && !collection.loading && collection.details.parts,
       child: MovieWithCreditsAndReviews,
       // Every part of a saga is pretty, its skeletons too: a display that changed with `ready` would remount them
@@ -158,7 +158,7 @@ export const MovieContent = ({ id: drawn = null, variant = 'page', palette = nul
           ...acc,
           [`directors-${index}`]: {
             id: `linked-${id}-${curr.id || index}`,
-            label: emojize('🎬', curr.name || 'Loading'),
+            label: emojize('🎬', curr.name || t('state.loading')),
             child: MovieWithCreditsAndReviews,
             ready: ready && curr.id,
             query: { uri: `person/${curr.id}/movie_credits` },
@@ -203,7 +203,7 @@ export const MovieContent = ({ id: drawn = null, variant = 'page', palette = nul
           ...acc,
           [`headliners-${index}`]: {
             id: `linked-${id}-${curr.id || index}`,
-            label: emojize('🤵', curr.name || 'Loading'),
+            label: emojize('🤵', curr.name || t('state.loading')),
             child: MovieWithCreditsAndReviews,
             ready: ready && curr.id,
             query: { uri: `person/${curr.id}/movie_credits` },
@@ -258,7 +258,7 @@ export const MovieContent = ({ id: drawn = null, variant = 'page', palette = nul
     return (
       <Warning
         emoji='💢'
-        title='Sorry, unable to display movie...'
+        title={t('movie.error')}
         subtitle={movie.error.message}
       />
     )

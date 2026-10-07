@@ -1,8 +1,10 @@
 import { memo, useRef, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useHistoryState } from '@sensorr/utils'
 import { Icon } from '@sensorr/ui'
 
 const UIOverview = ({ children, remembered = true, lines = 8, ...props }) => {
+  const { t } = useTranslation()
   const ref = useRef(null)
   const history = useHistoryState('overview', false, { enabled: remembered })
   const local = useState(false)
@@ -29,7 +31,7 @@ const UIOverview = ({ children, remembered = true, lines = 8, ...props }) => {
         {children}
       </p>
       {clamp && (
-        <button onClick={() => setExpanded(expanded => !expanded)} sx={UIOverview.styles.reduce} aria-expanded={expanded} aria-label={expanded ? 'Show less' : 'Show more'}>
+        <button onClick={() => setExpanded(expanded => !expanded)} sx={UIOverview.styles.reduce} aria-expanded={expanded} aria-label={expanded ? t('details.overview.less') : t('details.overview.more')}>
           <Icon value='chevron' direction={expanded} width='1em' height='1em' />
         </button>
       )}

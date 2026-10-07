@@ -1,5 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { Badge, EpisodeStatus, EpisodeStatusOptions, Icon, Lines, Picture, Progress, ProgressPill } from '@sensorr/ui'
 import { episodeStatus, progressOf, seasonDiffusionOf } from '@sensorr/sensorr'
@@ -55,6 +56,7 @@ const bleed = {
 // atop its season's drawer, or in its episode's unfolded row. `diffusion` is the one of the header's pill (Show.tsx),
 // and `followed` whether Sensorr follows the show, which hollows the violet of its airing pills
 const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer = null, diffusion = null, followed = true, inLibrary, ready, followEpisodes, search = null, plex = null, artworks = null, ...props }) => {
+  const { t } = useTranslation()
   const api = useAPI()
   const seasons = useMemo(() => {
     const summaries = entity?.seasons || []
@@ -68,7 +70,7 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
 
       return {
         number,
-        name: summary.name || (number === 0 ? 'Specials' : `Season ${number}`),
+        name: summary.name || (number === 0 ? t('shows.seasons.specials') : t('shows.seasons.season', { number })),
         year: number !== 0 && (summary.air_date || list[0]?.air_date) ? new Date(summary.air_date || list[0]?.air_date).getFullYear() : null,
         count: inLibrary ? list.length : (summary.episode_count || 0),
         episodes: list,
@@ -82,7 +84,7 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
         monitored: !!list.length && list.every(({ monitored }) => monitored),
       }
     })
-  }, [entity?.seasons, entity?.status, episodes, proposals, inLibrary])
+  }, [entity?.seasons, entity?.status, episodes, proposals, inLibrary, t])
 
   const totals = useMemo(() => {
     const list = (episodes || []).filter(({ season_number }) => season_number !== 0)
@@ -176,17 +178,17 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
         <div sx={UISeasons.styles.list}>
           <div sx={{ ...UISeasons.styles.head, ...UISeasons.styles.header }}>
             <div sx={UISeasons.styles.label}>
-              <h2 id={`seasons-${entity.id}`}>All seasons</h2>
+              <h2 id={`seasons-${entity.id}`}>{t('shows.seasons.all')}</h2>
               {inLibrary ? (
                 <>
-                  <small>{totals.count} episodes</small>
+                  <small>{t('shows.seasons.episodes', { count: totals.count })}</small>
                   {!!totals.size && <ReleaseSize size={totals.size} data-size={true} />}
                 </>
               ) : (
                 <small>
                   {[
-                    `${regular.length} season${regular.length > 1 ? 's' : ''}`,
-                    `${regular.reduce((sum, { count }) => sum + count, 0)} episodes`,
+                    t('shows.seasons.seasons', { count: regular.length }),
+                    t('shows.seasons.episodes', { count: regular.reduce((sum, { count }) => sum + count, 0) }),
                     !!years.length && [...new Set([Math.min(...years), Math.max(...years)])].join('–'),
                   ].filter(Boolean).join(' · ')}
                 </small>
@@ -219,14 +221,14 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
                 <strong>{season.name}</strong>
                 {/* Announced without an episode: the status a poster gives a show that has not aired (ShowProgress) */}
                 <small>
-                  {empty ? EpisodeStatusOptions.upcoming.label : `${season.count} episodes`}{season.year ? ` · ${season.year}` : ''}
-                  {specials && !!season.progress.owned && ` · ${season.progress.owned} owned`}
+                  {empty ? EpisodeStatusOptions.upcoming.label : t('shows.seasons.episodes', { count: season.count })}{season.year ? ` · ${season.year}` : ''}
+                  {specials && !!season.progress.owned && ` · ${t('shows.seasons.owned', { count: season.progress.owned })}`}
                 </small>
                 {!!season.proposed && (
-                  <Badge emoji={EpisodeStatusOptions.proposed.emoji} label={season.proposed} compact={true} size='small' title={`${season.proposed} pending proposal${season.proposed > 1 ? 's' : ''}`} data-count={true} />
+                  <Badge emoji={EpisodeStatusOptions.proposed.emoji} label={season.proposed} compact={true} size='small' title={t('shows.seasons.proposed', { count: season.proposed })} data-count={true} />
                 )}
                 {!!season.wanted && (
-                  <Badge emoji={EpisodeStatusOptions.wanted.emoji} label={season.wanted} compact={true} size='small' title={`${season.wanted} wanted`} data-count={true} />
+                  <Badge emoji={EpisodeStatusOptions.wanted.emoji} label={season.wanted} compact={true} size='small' title={t('shows.seasons.wanted', { count: season.wanted })} data-count={true} />
                 )}
               </>
             )
@@ -262,7 +264,7 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
                       {!!search && (
                         <Search
                           disabled={!ready}
-                          title={`Search releases for ${season.name}`}
+                          title={t('shows.seasons.search', { label: season.name })}
                           onClick={e => search(e, { type: 'season', season: season.number }, season.name)}
                         />
                       )}
@@ -271,11 +273,11 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
                         partial={!!season.followed && !season.monitored}
                         disabled={!ready || !season.episodes.length}
                         title={
-                          season.monitored ? `Every episode of ${season.name} followed`
-                            : season.followed ? `${season.followed} of ${season.count} episodes of ${season.name} followed`
-                            : `Follow every episode of ${season.name}`
+                          season.monitored ? t('shows.seasons.follow.all', { season: season.name })
+                            : season.followed ? t('shows.seasons.follow.partial', { followed: season.followed, count: season.count, season: season.name })
+                            : t('shows.seasons.follow.label', { season: season.name })
                         }
-                        name={`Follow every episode of ${season.name}`}
+                        name={t('shows.seasons.follow.label', { season: season.name })}
                         onChange={value => followEpisodes(season.episodes.map(({ id }) => id), value)}
                       />
                     </div>
@@ -283,7 +285,7 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
                     <div sx={UISeasons.styles.remote}>
                       <Search
                         disabled={!ready}
-                        title={`Search releases for ${season.name}`}
+                        title={t('shows.seasons.search', { label: season.name })}
                         onClick={e => search(e, { type: 'season', season: season.number }, season.name)}
                       />
                     </div>
@@ -297,7 +299,7 @@ const UISeasons = ({ entity, episodes, proposals = NONE, policy = null, answer =
                           <Picture path={artworkOf(plex[season.number].poster, (entity?.seasons || []).find(({ season_number }) => season_number === season.number)?.poster_path || null, api.access_token)} size='w185' />
                         ) : (
                           // Plex shows the show's poster: where this season's own would go
-                          <span sx={UISeasons.styles.none}><small>No poster</small></span>
+                          <span sx={UISeasons.styles.none}><small>{t('shows.seasons.noPoster')}</small></span>
                         )}
                         <div sx={UISeasons.styles.artworks}>
                           <Artworks
@@ -345,11 +347,15 @@ const Bar = ({ progress }) => (
   </div>
 )
 
-const Complete = ({ progress }) => (progress.aired > 0 && progress.owned >= progress.aired) ? (
-  <span title='Every aired episode owned' data-complete={true}>
-    <Icon value='check' width='1em' height='1em' />
-  </span>
-) : <span />
+const Complete = ({ progress }) => {
+  const { t } = useTranslation()
+
+  return (progress.aired > 0 && progress.owned >= progress.aired) ? (
+    <span title={t('shows.seasons.complete')} data-complete={true}>
+      <Icon value='check' width='1em' height='1em' />
+    </span>
+  ) : <span />
+}
 
 UISeasons.styles = {
   // Inside the movie's releases block (ReleasesStyles), the rows start and end where a release row does: its
@@ -530,6 +536,7 @@ export const Seasons = memo(UISeasons)
 
 // `readonly` for a show out of the library: its episodes from TMDB, nothing owned nor followed
 const UIEpisodes = ({ show, episodes, replaced = null, ready = false, followEpisodes = null, unfolded, setUnfolded, placed = null, policy = null, answer = null, first = null, readonly = false, search = null }) => {
+  const { t, i18n: { language } } = useTranslation()
   const ref = useRef(null)
   const virtual = episodes.length > THRESHOLD
 
@@ -582,14 +589,14 @@ const UIEpisodes = ({ show, episodes, replaced = null, ready = false, followEpis
                 )}
                 {!readonly && <File file={episode.files?.[0]} replaced={replaced.has(`${episode.season_number}:${episode.episode_number}`)} />}
                 <time dateTime={episode.air_date ? new Date(episode.air_date).toISOString().slice(0, 10) : undefined}>
-                  {episode.air_date ? new Date(episode.air_date).toLocaleDateString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit' }) : 'TBA'}
+                  {episode.air_date ? new Date(episode.air_date).toLocaleDateString(language, { year: 'numeric', month: '2-digit', day: '2-digit' }) : t('shows.seasons.episode.tba')}
                 </time>
                 {/* The follow already says an episode is not followed: the empty cell keeps the grid columns */}
                 {!readonly && (status === 'unmonitored' ? <span /> : <EpisodeStatus value={status} size='small' compact={true} />)}
                 {!!search && (
                   <Search
                     disabled={!ready}
-                    title={`Search releases for S${pad(episode.season_number)}E${pad(episode.episode_number)}`}
+                    title={t('shows.seasons.search', { label: `S${pad(episode.season_number)}E${pad(episode.episode_number)}` })}
                     onClick={e => search(e, { type: 'episode', season: episode.season_number, episode: episode.episode_number }, `S${pad(episode.season_number)}E${pad(episode.episode_number)}`)}
                   />
                 )}
@@ -597,8 +604,8 @@ const UIEpisodes = ({ show, episodes, replaced = null, ready = false, followEpis
                   <Follow
                     checked={!!episode.monitored}
                     disabled={!ready}
-                    title={episode.monitored ? `Episode ${pad(episode.episode_number)} followed` : `Follow episode ${pad(episode.episode_number)}`}
-                    name={`Follow episode ${pad(episode.episode_number)}`}
+                    title={episode.monitored ? t('shows.seasons.episode.followed', { number: pad(episode.episode_number) }) : t('shows.seasons.episode.follow', { number: pad(episode.episode_number) })}
+                    name={t('shows.seasons.episode.follow', { number: pad(episode.episode_number) })}
                     onChange={value => followEpisodes([episode.id], value)}
                   />
                 )}
@@ -622,6 +629,7 @@ const UIEpisodes = ({ show, episodes, replaced = null, ready = false, followEpis
 
 // A season of a show out of the library, fetched from TMDB when its drawer opens
 const UIRemoteEpisodes = ({ show, season, unfolded, setUnfolded, ready = false, search = null }) => {
+  const { t } = useTranslation()
   const { loading, error, data } = useTMDBRequest(`tv/${show}/season/${season}`, {}, { transform: (data) => data })
 
   if (loading) {
@@ -631,7 +639,7 @@ const UIRemoteEpisodes = ({ show, season, unfolded, setUnfolded, ready = false, 
   if (error || !data.episodes?.length) {
     return (
       <p sx={UIEpisodes.styles.status}>
-        {error ? `Unable to load the episodes: ${error.message}` : 'No episode announced yet'}
+        {error ? t('shows.seasons.remote.error', { message: error.message }) : t('shows.seasons.remote.empty')}
       </p>
     )
   }
@@ -642,6 +650,7 @@ const UIRemoteEpisodes = ({ show, season, unfolded, setUnfolded, ready = false, 
 const RemoteEpisodes = memo(UIRemoteEpisodes)
 
 const UIFile = ({ file, replaced = false }) => {
+  const { t } = useTranslation()
   const meta = useMemo(() => file ? fileMetaOf(file) : null, [file?.original, file?.title])
 
   if (!file) {
@@ -651,7 +660,7 @@ const UIFile = ({ file, replaced = false }) => {
   return (
     <span data-file={true} title={file.original || file.title}>
       {replaced && (
-        <Badge emoji={EpisodeStatusOptions.proposed.emoji} size='normal' role='img' aria-label='Replaced by a pending proposal' title='Replaced by a pending proposal' />
+        <Badge emoji={EpisodeStatusOptions.proposed.emoji} size='normal' role='img' aria-label={t('shows.seasons.replaced')} title={t('shows.seasons.replaced')} />
       )}
       {FILED.map(axis => !!meta?.[axis] && <ReleaseAxis key={axis} axis={axis} value={meta[axis]} />)}
       {!!file.size && <ReleaseSize size={file.size} data-size={true} />}

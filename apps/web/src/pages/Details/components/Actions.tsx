@@ -1,4 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Icon, QuerySelect, Option } from '@sensorr/ui'
 import { keyframes } from '@emotion/react'
 import Color from 'color'
@@ -134,20 +135,24 @@ UIMovieActions.styles = {
 
 export const MovieActions = memo(UIMovieActions)
 
-const UIShowTicket = ({ palette = null, ...props }) => (
-  <div sx={UIMovieActions.styles.element}>
-    <Ticket
-      {...props as any}
-      palette={useModePalette(palette)}
-      title='Search releases for this show from your indexers'
-      expandable={false}
-      expanded={false}
-      setExpanded={() => null}
-      setHover={() => null}
-    />
-    <Preferences entity={props.entity} metadata={{}} setMetadata={() => null} expanded={false} hover={false} />
-  </div>
-)
+const UIShowTicket = ({ palette = null, ...props }) => {
+  const { t } = useTranslation()
+
+  return (
+    <div sx={UIMovieActions.styles.element}>
+      <Ticket
+        {...props as any}
+        palette={useModePalette(palette)}
+        title={t('details.ticket.searchShow')}
+        expandable={false}
+        expanded={false}
+        setExpanded={() => null}
+        setHover={() => null}
+      />
+      <Preferences entity={props.entity} metadata={{}} setMetadata={() => null} expanded={false} hover={false} />
+    </div>
+  )
+}
 
 export const ShowTicket = memo(UIShowTicket)
 
@@ -161,9 +166,11 @@ const UITicket = ({
   setExpanded,
   setHover,
   toggleSensorr,
-  title = 'Search releases for this movie from your indexers',
+  title = null,
   ...props
 }) => {
+  const { t } = useTranslation()
+
   return (
     <div sx={UITicket.styles.element}>
       <div
@@ -191,7 +198,7 @@ const UITicket = ({
           </span>
           <span sx={UITicket.styles.center}>
             <button
-              title={title}
+              title={title || t('details.ticket.searchMovie')}
               disabled={!ready}
               onClick={(e) => toggleSensorr(e)}
               sx={{
@@ -207,7 +214,7 @@ const UITicket = ({
                 sx={UITicket.styles.subtitle}
                 style={{ color: palette?.accentColor || 'hsla(347, 20%, 34%, 0.54)' }}
               >
-                Search for
+                {t('details.ticket.searchFor')}
               </span>
               <span
                 sx={UITicket.styles.rule}
@@ -223,7 +230,7 @@ const UITicket = ({
                 sx={UITicket.styles.title}
                 style={{ color: palette?.color || 'hsla(340, 20%, 10%, 0.65)' }}
               >
-                Releases
+                {t('details.ticket.releases')}
               </span>
             </button>
           </span>
@@ -372,6 +379,7 @@ const UIPreferences = ({
   hover,
   ...props
 }) => {
+  const { t } = useTranslation()
   const sensorr = useSensorr()
   const query = useMemo(() => sensorr.getQuery(entity, metadata.query), [entity?.id, metadata.query])
 
@@ -428,7 +436,7 @@ const UIPreferences = ({
         {expanded && (
           <div sx={UIPreferences.styles.container}>
             <div sx={UIPreferences.styles.block}>
-              <span>Terms</span>
+              <span>{t('sensorr.terms.label')}</span>
               <QueryInput
                 direction='column'
                 value={values.terms}
@@ -439,10 +447,10 @@ const UIPreferences = ({
                   })
                 }}
               />
-              <small>Sensorr will search for all selected terms on configured indexers</small>
+              <small>{t('sensorr.terms.help')}</small>
             </div>
             <div sx={UIPreferences.styles.block}>
-              <span>Years</span>
+              <span>{t('sensorr.years.label')}</span>
               <QueryInput
                 value={values.years}
                 onChange={(values) => {
@@ -452,30 +460,30 @@ const UIPreferences = ({
                   })
                 }}
               />
-              <small>Sensorr will filter releases with selected years</small>
+              <small>{t('sensorr.years.help')}</small>
             </div>
             <div sx={UIPreferences.styles.block}>
-              <span>Policy</span>
+              <span>{t('sensorr.policy.label')}</span>
               <PolicyInput
                 value={metadata?.policy}
                 onChange={value => setMetadata('policy', value)}
               />
-              <small>Sensorr will apply selected policy to sort and select the best release</small>
+              <small>{t('details.preferences.policy')}</small>
             </div>
             <div sx={UIPreferences.styles.block}>
-              <span>Refine for better release</span>
+              <span>{t('details.preferences.refine.label')}</span>
               <OptionInput
                 id={`refine-${entity?.id}`}
-                children="Sensorr will regularly search for better release than the current archived one"
+                children={t('details.preferences.refine.help')}
                 value={metadata?.refine}
                 onChange={value => setMetadata('refine', value)}
               />
             </div>
             <div sx={UIPreferences.styles.block}>
-              <span>Shrink for smaller release</span>
+              <span>{t('details.preferences.shrink.label')}</span>
               <OptionInput
                 id={`shrink-${entity?.id}`}
-                children="Sensorr will regularly search for smaller release than the current archived one"
+                children={t('details.preferences.shrink.help')}
                 value={metadata?.shrink}
                 onChange={value => setMetadata('shrink', value)}
               />
@@ -713,6 +721,7 @@ const UIQueryInput = ({ value, onChange, direction = 'row', ...props }) => {
 export const QueryInput = memo(UIQueryInput)
 
 const UIPolicyInput = ({ value, onChange, ...props }) => {
+  const { t } = useTranslation()
   const sensorr = useSensorr()
 
   return (
@@ -729,7 +738,7 @@ const UIPolicyInput = ({ value, onChange, ...props }) => {
         ))}
       </select>
       <span sx={UIPolicyInput.styles.container}>
-        <span>{value?.name || 'default'}</span>
+        <span>{value?.name || t('details.preferences.defaultPolicy')}</span>
       </span>
       <span sx={UIPolicyInput.styles.button}>
         <Icon value='chevron' direction={false} width='0.625em' height='0.625em' />

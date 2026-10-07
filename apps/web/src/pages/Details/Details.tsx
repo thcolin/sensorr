@@ -1,6 +1,7 @@
 import React, { memo, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useThemeUI } from '@theme-ui/core'
 import Color from 'color'
+import { useTranslation } from 'react-i18next'
 import { useHistoryState, createPendingReducer } from '@sensorr/utils'
 import { usePalette } from '@sensorr/palette'
 import { Bar, Billboard, Lines, Link, ReviewsBadge, pictureSrc, reveal, barTintOf } from '@sensorr/ui'
@@ -101,6 +102,7 @@ const UIDetails = ({
   initialPalette = null,
   ...props
 }) => {
+  const { t } = useTranslation()
   const { title, tagline, overview, poster, billboard, meaningful } = details
   const artworks = useArtworksOf(behavior, entity?.id, metadata)
   // A show opens its settings once it is in the library, which is known only once its metadata loads
@@ -495,7 +497,7 @@ const UIDetails = ({
         <div sx={{ ...UIDetails.styles.poster, marginTop: expanded ? '1em' : [{ person: '-30vh', collection: '-15vh', movie: '-15vh', tv: '-15vh' }[behavior], '-25vh'] }}>
           {posterBlock}
           <a href={`https://www.themoviedb.org/${behavior}/${entity.id}/edit`} target='_blank' rel='noopener noreferrer'>
-            Contribute to TheMovieDB
+            {t('details.contribute')}
           </a>
           {ticketBlock}
         </div>

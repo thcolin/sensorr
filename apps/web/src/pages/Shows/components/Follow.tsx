@@ -1,14 +1,16 @@
 import { memo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ShowStateOptions, State } from '@sensorr/ui'
 
-const OPTIONS = [
+const OPTIONS = (t) => [
   ...ShowStateOptions.filter(({ value }) => ['ignored', 'followed'].includes(value)),
   // A season with some of its episodes followed: shown, never chosen, either choice writes the whole season
-  { emoji: '📺', label: 'Partly followed', value: 'partial', hide: true },
+  { emoji: '📺', label: t('shows.follow.partial'), value: 'partial', hide: true },
 ]
 
 // Follows a season or an episode: the state select of a poster (`ShowState`), 🔕 Ignored or 📺 Followed
 const UIFollow = ({ checked, partial = false, onChange, disabled = false, name, title }) => {
+  const { t } = useTranslation()
   const [pending, setPending] = useState(false)
 
   const handleChange = async (value) => {
@@ -21,7 +23,7 @@ const UIFollow = ({ checked, partial = false, onChange, disabled = false, name, 
     <fieldset disabled={disabled || pending} aria-busy={pending} data-follow={true} data-partial={partial} sx={UIFollow.styles.element}>
       <State
         value={partial ? 'partial' : checked ? 'followed' : 'ignored'}
-        options={OPTIONS}
+        options={OPTIONS(t)}
         onChange={handleChange}
         compact={true}
         size='small'

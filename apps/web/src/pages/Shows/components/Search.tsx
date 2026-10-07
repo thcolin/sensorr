@@ -1,4 +1,5 @@
 import { memo, useCallback, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Badge, Icon } from '@sensorr/ui'
 import { coverageLabel, manualPickOf, swapOf, unitLabel } from '@sensorr/sensorr'
 import { useShowsMetadataContext } from '../../../contexts/ShowsMetadata/ShowsMetadata'
@@ -53,11 +54,12 @@ type Target = { type: 'series' | 'season' | 'episode', season?: number, episode?
 // The release drawer of a show, opened on one of its levels. `open` takes the releases the proposal is looked for in,
 // for a caller that switches `entity` in the same gesture and would otherwise read the previous show's
 export const useShowSearch = (entity, loading = false) => {
+  const { t } = useTranslation()
   const id = entity?.id
   const { metadata: { [id]: metadata }, episodes: { [id]: episodes }, setShowMetadata, banShowRelease, unbanShowRelease, addShow } = useShowsMetadataContext() as any
   const sensorr = useSensorr()
   const inLibrary = !!metadata && metadata.state !== 'ignored'
-  const [search, setSearch] = useState({ unit: null, title: 'Releases', proposal: null })
+  const [search, setSearch] = useState({ unit: null, title: t('sensorr.drawer.title'), proposal: null })
   const toggle = useRef((e) => null)
   const policy = useShowPolicy(entity, metadata)
   const searched = useMemo(() => ({
@@ -66,12 +68,12 @@ export const useShowSearch = (entity, loading = false) => {
     banned_releases: metadata?.banned_releases || [],
   }), [sensorr, entity, metadata?.query, metadata?.banned_releases, policy])
 
-  const open = useCallback((e, target: Target = { type: 'series' }, label = 'the whole series', releases = metadata?.releases) => {
+  const open = useCallback((e, target: Target = { type: 'series' }, label = t('shows.search.series'), releases = metadata?.releases) => {
     const covers = ({ season, episode }) => (target.season === undefined || season === target.season) && (target.episode === undefined || episode === target.episode)
     const proposal = (releases || []).find(release => isPending(release) && (target.type !== 'series' || release.level !== 'episode') && (release.coverage || []).some(covers)) || null
-    setSearch({ unit: { ...target, episodes: [] }, title: `Releases for ${label}`, proposal })
+    setSearch({ unit: { ...target, episodes: [] }, title: t('shows.search.title', { label }), proposal })
     toggle.current(e)
-  }, [metadata?.releases])
+  }, [metadata?.releases, t])
 
   // A pick out of the library adds the show first, unfollowed: its episodes are where the import links the files
   const pick = useCallback(async (release) => {
@@ -113,6 +115,7 @@ export const useShowSearch = (entity, loading = false) => {
 
 // One drawer for every row of a show job, on the show whose ticket was clicked
 export const ShowSearchSingleton = ({ setToggle }) => {
+  const { t } = useTranslation()
   const [entity, setEntity] = useState(null)
   const { metadata, episodes, loadEpisodes } = useShowsMetadataContext() as any
   // A job logs the show lightened: the titles and dates of its query come from TMDB, as on the show page
@@ -127,7 +130,7 @@ export const ShowSearchSingleton = ({ setToggle }) => {
       loadEpisodes(show.id).catch(() => null)
     }
 
-    open(e, { type: 'series' }, 'the whole series', metadata[show.id]?.releases)
+    open(e, { type: 'series' }, t('shows.search.series'), metadata[show.id]?.releases)
   })
 
   return drawer

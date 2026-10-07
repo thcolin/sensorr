@@ -1,5 +1,7 @@
 import { memo, useEffect, useMemo, useState } from 'react'
 import { formatDistanceToNowStrict } from 'date-fns'
+import { Trans, useTranslation } from 'react-i18next'
+import i18n, { dateLocale } from '@sensorr/i18n'
 import { Bar, Button, Icon, Link, Option, Picture, Skeleton, pictureSrc, transformMovieDetails } from '@sensorr/ui'
 import { emojize, filesize } from '@sensorr/utils'
 import { useTMDB } from '../../store/tmdb'
@@ -24,13 +26,15 @@ export const EMOJI = {
 }
 
 export const VERDICTS = {
-  accept: { emoji: '✅', icon: 'check', label: 'Accepted', color: 'primary', text: 'whitePure' },
-  refuse: { emoji: '❌', icon: 'clear', label: 'Refused', color: 'error', text: 'whitePure' },
-  ban: { emoji: '⊘', label: 'Banned', color: 'errorDarker', text: 'whitePure' },
-  retry: { emoji: '🔁', label: 'Retried', color: 'grayDark', text: 'text' },
-  drop: { emoji: '🗑️', label: 'Dropped', color: 'grayDark', text: 'text' },
-  replace: { emoji: '✅', icon: 'check', label: 'Replaced', color: 'primary', text: 'whitePure' },
+  accept: { emoji: '✅', icon: 'check', get label() { return i18n.t('proposals.verdicts.accept') }, color: 'primary', text: 'whitePure' },
+  refuse: { emoji: '❌', icon: 'clear', get label() { return i18n.t('proposals.verdicts.refuse') }, color: 'error', text: 'whitePure' },
+  ban: { emoji: '⊘', get label() { return i18n.t('proposals.verdicts.ban') }, color: 'errorDarker', text: 'whitePure' },
+  retry: { emoji: '🔁', get label() { return i18n.t('proposals.verdicts.retry') }, color: 'grayDark', text: 'text' },
+  drop: { emoji: '🗑️', get label() { return i18n.t('proposals.verdicts.drop') }, color: 'grayDark', text: 'text' },
+  replace: { emoji: '✅', icon: 'check', get label() { return i18n.t('proposals.verdicts.replace') }, color: 'primary', text: 'whitePure' },
 }
+
+const DECISIONS = ['accept', 'refuse'] as const
 
 export const delta = (bytes) => !bytes ? '±0' : `${bytes < 0 ? '−' : '+'}${filesize.stringify(Math.abs(bytes))}`
 
@@ -168,6 +172,7 @@ export const Size = ({ item, threshold, compact = false, named = true }) => item
 ) : <small style={named ? morph('size', item.id) : undefined}>{emojize('📦', filesize.stringify(item.proposal?.size || 0))}</small>
 
 const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving = null, mobile = false, onGesture, onSearch, onClose = null, disabled = false, selected = null, selectedVisible = false, onSelectedChange = undefined, ...props }) => {
+  const { t, i18n: { language } } = useTranslation()
   const { movie, additional } = useDetails(item.id, item.entity?.plex_artworks)
   const [meaningful, setMeaningful] = useState(false)
   // Its selects measure themselves on mount: drawn closed, they would slow every opening.
@@ -192,11 +197,11 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
               <h3 title={facts.title} style={morph('title', item.id)}><Link to={`/movie/${item.id}`}>{facts.title}</Link></h3>
               <span>
                 {!!onClose && (
-                  <button type='button' onClick={onClose} sx={UIActive.styles.close} style={morph('toggle', item.id)} aria-label='Close' title='Close (Esc)'>
+                  <button type='button' onClick={onClose} sx={UIActive.styles.close} style={morph('toggle', item.id)} aria-label={t('proposals.card.close')} title={t('proposals.card.closeTitle')}>
                     <Icon value='chevron' direction={true} width='0.75em' height='0.75em' />
                   </button>
                 )}
-                <code title={item.owned.length ? `Size against the lightest owned release: ${delta(item.diff.size)}` : 'Size of the proposed release'}>
+                <code title={item.owned.length ? t('proposals.card.size.against', { delta: delta(item.diff.size) }) : t('proposals.card.size.proposed')}>
                   <Size item={item} threshold={threshold} compact={true} />
                 </code>
               </span>
@@ -257,14 +262,14 @@ const UIActive = ({ item, entity, metadata, setMetadata, threshold = 0, leaving 
                 ))}
                 {item.command === 'report' && !!report && (
                   <p sx={UIActive.styles.report}>
-                    <span role='img' aria-label='Reported'>🚩</span>
+                    <span role='img' aria-label={t('proposals.card.reported')}>🚩</span>
                     <span>
                       {!!report.message?.trim() && <q>{report.message}</q>}
-                      <small title={new Date(report.date).toLocaleString()}>
+                      <small title={new Date(report.date).toLocaleString(language)}>
                         {[
                           report.username,
-                          formatDistanceToNowStrict(new Date(report.date), { addSuffix: true }),
-                          `${item.owned.length > 1 ? `${item.owned.length} owned releases` : 'owned release'} banned`,
+                          formatDistanceToNowStrict(new Date(report.date), { addSuffix: true, locale: dateLocale() }),
+                          t('proposals.card.banned', { count: item.owned.length }),
                         ].filter(Boolean).join(' · ')}
                       </small>
                     </span>
@@ -580,8 +585,9 @@ Select.styles = {
 // hover to show them: there, a button stretched under the whole row opens it.
 const UICompact = ({ item, onSelect, onHover = null, onDecide = null, disabled = false, threshold = 0, leaving = null, morphing = false, selected = false, selectedVisible = false, onSelectedChange = null, ...props }) => {
   const year = item.entity?.release_date && new Date(item.entity.release_date).getFullYear()
+  const { t } = useTranslation()
   const morph = morphing ? name : () => undefined
-  const label = `Open ${item.entity?.title || 'proposal'}`
+  const label = t('proposals.card.open', { title: item.entity?.title || t('proposals.card.proposal') })
   const { entity } = usePlexArtworks(item.entity, null, item.entity?.plex_artworks)
 
   return (
@@ -596,7 +602,7 @@ const UICompact = ({ item, onSelect, onHover = null, onDecide = null, disabled =
           checked={selected}
           visible={selectedVisible}
           disabled={!!leaving}
-          label={`Select ${item.entity?.title || 'proposal'}`}
+          label={t('proposals.card.select', { title: item.entity?.title || t('proposals.card.proposal') })}
           onChange={() => onSelectedChange(item.id)}
           layout={UICompact.styles.select}
         />
@@ -616,25 +622,25 @@ const UICompact = ({ item, onSelect, onHover = null, onDecide = null, disabled =
       </span>
       {!!onDecide && (
         <div sx={UICompact.styles.decide} data-decide={true}>
-          {(['accept', 'refuse'] as const).map(verdict => (
+          {DECISIONS.map(verdict => (
             <button
               key={verdict}
               type='button'
               disabled={disabled}
               onClick={() => onDecide(verdict)}
-              aria-label={verdict === 'accept' ? 'Accept' : 'Refuse'}
+              aria-label={verdict === 'accept' ? t('sensorr.gestures.accept') : t('sensorr.gestures.refuse')}
               data-verdict={verdict}
             >
               <Icon value={verdict === 'accept' ? 'check' : 'clear'} width='1.125em' height='1.125em' />
             </button>
           ))}
           <span aria-hidden={true} />
-          <button type='button' onClick={() => onSelect(item.id)} aria-label={label} title='Open' data-toggle={true} style={morph('toggle', item.id)}>
+          <button type='button' onClick={() => onSelect(item.id)} aria-label={label} title={t('proposals.card.openTitle')} data-toggle={true} style={morph('toggle', item.id)}>
             <Icon value='chevron' direction={false} width='0.75em' height='0.75em' />
           </button>
         </div>
       )}
-      <code sx={UICompact.styles.size} title={item.owned.length ? `Size against the lightest owned release: ${delta(item.diff.size)}` : 'Size of the proposed release'}>
+      <code sx={UICompact.styles.size} title={item.owned.length ? t('proposals.card.size.against', { delta: delta(item.diff.size) }) : t('proposals.card.size.proposed')}>
         <Size item={item} threshold={threshold} compact={true} named={morphing} />
       </code>
       {!!leaving && <Band verdict={leaving} />}
@@ -829,6 +835,7 @@ export const Compact = memo(UICompact)
 // three ways out. It never opens into a card.
 const UIOverdue = ({ item, onGesture, onSearch, disabled = false, threshold = 0, leaving = null }) => {
   const year = item.entity?.release_date && new Date(item.entity.release_date).getFullYear()
+  const { t, i18n: { language } } = useTranslation()
   const accepted = item.proposal?.accepted_at
   const title = item.entity?.title
   const { entity } = usePlexArtworks(item.entity, null, item.entity?.plex_artworks)
@@ -849,17 +856,17 @@ const UIOverdue = ({ item, onGesture, onSearch, disabled = false, threshold = 0,
               <Transition key={axis} axis={axis} from={from} to={to} policy={item.policy} compact={true} />
             ))}
           </span>
-          <small sx={UIOverdue.styles.age} title={accepted ? new Date(accepted).toLocaleString() : undefined}>
-            {[item.proposal?.znab, accepted && `accepted ${formatDistanceToNowStrict(new Date(accepted), { addSuffix: true })}`, 'not on Plex'].filter(Boolean).join(' · ')}
+          <small sx={UIOverdue.styles.age} title={accepted ? new Date(accepted).toLocaleString(language) : undefined}>
+            {[item.proposal?.znab, accepted && t('proposals.overdue.accepted', { distance: formatDistanceToNowStrict(new Date(accepted), { addSuffix: true, locale: dateLocale() }) }), t('proposals.overdue.notOnPlex')].filter(Boolean).join(' · ')}
           </small>
         </span>
       </span>
       <span sx={UIOverdue.styles.actions}>
-        <Button variant='outline' color='gray' disabled={disabled || !!leaving} onClick={() => onGesture('retry')} title='Send the same .torrent to the blackhole again' aria-label={`Retry ${title}`}>Retry</Button>
-        <Button variant='outline' color='gray' disabled={disabled || !!leaving} onClick={onSearch} title='Pick another release in its place' aria-label={`Search another release of ${title}`}>Search</Button>
-        <Button variant='outline' color='gray' disabled={disabled || !!leaving} onClick={() => onGesture('drop')} title='Remove the accepted release and keep what Plex has' aria-label={`Drop the swap of ${title}, Plex keeps its version`} data-drop={true}>Drop</Button>
+        <Button variant='outline' color='gray' disabled={disabled || !!leaving} onClick={() => onGesture('retry')} title={t('proposals.overdue.retry.title')} aria-label={t('proposals.overdue.retry.label', { title })}>{t('proposals.overdue.retry.button')}</Button>
+        <Button variant='outline' color='gray' disabled={disabled || !!leaving} onClick={onSearch} title={t('proposals.overdue.search.title')} aria-label={t('proposals.overdue.search.label', { title })}>{t('proposals.overdue.search.button')}</Button>
+        <Button variant='outline' color='gray' disabled={disabled || !!leaving} onClick={() => onGesture('drop')} title={t('proposals.overdue.drop.title')} aria-label={t('proposals.overdue.drop.label', { title })} data-drop={true}>{t('proposals.overdue.drop.button')}</Button>
       </span>
-      <code sx={UICompact.styles.size} title={`Size against the lightest owned release: ${delta(item.diff.size)}`}>
+      <code sx={UICompact.styles.size} title={t('proposals.card.size.against', { delta: delta(item.diff.size) })}>
         <Size item={item} threshold={threshold} compact={true} named={false} />
       </code>
       {!!leaving && <Band verdict={leaving} />}
@@ -962,7 +969,7 @@ export const UIGroupTitle = ({ group, emoji, label, count, open, onToggle, selec
       <span sx={UIGroupTitle.styles.end}>
         <span data-select-all={true}>
           <Option id={`select-${group}`} type='checkbox' checked={selected} onChange={onSelectedChange}>
-            {selected ? 'Unselect All' : 'Select All'}
+            {selected ? <Trans i18nKey='proposals.group.unselectAll' /> : <Trans i18nKey='proposals.group.selectAll' />}
           </Option>
         </span>
       </span>

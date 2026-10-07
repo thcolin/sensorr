@@ -25,35 +25,41 @@ export const statusGroupOf = (status: string) => Object.keys(STATUS_GROUPS).find
 export const status = {
   initial: { values: [] },
   serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.flatMap(value => STATUS_GROUPS[value]).join('|') } : {},
-  component: withProps({
-    label: emojize('🚦', 'Status'),
-    options: [
-      { value: 'airing', label: emojize('📡', 'Airing') },
-      { value: 'upcoming', label: emojize('📅', 'Upcoming') },
-      { value: 'ended', label: emojize('🏁', 'Ended') },
-    ],
-  })(OneOf),
+  component: (props) => (
+    <OneOf
+      {...props}
+      label={i18n.t('ui.filters.status')}
+      options={[
+        { value: 'airing', label: emojize('📡', i18n.t('showFields.status.airing')) },
+        { value: 'upcoming', label: emojize('📅', i18n.t('showFields.status.upcoming')) },
+        { value: 'ended', label: emojize('🏁', i18n.t('showFields.status.ended')) },
+      ]}
+    />
+  ),
 }
 
 
 // A TMDB type by its name, and by its index for `discover/tv`
 export const TYPES = [
-  { name: 'Scripted', index: 4, emoji: '🎬' },
-  { name: 'Miniseries', index: 2, emoji: '📕' },
-  { name: 'Documentary', index: 0, emoji: '🎓' },
-  { name: 'Reality', index: 3, emoji: '🤳' },
-  { name: 'Talk Show', index: 5, emoji: '🛋️' },
-  { name: 'News', index: 1, emoji: '🗞️' },
-  { name: 'Video', index: 6, emoji: '📼' },
+  { name: 'Scripted', key: 'scripted', index: 4, emoji: '🎬' },
+  { name: 'Miniseries', key: 'miniseries', index: 2, emoji: '📕' },
+  { name: 'Documentary', key: 'documentary', index: 0, emoji: '🎓' },
+  { name: 'Reality', key: 'reality', index: 3, emoji: '🤳' },
+  { name: 'Talk Show', key: 'talkShow', index: 5, emoji: '🛋️' },
+  { name: 'News', key: 'news', index: 1, emoji: '🗞️' },
+  { name: 'Video', key: 'video', index: 6, emoji: '📼' },
 ]
 
 export const type = {
   initial: { values: [] },
   serialize: (key, raw) => raw?.values?.length ? { [key]: raw.values.join('|') } : {},
-  component: withProps({
-    label: i18n.t('ui.filters.type'),
-    options: TYPES.map(({ name, emoji }) => ({ value: name, label: emojize(emoji, name) })),
-  })(OneOf),
+  component: (props) => (
+    <OneOf
+      {...props}
+      label={i18n.t('ui.filters.type')}
+      options={TYPES.map(({ name, key, emoji }) => ({ value: name, label: emojize(emoji, i18n.t(`showFields.types.${key}`)) }))}
+    />
+  ),
 }
 
 const FilterNetworks = ({ statistics, counted = true, ...props }) => {
@@ -82,7 +88,7 @@ export const origin_country = {
   component: withProps({
     label: 'ui.filters.origin_country',
     display: 'select',
-    labelize: (_id, count) => `${countries[_id]?.emoji || '🏳️'}  ${countries[_id]?.name || `Unknown (${_id})`} (${count})`,
+    labelize: (_id, count) => `${countries[_id]?.emoji || '🏳️'}  ${countries[_id]?.name || i18n.t('showFields.unknown', { id: _id })} (${count})`,
   })(FilterStatistics),
 }
 

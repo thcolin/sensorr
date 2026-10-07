@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { nanoid } from 'nanoid'
+import { useTranslation } from 'react-i18next'
 import CreatableSelect from 'react-select/creatable'
 import { Select } from '@sensorr/ui'
-import { emojize } from '@sensorr/utils'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { useSaveConfig } from '../../pages/Settings/Settings'
 import { List, listsOf } from '../../pages/Home/rows'
@@ -10,6 +10,7 @@ import { List, listsOf } from '../../pages/Home/rows'
 export const saveAsListOf = (kind: 'discover' | 'library', media: 'movie' | 'tv') => {
   // One field: a name typed makes a new list, offered first, a list picked gets the filters as one more source
   const SaveAsList = ({ values }: { values: { [key: string]: any } }) => {
+    const { t } = useTranslation()
     const { config } = useConfigContext()
     const onSave = useSaveConfig()
     const lists: List[] = listsOf(config).filter((list) => list.media === media)
@@ -43,7 +44,7 @@ export const saveAsListOf = (kind: 'discover' | 'library', media: 'movie' | 'tv'
 
     return (
       <section sx={SaveAsList.styles.element}>
-        <label htmlFor={`save-as-list-${kind}`} sx={SaveAsList.styles.label}>{emojize('🗂️', 'Save as list')}</label>
+        <label htmlFor={`save-as-list-${kind}`} sx={SaveAsList.styles.label}>{t('lists.saveAsList.label')}</label>
         <div sx={SaveAsList.styles.field}>
           <Select
             inputId={`save-as-list-${kind}`}
@@ -52,14 +53,14 @@ export const saveAsListOf = (kind: 'discover' | 'library', media: 'movie' | 'tv'
             options={options}
             value={choice}
             onChange={(option: any) => setChoice(option?.label?.trim() ? option : null)}
-            placeholder={options.length ? 'Name a new list, or pick one' : 'Name a new list'}
-            formatCreateLabel={(input: string) => `New list "${input}"`}
+            placeholder={options.length ? t('lists.saveAsList.placeholder') : t('lists.saveAsList.placeholderNew')}
+            formatCreateLabel={(input: string) => t('lists.saveAsList.create', { name: input })}
             createOptionPosition='first'
-            noOptionsMessage={() => 'Type a name to make a list'}
+            noOptionsMessage={() => t('lists.saveAsList.noOptions')}
             menuPlacement='top'
           />
-          <button type='button' disabled={!name || saving} aria-busy={saving} title={!name ? 'Name a new list, or pick one' : choice.__isNew__ ? `Create "${name}"` : `Add these filters to "${name}"`} onClick={save}>
-            Save
+          <button type='button' disabled={!name || saving} aria-busy={saving} title={!name ? t('lists.saveAsList.placeholder') : choice.__isNew__ ? t('lists.saveAsList.createTitle', { name }) : t('lists.saveAsList.addTitle', { name })} onClick={save}>
+            {t('lists.saveAsList.save')}
           </button>
         </div>
       </section>

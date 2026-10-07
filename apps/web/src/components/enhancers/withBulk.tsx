@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import i18n from '@sensorr/i18n'
 import { Bulk, ShowStateOptions } from '@sensorr/ui'
 import { useBulkContext } from '../../contexts/Bulk/Bulk'
 import { useMoviesMetadataContext } from '../../contexts/MoviesMetadata/MoviesMetadata'
@@ -21,8 +23,8 @@ export const SHOW_STATES = [
   { value: false, icon: UNFOLLOWED.emoji, label: UNFOLLOWED.label },
 ]
 
-export const movies = (count) => `${count} ${count === 1 ? 'movie' : 'movies'}`
-export const shows = (count) => `${count} ${count === 1 ? 'show' : 'shows'}`
+export const movies = (count) => i18n.t('enhancers.bulk.movies', { count })
+export const shows = (count) => i18n.t('enhancers.bulk.shows', { count })
 
 export const withSelection = (WrappedComponent) => {
   const WithSelection = ({ entity, ...props }) => {
@@ -49,6 +51,7 @@ export const withSelection = (WrappedComponent) => {
 }
 
 export const EntitiesBulk = ({ media }: { media: 'movie' | 'tv' }) => {
+  const { t } = useTranslation()
   const { setMovieMetadata } = useMoviesMetadataContext() as any
   const { metadata: keptShows, setShowMetadata, followShow, setShowLists } = useShowsMetadataContext() as any
   const { selection, setSelection } = useBulkContext()
@@ -92,15 +95,15 @@ export const EntitiesBulk = ({ media }: { media: 'movie' | 'tv' }) => {
         media === 'movie' ? {
           key: 'state',
           icon: '📚',
-          label: 'State',
+          label: t('enhancers.bulk.state'),
           options: MOVIE_STATES,
-          onChange: ({ value }) => apply('state', value, `Do you want to change ${label} state to "${value}" ?`),
+          onChange: ({ value, label: state }) => apply('state', value, t('enhancers.bulk.confirm', { selection: label, state })),
         } : {
           key: 'monitored',
           icon: '📚',
-          label: 'State',
+          label: t('enhancers.bulk.state'),
           options: SHOW_STATES,
-          onChange: ({ value, label: state }) => apply('monitored', value, `Do you want to change the state of ${label} to "${state}"?`),
+          onChange: ({ value, label: state }) => apply('monitored', value, t('enhancers.bulk.confirm', { selection: label, state })),
         },
         lists,
       ]}
