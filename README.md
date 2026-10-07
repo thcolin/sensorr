@@ -23,7 +23,7 @@
 </p>
 
 <p align="center">
-  🎬 Wish &nbsp;→&nbsp; 🔎 Search &nbsp;→&nbsp; ⚖️ Rank &nbsp;→&nbsp; 📥 Grab &nbsp;→&nbsp; ✨ Refine
+  🍿 Wished &nbsp;→&nbsp; 📹 Record &nbsp;→&nbsp; 📼 Archived &nbsp;→&nbsp; ✨ Refine &nbsp;→&nbsp; 💎 Refined &nbsp;→&nbsp; ✂️ Shrink &nbsp;→&nbsp; 💍 Shrinked
 </p>
 
 <p align="center">
@@ -31,47 +31,19 @@
   picks the best release by your rules, and hands it to your download client.
 </p>
 
-### Movies and TV, together
+<img src="docs/assets/readme/movies-tv.webp" width="100%" alt="One library for everything. Movies and shows live side by side, with the same rules, the same screens and the same jobs. No Radarr next to Sonarr.">
 
-One library for both, with the same rules and the same screens. No Radarr next to Sonarr.
+<img src="docs/assets/readme/seasons.webp" width="100%" alt="Whole series, seasons or episodes. Follow a show, a season or a single episode. Sensorr looks for the whole series first, then season packs, then episodes, and hard links finished files into your library.">
 
-<img src="docs/assets/readme/movies-tv.webp" width="100%" alt="The movie library and the TV library">
+<img src="docs/assets/readme/policies.webp" width="100%" alt="Your rules, not a quality profile. Avoid, prefer or require each source, codec, resolution, language and indexer. The sandbox shows which release would win.">
 
-### Whole series, seasons, episodes
+<img src="docs/assets/readme/swaps.webp" width="100%" alt="Better, then lighter. Refine looks for a release closer to your policy, Shrink for a smaller one that loses nothing. Each swap shows what changes, and the space it frees.">
 
-Follow a show, a season or a single episode. Sensorr grabs the whole pack when it can, episode by episode when it can't.
+<img src="docs/assets/readme/people.webp" width="100%" alt="Follow the people you love. Follow a director, an actor or a composer, and their next films land in your calendar, month by month.">
 
-<img src="docs/assets/readme/seasons.webp" width="100%" alt="A show page with a season pack to accept, and the files of each episode">
+<img src="docs/assets/readme/friends.webp" width="100%" alt="Requests and a yearly wrapped. Friends link their Plex account, and their watchlist becomes requests. Each year, they get a wrapped of what they watched on your server.">
 
-### Policies, not quality profiles
-
-Say what you avoid, what you prefer and what you require. The sandbox shows what Sensorr would pick.
-
-<img src="docs/assets/readme/policies.webp" width="100%" alt="A policy's rules, and the releases its sandbox ranks first">
-
-### Swaps: Refine and Shrink
-
-Already own it? `refine` finds a better version, `shrink` a lighter one. You see what changes, and the space it frees.
-
-<img src="docs/assets/readme/swaps.webp" width="100%" alt="The Swaps screen, the space each command frees, and what changes for one movie">
-
-### Follow people
-
-Follow a director or an actor, and their next films land in your calendar.
-
-<img src="docs/assets/readme/people.webp" width="100%" alt="A director you follow, and the calendar of the people you follow">
-
-### Friends
-
-Their Plex watchlists become requests you accept or ignore. Each year, they get a wrapped of what they watched on your server.
-
-<img src="docs/assets/readme/friends.webp" width="100%" alt="Requests from friends, and a friend's wrapped">
-
-### In your pocket
-
-Install it on your phone, and accept a proposal right from its notification.
-
-<img src="docs/assets/readme/phone.webp" width="100%" alt="Sensorr on an iPhone, and a notification with Accept and Refuse">
+<img src="docs/assets/readme/phone.webp" width="100%" alt="In your pocket. Install Sensorr on your phone like an app, and accept a proposal right from its notification.">
 
 **[Try the demo](https://thcolin.github.io/sensorr/)**, login `demo` / `demo`. It runs in your browser on made-up libraries, and your changes stay there until you reset them.
 
