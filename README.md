@@ -19,16 +19,21 @@
 </p>
 
 <p align="center">
-  <img src="docs/assets/readme/hero.webp" width="100%" alt="Sensorr's Home on a desktop browser and on an iPhone">
-</p>
-
-<p align="center">
   🍿 Wished &nbsp;→&nbsp; 📹 Record &nbsp;→&nbsp; 📼 Archived &nbsp;→&nbsp; ✨ Refine &nbsp;→&nbsp; 💎 Refined &nbsp;→&nbsp; ✂️ Shrink &nbsp;→&nbsp; 💍 Shrinked
 </p>
 
 <p align="center">
   Sensorr watches your indexers for the movies and shows you want,<br>
   picks the best release by your rules, and hands it to your download client.
+</p>
+
+<p align="center">
+  <a href="https://thcolin.github.io/sensorr/"><b>Try the demo</b></a>, login <code>demo</code> / <code>demo</code>.<br>
+  It runs in your browser on made-up libraries, and your changes stay there until you reset them.
+</p>
+
+<p align="center">
+  <img src="docs/assets/readme/hero.webp" width="100%" alt="Sensorr's Home on a desktop browser and on an iPhone">
 </p>
 
 <img src="docs/assets/readme/movies-tv.webp" width="100%" alt="One library for everything. Movies and shows live side by side, with the same rules, the same screens and the same jobs. No Radarr next to Sonarr.">
@@ -45,8 +50,6 @@
 
 <img src="docs/assets/readme/phone.webp" width="100%" alt="In your pocket. Install Sensorr on your phone like an app, and accept a proposal right from its notification.">
 
-**[Try the demo](https://thcolin.github.io/sensorr/)**, login `demo` / `demo`. It runs in your browser on made-up libraries, and your changes stay there until you reset them.
-
 ### And also
 
 - **Plex in sync.** A movie a friend reports from Plex is searched again.
@@ -56,19 +59,25 @@
 
 # Install
 
-The images are published on GHCR for `linux/amd64` and `linux/arm64`. On arm64, MongoDB 8 needs an ARMv8.2-A CPU: a Raspberry Pi 5 runs it, a Pi 4 does not.
-
-With Docker and Docker Compose installed, run the installer:
+You need Docker and Docker Compose, on `linux/amd64` or `linux/arm64`. On arm64, MongoDB 8 needs an ARMv8.2-A CPU: a Raspberry Pi 5 runs it, a Pi 4 does not.
 
 ```sh
 curl --proto =https -fsSL https://raw.githubusercontent.com/thcolin/sensorr/dev/install.sh | sh
 ```
 
+The installer asks for a few folders, a login and your TMDB API key, then starts the stack and gives you its URL. Run it again in the same folder to repair an install.
+
+The first login opens an onboarding: your indexers, a first policy, the blackhole, Plex, your friends and mail, then the jobs. Only TMDB is required, every other step can wait for *Settings*.
+
+<details>
+<summary><b>What the installer asks</b></summary>
+
 It asks for the install folder, `~/.sensorr` by default, the channel, the blackhole and shows folders, your username and password, `sensorr` and `sensorr` by default, the time zone, whether to [update from the app](#update-from-the-app), off by default, and your TMDB API key. It generates the auth secret and the database password, starts the stack, and gives the URL once the login works. Run it again in the same folder to repair an install: it keeps every value its `.env` holds, asks only for the missing ones, then pulls and restarts the stack.
 
-The first login opens an onboarding: TMDB, your indexers, a first policy, the blackhole, Plex, your friends and mail, then the jobs. Only TMDB is required, every other step can be skipped and changed later in *Settings*.
+</details>
 
-## Manual install
+<details>
+<summary><b>Manual install</b></summary>
 
 ```sh
 # Choose an install folder for Sensorr install and config files
@@ -91,7 +100,7 @@ echo "SENSORR_DATABASE_PASSWORD=anotherpassword" >> .env
 # Define your "blackhole" directory where .torrent files will be downloaded
 echo "SENSORR_BLACKHOLE=/home/user/downloads" >> .env
 
-# Define your shows directory, mounted whole as /tvshows: the shows library, its blackhole and the download client's staging folder live under it, see "Series" below
+# Define your shows directory, mounted whole as /tvshows: the shows library, its blackhole and the download client's staging folder live under it, see "TV shows folders" below
 echo "SENSORR_TVSHOWS=/home/user/tvshows" >> .env
 
 # Define your "server contact information" (either a `mailto:` or `https` link) required if you want to enable web push notifications, see ["What is VAPID and why is it useful?"](https://stackoverflow.com/questions/40392257/what-is-vapid-and-why-is-it-useful)
@@ -109,7 +118,10 @@ docker compose up -d
 # Use previously defined username/password to login
 ```
 
-## From 0.x
+</details>
+
+<details>
+<summary><b>Coming from Sensorr 0.x</b></summary>
 
 Sensorr 0.x ran as the `thcolin/sensorr` image, its config mounted on `/app/sensorr/config` and its downloads on `/app/sensorr/blackhole`.
 
@@ -118,24 +130,25 @@ Sensorr 0.x ran as the `thcolin/sensorr` image, its config mounted on `/app/sens
 3. Run the installer with the 0.x config folder as install folder, and its downloads folder as blackhole. The installer keeps the `config.json` it finds there, and the API converts it on its first boot: the TMDB key, the region, the indexers and the policy stay, the login moves to `.env`, Plex is linked again from the onboarding. The 0.x file is kept as `.secrets/config.json.bak`.
 4. On the first login, the onboarding asks where you come from: pick *From a 0.x* and send the `.zip`. It is imported by the `migrate` job once TMDB answers, follow it in *Jobs*. Movies keep their `wished` or `archived` state, stars become `followed`, and `ignored` movies are left behind.
 
-## Series
+</details>
 
-The shows directory holds three folders, all set from *Settings > Blackhole*: the library at
-its root, `.blackhole` where Sensorr writes the `.torrent` of a show release, and `.staging`
-where your download client saves it. Point your download client at both: watch
-`.blackhole`, save into `.staging` with the torrent's own folder layout. `import shows` then
-hard links the files into the library, and your Plex show section reads the library.
+# Advanced
 
-The three have to sit on one filesystem and inside one mount of `sensorr-api`: a hard link
-cannot cross either. That is why `docker-compose.yml` mounts `SENSORR_TVSHOWS` whole instead
-of one volume per folder.
+<details>
+<summary><b>TV shows folders</b></summary>
 
-`import shows` knows a file is still downloading from qBittorrent's `.!qB` suffix (*Options >
-Downloads > Append .!qB extension to incomplete files*), or from a size below the one the
-`.torrent` announces. The five series jobs are paused in the shipped configuration: start them
-from *Settings > Schedule*.
+The shows directory holds three folders, all set from *Settings > Blackhole*: the library at its root, `.blackhole` where Sensorr writes the `.torrent` of a show release, and `.staging` where your download client saves it. Point your download client at both: watch
+`.blackhole`, save into `.staging` with the torrent's own folder layout. `import shows` then hard links the files into the library, and your Plex show section reads the library.
 
-## HTTPS
+The three have to sit on one filesystem and inside one mount of `sensorr-api`: a hard link cannot cross either. That is why `docker-compose.yml` mounts `SENSORR_TVSHOWS` whole instead of one volume per folder.
+
+`import shows` knows a file is still downloading from qBittorrent's `.!qB` suffix (*Options > Downloads > Append .!qB extension to incomplete files*), or from a size below the one the
+`.torrent` announces. The five series jobs are paused in the shipped configuration: start them from *Settings > Schedule*.
+
+</details>
+
+<details>
+<summary><b>HTTPS with your own certificate</b></summary>
 
 Use custom key/cert for HTTPS (default to [`tls internal { on_demand }`](https://caddyserver.com/docs/automatic-https#on-demand-tls)). The folder holding them is mounted whole as `/certs`, and the two names are the files inside it (default `sensorr.cert` and `sensorr.key`)
 
@@ -158,7 +171,10 @@ Caddy reads the files when it starts: after a renewal, restart it with `docker c
 
 `SENSORR_SSL_KEY` and `SENSORR_SSL_CERT` are no longer read: an install that set them moves to `SENSORR_SSL_DIR`, `SENSORR_SSL_CERT_NAME` and `SENSORR_SSL_KEY_NAME`
 
-## Configuration
+</details>
+
+<details>
+<summary><b>Editing <code>config.json</code> by hand</b></summary>
 
 When you edit manually your `config.json`, you need to restart `sensorr-api` container to apply your changes
 
@@ -166,7 +182,11 @@ When you edit manually your `config.json`, you need to restart `sensorr-api` con
 docker container restart sensorr-api
 ```
 
-# Update
+</details>
+
+<a name="update-from-the-app"></a>
+<details>
+<summary><b>Update</b></summary>
 
 The stack follows the latest release. Pull the new images and recreate the containers:
 
@@ -180,7 +200,7 @@ To pin a version, set it in `.env`, for example `SENSORR_TAG=1.0.0`. `SENSORR_TA
 
 Until `v1.0.0` is tagged, no `latest` image exists: set `SENSORR_TAG=dev` in `.env` before `docker compose up -d`.
 
-## Update from the app
+### Update from the app
 
 Settings › Update shows the version that runs and what each channel offers: stable, the `latest` tag, beta, the `beta` tag, or dev, the `dev` tag rebuilt on every push to the `dev` branch. With the `updater` compose profile on, it also updates the stack: `sensorr-updater` writes `SENSORR_TAG` into the env file you pass to compose, `.env` by default, the last one holding a `SENSORR_TAG=` line when you pass several, pulls the images of the channel you picked, and recreates `sensorr-api`, `sensorr-web` and itself. It leaves `sensorr-db` running, and your next `docker compose up -d` recreates `sensorr-db` on the new tag.
 
@@ -192,13 +212,18 @@ docker compose up -d
 
 `sensorr-updater` holds the Docker socket, which controls every container of the host. It publishes no port and only talks to `sensorr-api`, over the `updater` network, which has no way out, with the secret `sensorr-api` generates in `.secrets/updater` on its first boot. An update is refused while a [job](docs/jobs.md) runs, since recreating `sensorr-api` would kill it. Without the profile, the page gives the commands to run instead.
 
-# Dump and import
+</details>
+
+<details>
+<summary><b>Backup and restore</b></summary>
 
 Settings › Backup writes your library and its settings into a `.zip` in `dumps/` of the install folder: movies, TV shows, episodes and stars as JSON lines, `config.json`, and a `manifest.json` with the version of Sensorr and the count of each. The keys and passwords stay out, the TMDB key, every indexer key, the Plex token, the mail password, the Tautulli and MediUX keys, and so does the key an indexer leaves in a release link. The addresses those keys go to, Plex, Tautulli and the mail server, stay out with them. The wrapped, the jobs' logs and your friends' Plex tokens stay out too; the email of the friends who requested a movie or a show stays in, on that movie or show.
 
 The `dump` job does the same every Sunday at 4:00 once turned on in Settings › Schedule, and keeps the last 4. A dump only reaches `dumps/` with the `./dumps:/app/dumps` volume of `docker-compose.yml`: an install made before Settings › Backup needs that line in its compose file, and a `mkdir dumps` in its install folder.
 
 The same page imports a dump, one of its list or a `.zip` from your device, after telling what it holds, and so does the onboarding of a new instance, under *From a dump*. The import replaces the movies, TV shows, episodes and stars, and the settings but their keys and passwords: those of the instance that imports stay with their addresses, an indexer of the same name at the same address keeps its key, and each job stays paused or running as it was. It is refused while a job runs, and it runs as the `restore` job: each collection is filled aside and counted first, so a dump that breaks leaves the library as it was. From a shell, `docker exec sensorr-api bin/sensorr dump` writes one. Import from the page only: started from a shell, a restore would run next to the jobs the API starts.
+
+</details>
 
 # Documentation
 
