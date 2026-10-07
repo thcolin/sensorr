@@ -62,7 +62,7 @@
 You need [Docker and Docker Compose](https://docs.docker.com/compose/install/), on `linux/amd64` or `linux/arm64`. On arm64, MongoDB 8 needs an ARMv8.2-A CPU: a Raspberry Pi 5 runs it, a Pi 4 does not.
 
 ```sh
-curl --proto =https -fsSL https://raw.githubusercontent.com/thcolin/sensorr/dev/install.sh | sh
+curl --proto =https -fsSL https://raw.githubusercontent.com/thcolin/sensorr/main/install.sh | sh
 ```
 
 The installer asks for a few folders, a login and your [TMDB API key](https://www.themoviedb.org/settings/api) (it comes with a [TMDB account](https://www.themoviedb.org/signup)), then starts the stack and gives you its URL. Run it again in the same folder to repair an install.
@@ -84,9 +84,9 @@ It asks for the install folder, `~/.sensorr` by default, the channel, the blackh
 mkdir ~/.sensorr && cd ~/.sensorr
 
 # Download install files
-curl -o docker-compose.yml https://raw.githubusercontent.com/thcolin/sensorr/dev/docker-compose.yml
-curl -o config.json https://raw.githubusercontent.com/thcolin/sensorr/dev/config.default.json
-curl --create-dirs -o docker/sensorr-db/0-init-mongodb.js https://raw.githubusercontent.com/thcolin/sensorr/dev/docker/sensorr-db/0-init-mongodb.js
+curl -o docker-compose.yml https://raw.githubusercontent.com/thcolin/sensorr/main/docker-compose.yml
+curl -o config.json https://raw.githubusercontent.com/thcolin/sensorr/main/config.default.json
+curl --create-dirs -o docker/sensorr-db/0-init-mongodb.js https://raw.githubusercontent.com/thcolin/sensorr/main/docker/sensorr-db/0-init-mongodb.js
 
 # Create every folder the stack mounts: Docker on a Synology refuses to start on a missing one
 mkdir -p caddy/data caddy/config caddy/certs db .secrets dumps blackhole tvshows
@@ -197,8 +197,6 @@ docker compose up -d
 ```
 
 To pin a version, set it in `.env`, for example `SENSORR_TAG=1.0.0`. `SENSORR_TAG=beta` follows the beta releases, once the first one is tagged, `SENSORR_TAG=dev` the `dev` branch, rebuilt on every push. What changed in each release is in the [changelog](CHANGELOG.md).
-
-Until `v1.0.0` is tagged, no `latest` image exists: set `SENSORR_TAG=dev` in `.env` before `docker compose up -d`.
 
 ### Update from the app
 

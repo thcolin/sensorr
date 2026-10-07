@@ -1,7 +1,7 @@
 #!/bin/sh
 # Installs Sensorr with Docker Compose: asks what docker-compose.yml needs, writes .env, starts the stack.
 #
-#   curl --proto =https -fsSL https://raw.githubusercontent.com/thcolin/sensorr/dev/install.sh | sh
+#   curl --proto =https -fsSL https://raw.githubusercontent.com/thcolin/sensorr/main/install.sh | sh
 #
 # Run again on an existing install, it keeps every value its .env already holds, asks only for the
 # missing ones, then pulls and restarts the stack.
