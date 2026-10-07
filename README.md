@@ -1,13 +1,5 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/logo-dark.webp">
-    <img src="docs/assets/readme/logo-light.webp" width="240" alt="Sensorr">
-  </picture>
-</p>
-
-<p align="center">
-  <b>Your Friendly Digital Video Recorder.</b><br>
-  Think VCR, but in modern times.
+  <img src="docs/assets/readme/hero.webp" width="100%" alt="Sensorr, Your Friendly Digital Video Recorder. Think VCR, but in modern times. Its Home on a desktop browser and on an iPhone">
 </p>
 
 <p align="center">
@@ -38,10 +30,6 @@
 <p align="center">
   <a href="https://thcolin.github.io/sensorr/"><b>Try the demo</b></a>, login <code>demo</code> / <code>demo</code>.<br>
   <sub><i>It runs in your browser on made-up libraries, and your changes stay there until you reset them.</i></sub>
-</p>
-
-<p align="center">
-  <img src="docs/assets/readme/hero.webp" width="100%" alt="Sensorr, Your Friendly Digital Video Recorder. Think VCR, but in modern times. Its Home on a desktop browser and on an iPhone">
 </p>
 
 <img src="docs/assets/readme/movies-tv.webp" width="100%" alt="One library for everything. Movies and shows side by side, with the same rules and the same jobs, kept in sync with your Plex. No Radarr next to Sonarr.">
