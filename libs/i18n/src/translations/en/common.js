@@ -510,8 +510,10 @@ export default {
       title: 'Search',
       movies: 'Search movies',
       persons: 'Search persons',
+      shows: 'Search shows',
       empty: {
         shows: 'Try something more familiar, like <0>Friends</0> ?',
+        persons: 'Try someone more familiar, like <0>Meryl Streep</0> ?',
       },
     },
     shows: {
