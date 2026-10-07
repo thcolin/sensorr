@@ -10,7 +10,7 @@ export const literalStrings = (files) => ({
     'i18next/no-literal-string': ['error', {
       mode: 'jsx-only',
       'jsx-attributes': { include: ['title', 'subtitle', 'label', 'placeholder', 'alt', 'aria-label', 'aria-description', 'aria-valuetext', 'noun', 'children', 'description'] },
-      words: { exclude: [/^[\p{P}\p{S}\p{N}\p{M}\p{Cf}\s]+$/u, '[A-Z_-]+', /^[\w./-]*\d[\w./-]*$/u, '\\.torrent', 'Sensorr', 'Plex', 'TMDB', 'MediUX'] },
+      words: { exclude: [/^[\p{P}\p{S}\p{N}\p{M}\p{Cf}\s]+$/u, '[A-Z_-]+', /^[\w./-]*\d[\w./-]*$/u, /^[a-z]+(\.[a-zA-Z_]+)+$/u, '\\.torrent', 'Sensorr', 'Plex', 'TMDB', 'MediUX'] },
     }],
   },
 })

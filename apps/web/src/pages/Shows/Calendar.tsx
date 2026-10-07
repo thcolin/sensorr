@@ -1,5 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
+import { Trans, useTranslation } from 'react-i18next'
 import { AbstractEntity, Badge, CalendarMonthPicker, Empty, Entities, EpisodeStatus, EpisodeStatusOptions, FilterGenres, FilterStatistics, Warning, transformShowDetails, useControlsState, withControls } from '@sensorr/ui'
 import { coverageLabel } from '@sensorr/sensorr'
 import i18n from '@sensorr/i18n'
@@ -17,13 +18,14 @@ import { Agenda, Cell, ControlsContext, Line, Month, Stream, Toggle, ViewSelect,
 import { dateOf, day, monthRange, originOf } from '../../components/Calendar/agenda'
 import { agendaDays, groupByDay, weeksRange } from './agenda'
 
-const FALLBACK = {
-  title: 'Sorry, unable to display episodes...',
-  subtitle: 'The API did not answer the episodes request, try again or log in again',
-}
+const FALLBACK = () => ({
+  title: i18n.t('shows.calendar.fallback.title'),
+  subtitle: i18n.t('shows.calendar.fallback.subtitle'),
+})
 
 const withFollowedShows = () => (WrappedComponent) => {
   const WithFollowedShows = ({ ...props }) => {
+    const { t } = useTranslation()
     const api = useAPI()
     const [shows, setShows] = useState(null)
     const [error, setError] = useState(null)
@@ -47,8 +49,8 @@ const withFollowedShows = () => (WrappedComponent) => {
         ready={!!shows}
         error={error || ((shows && !Object.keys(shows).length) ? {
           emoji: '📺',
-          title: 'Try to follow some shows first',
-          subtitle: 'The calendar lists the episodes of the shows you follow, follow one from its page or from your library',
+          title: t('shows.calendar.none.title'),
+          subtitle: t('shows.calendar.none.subtitle'),
         } : null)}
       />
     )
@@ -61,8 +63,8 @@ const withFollowedShows = () => (WrappedComponent) => {
 const summarize = ({ show_id, status, episodes }, show) => {
   const [first] = episodes
   const code = coverageLabel(episodes.map(episode => ({ season: episode.season_number, episode: episode.episode_number })), 'episode')
-  const name = show?.name || `Show ${show_id}`
-  const title = episodes.length > 1 ? `${episodes.length} episodes` : first.name
+  const name = show?.name || i18n.t('shows.calendar.show', { id: show_id })
+  const title = episodes.length > 1 ? i18n.t('shows.seasons.episodes', { count: episodes.length }) : first.name
 
   return {
     to: { pathname: `/tv/${show_id}`, hash: `#season-${first.season_number}` },
@@ -129,10 +131,10 @@ const FIELDS = {
       <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 } }}>
         <Warning
           emoji="🗓️"
-          title="Calendar"
+          title={<Trans i18nKey='pages.calendar.title' />}
           subtitle={(
             <span>
-              Narrow the episodes of the shows you follow by their <strong>status</strong>, or by the <strong>network</strong>, <strong>genres</strong>, <strong>policy</strong> and <strong>requesters</strong> of their show
+              <Trans i18nKey='shows.calendar.head' components={[<strong />, <strong />, <strong />, <strong />, <strong />]} />
             </span>
           )}
         />
@@ -171,7 +173,7 @@ const useStatistics = () => {
       .catch((e) => {
         if (e.name !== 'AbortError') {
           console.warn(e)
-          toast.error('Error while loading calendar statistics')
+          toast.error(i18n.t('shows.calendar.errors.statistics'))
         }
       })
 
@@ -219,7 +221,7 @@ const UIEpisodeCard = ({ entity, ...props }) => {
   const badges = useMemo(() => !entity?.show_id ? {} : {
     focus: {
       component: Badge,
-      props: { emoji: '📅', label: dateOf(entity.key).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' }), compact: true, size: 'small' },
+      props: { emoji: '📅', label: dateOf(entity.key).toLocaleDateString(i18n.language, { month: '2-digit', day: '2-digit' }), compact: true, size: 'small' },
     },
     state: {
       component: EpisodeStatus,
@@ -255,8 +257,8 @@ const GridCalendar = compose(
     child: UIEpisodeCard,
     empty: {
       emoji: '📅',
-      title: 'No episode this month',
-      subtitle: 'None of the shows you follow has an episode airing this month and matching these filters, try another month or fewer filters',
+      title: <Trans i18nKey='shows.calendar.month.empty.title' />,
+      subtitle: <Trans i18nKey='shows.calendar.month.empty.subtitle' />,
     },
   }),
   withFollowedShows(),
@@ -273,6 +275,7 @@ const GridCalendar = compose(
 )(Entities)
 
 const UIShowsMonth = ({ entities, shows, ready, error, controls }) => {
+  const { t } = useTranslation()
   const days = useMemo(() => new Map(groupByDay(Object.values(entities || {}), shows).map(({ key, entries }) => [key, entries])), [entities, shows])
   const render = useCallback((value) => <Cell {...entry(value, shows[value.show_id])} />, [shows])
 
@@ -282,8 +285,8 @@ const UIShowsMonth = ({ entities, shows, ready, error, controls }) => {
       days={days}
       ready={ready}
       error={error}
-      fallback={FALLBACK}
-      label='Episodes by day'
+      fallback={FALLBACK()}
+      label={t('shows.calendar.label')}
       render={render}
       keyOf={keyOf}
     />
@@ -310,6 +313,7 @@ const STREAMS = {
 
 const withShowsAgenda = () => (WrappedComponent) => {
   const WithShowsAgenda = ({ ready, error, shows, ...props }) => {
+    const { t } = useTranslation()
     const api = useAPI()
     const context = useContext(ControlsContext)
     const [query, controls] = useControlsState(() => context, ({ uri, ...params }) => ({ ready: true, params }))
@@ -331,7 +335,7 @@ const withShowsAgenda = () => (WrappedComponent) => {
       }))
     }, [api, origin, filters])
 
-    const { streams, more, ready: loaded, failure } = useStreams(key, fetchPage, 'episodes')
+    const { streams, more, ready: loaded, failure } = useStreams(key, fetchPage, t('shows.calendar.noun'))
     const days = useMemo(() => (ready && loaded) ? agendaDays(streams, shows, today, origin) : [], [ready, loaded, streams, shows, today, origin])
     const setMonth = context?.[1]
     const onMonth = useCallback((month: Date) => setMonth(values => ({ ...values, air_date: month })), [setMonth])
@@ -360,20 +364,21 @@ const withShowsAgenda = () => (WrappedComponent) => {
 }
 
 const UIShowsAgenda = ({ shows, controls, ...props }) => {
+  const { t } = useTranslation()
   const render = useCallback((value) => <Line {...entry(value, shows[value.show_id])} />, [shows])
 
   return (
     <Agenda
       {...props as any}
       month={monthOf(controls)}
-      fallback={FALLBACK}
+      fallback={FALLBACK()}
       empty={{
         emoji: '📅',
-        title: 'No episode to list',
-        subtitle: 'None of the shows you follow has an episode with an air date and matching these filters yet',
+        title: t('shows.calendar.list.empty.title'),
+        subtitle: t('shows.calendar.list.empty.subtitle'),
       }}
-      noun='episodes'
-      label='Episodes by day'
+      noun={t('shows.calendar.noun')}
+      label={t('shows.calendar.label')}
       render={render}
       keyOf={keyOf}
     />

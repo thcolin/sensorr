@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import nanobounce from 'nanobounce'
 import toast from 'react-hot-toast'
 import { useControlsState } from '@sensorr/ui'
+import i18n from '@sensorr/i18n'
 import { useHistoryState } from '@sensorr/utils'
 import { API } from '@sensorr/services'
 import { TMDB } from '@sensorr/tmdb'
@@ -108,7 +109,7 @@ const withFetchQuery = (
             }
           } catch (err) {
             console.warn(err)
-            toast.error('Error while fetching entities')
+            toast.error(i18n.t('enhancers.fetchQuery.error'))
           } finally {
             setLoading(false)
           }
@@ -144,7 +145,7 @@ const withFetchQuery = (
         .then(({ entities }) => current === generation.current && setPages((pages) => ({ ...pages, [page]: entities })))
         .catch((err) => {
           console.warn(err)
-          toast.error('Error while fetching entities')
+          toast.error(i18n.t('enhancers.fetchQuery.error'))
         }))
     }, [keep, wanted, loaded, complete, pages, total, loading])
 

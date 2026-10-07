@@ -1,5 +1,7 @@
 import { memo, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
+import i18n from '@sensorr/i18n'
 import { entryPolicy, Policy } from '@sensorr/sensorr'
 import { useSensorr } from '../../../store/sensorr'
 import { useShowsMetadataContext } from '../../../contexts/ShowsMetadata/ShowsMetadata'
@@ -11,7 +13,7 @@ export const useShowPolicy = (entity, metadata) => {
 }
 
 // `setShowMetadata` toasts a policy change, and nothing for the other fields of a single show
-const failed = (key) => key !== 'policy' && toast.error('Error while updating show metadata')
+const failed = (key) => key !== 'policy' && toast.error(i18n.t('jobs.processShows.update'))
 
 // A field is pending from its write to its answer, its control disabled meanwhile
 const usePendingMetadata = (setMetadata) => {
@@ -27,6 +29,7 @@ const usePendingMetadata = (setMetadata) => {
 }
 
 const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, lists = null, children = null }) => {
+  const { t } = useTranslation()
   const sensorr = useSensorr()
   const { pending, set } = usePendingMetadata(setMetadata)
   const policy = useShowPolicy(entity, metadata)
@@ -43,15 +46,15 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, lis
   }
 
   const helps = {
-    terms: 'Sensorr will search for all selected terms on configured indexers',
-    years: 'Sensorr will filter releases with a year outside this range',
-    policy: 'Sensorr will apply selected policy to sort and select the best release',
+    terms: t('sensorr.terms.help'),
+    years: t('shows.actions.years.help'),
+    policy: t('details.preferences.policy'),
   }
 
   return (
     <div sx={lists ? { ...MetadataStyles.container, ...MetadataStyles.listed } : MetadataStyles.container}>
       <div sx={{ ...MetadataStyles.block, ...MetadataStyles.wide, ...MetadataStyles.line }}>
-        <span id={ids.terms}>Terms</span>
+        <span id={ids.terms}>{t('sensorr.terms.label')}</span>
         <fieldset disabled={!ready || !!pending['query']} sx={MetadataStyles.fieldset} aria-labelledby={ids.terms}>
           <QueryInput
             aria-labelledby={ids.terms}
@@ -62,7 +65,7 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, lis
         {help && <small title={helps.terms}>{helps.terms}</small>}
       </div>
       <div sx={{ ...MetadataStyles.block, ...MetadataStyles.column }}>
-        <span id={ids.years}>Years</span>
+        <span id={ids.years}>{t('sensorr.years.label')}</span>
         <fieldset disabled={!ready || !!pending['query']} sx={MetadataStyles.fieldset} aria-labelledby={ids.years}>
           <YearsInput
             value={years.length ? [Math.min(...years), Math.max(...years)] : [null, null]}
@@ -73,7 +76,7 @@ const UIShowSettings = ({ entity, metadata, ready, setMetadata, help = true, lis
       </div>
       {lists}
       <div sx={{ ...MetadataStyles.block, ...MetadataStyles.column }}>
-        <span id={ids.policy}>Policy</span>
+        <span id={ids.policy}>{t('sensorr.policy.label')}</span>
         <fieldset disabled={!ready || !!pending['policy']} sx={MetadataStyles.fieldset} aria-labelledby={ids.policy}>
           <PolicyInput
             value={policy}
@@ -93,6 +96,7 @@ const isRange = ([from, to]) => from >= 1900 && to <= new Date().getFullYear() +
 
 // A range is kept once focus leaves both bounds, so each can be typed before the other; a wrong one stays shown
 const UIYearsInput = ({ value, onChange }) => {
+  const { t } = useTranslation()
   const [draft, setDraft] = useState(value)
   const [invalid, setInvalid] = useState(false)
 
@@ -119,14 +123,14 @@ const UIYearsInput = ({ value, onChange }) => {
       data-invalid={invalid || undefined}
       onBlur={e => !e.currentTarget.contains(e.relatedTarget) && commit()}
     >
-      {['From', 'To'].map((label, index) => [
+      {[t('shows.actions.years.from'), t('shows.actions.years.to')].map((label, index) => [
         index > 0 && <span key='to' aria-hidden='true'>–</span>,
         <input
           key={label}
           type='text'
           inputMode='numeric'
           maxLength={4}
-          placeholder='YYYY'
+          placeholder={t('shows.actions.years.placeholder')}
           aria-label={label}
           aria-invalid={invalid}
           value={draft[index] ?? ''}
@@ -207,6 +211,7 @@ export const ShowLists = memo(({ entity, metadata }: { entity: any, metadata: an
 ))
 
 const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
+  const { t } = useTranslation()
   const { pending, set } = usePendingMetadata(setMetadata)
   const ids = {
     monitored: `show-monitored-${entity.id}`,
@@ -227,7 +232,7 @@ const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
       lists={<ShowListsInput entity={entity} metadata={metadata} ready={ready} />}
     >
       <div sx={{ ...MetadataStyles.block, ...MetadataStyles.line, ...MetadataStyles.option }}>
-        <span id={`${ids.monitored}-label`}>Follow episodes</span>
+        <span id={`${ids.monitored}-label`}>{t('shows.actions.monitored.label')}</span>
         <OptionInput
           id={ids.monitored}
           value={!!metadata?.monitored}
@@ -235,11 +240,11 @@ const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
           onChange={value => set('monitored', value)}
           {...labelled(ids.monitored)}
         >
-          {metadata?.monitored ? 'Sensorr searches the followed episodes' : 'Sensorr searches none of its episodes'}
+          {metadata?.monitored ? t('shows.actions.monitored.on') : t('shows.actions.monitored.off')}
         </OptionInput>
       </div>
       <div sx={{ ...MetadataStyles.block, ...MetadataStyles.line, ...MetadataStyles.option, gridColumn: ['auto', '2 / -1'] }}>
-        <span id={`${ids.monitor_new_seasons}-label`}>Follow new seasons</span>
+        <span id={`${ids.monitor_new_seasons}-label`}>{t('shows.actions.newSeasons.label')}</span>
         <OptionInput
           id={ids.monitor_new_seasons}
           value={!!metadata?.monitor_new_seasons}
@@ -247,7 +252,7 @@ const UIShowActions = ({ entity, metadata, ready, setMetadata, ...props }) => {
           onChange={value => set('monitor_new_seasons', value)}
           {...labelled(ids.monitor_new_seasons)}
         >
-          {!metadata?.monitored ? 'Follow episodes first' : metadata?.monitor_new_seasons ? 'Seasons to come are followed as they appear' : 'Seasons to come wait for you to follow them'}
+          {!metadata?.monitored ? t('shows.actions.newSeasons.first') : metadata?.monitor_new_seasons ? t('shows.actions.newSeasons.on') : t('shows.actions.newSeasons.off')}
         </OptionInput>
       </div>
     </ShowSettings>

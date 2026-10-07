@@ -1,5 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
+import i18n from '@sensorr/i18n'
 import { Button, Icon } from '@sensorr/ui'
 import { coverageLabel, swapOf } from '@sensorr/sensorr'
 import { emojize, filesize } from '@sensorr/utils'
@@ -13,17 +15,15 @@ import { VERDICTS } from '../../Proposals/Card'
 import { useShowPolicy } from './Actions'
 import { fileMetaOf, fillsOf, ownedFilesOf } from './fills'
 
-const plural = (count: number, word: string) => `${count} ${word}${count > 1 ? 's' : ''}`
-
 // What the size pill does not say: the episodes it replaces, the ones it brings
 export const reachOf = (fills, swap) => {
   const partial = !!fills.missing.length && fills.missing.length < fills.total
 
   if (swap) {
-    return [`replaces ${plural(swap.replaces, 'episode')}`, !!fills.missing.length && `fills ${fills.label}`].filter(Boolean).join(' · ')
+    return [i18n.t('shows.proposals.replaces', { count: swap.replaces }), !!fills.missing.length && i18n.t('shows.proposals.fills', { label: fills.label })].filter(Boolean).join(' · ')
   }
 
-  return fills.total ? `fills ${partial ? fills.label : plural(fills.missing.length, 'episode')}` : null
+  return fills.total ? (partial ? i18n.t('shows.proposals.fills', { label: fills.label }) : i18n.t('shows.proposals.fillsCount', { count: fills.missing.length })) : null
 }
 
 // Where a proposal sits in the seasons block (Seasons.tsx): a single episode in its row, a single season atop
@@ -46,6 +46,7 @@ const without = (object, key) => {
 // The pending proposals of a show, each one answered with an Undo delay. `episodes` is null until they load:
 // before, a swap would read as replacing nothing
 export const useProposals = ({ entity, metadata, episodes, proceedRelease, banRelease }) => {
+  const { t } = useTranslation()
   const policy = useShowPolicy(entity, metadata)
   const [decided, setDecided] = useState({})
   const keys = useRef(null)
@@ -80,7 +81,7 @@ export const useProposals = ({ entity, metadata, episodes, proceedRelease, banRe
 
       await proceedRelease(release, verdict === 'accept')
     } catch {
-      toast.error(`Error while sending **${VERDICTS[verdict].label}** for **${coverageLabel(release.coverage || [], release.level || undefined)}**`)
+      toast.error(i18n.t('proposals.toast.error', { verdict: VERDICTS[verdict].label, target: coverageLabel(release.coverage || [], release.level || undefined) }))
     }
 
     setDecided(decided => without(decided, release.id))
@@ -102,13 +103,13 @@ export const useProposals = ({ entity, metadata, episodes, proceedRelease, banRe
     )
     const actions = (
       <>
-        <Button variant='outline' color='gray' onClick={undo} aria-keyshortcuts='Z'>Undo</Button>
-        {verdict === 'refuse' && <Button variant='outline' color='error' onClick={() => keys.current.ban()} aria-keyshortcuts='B'>Ban</Button>}
+        <Button variant='outline' color='gray' onClick={undo} aria-keyshortcuts='Z'>{t('proposals.toast.undo')}</Button>
+        {verdict === 'refuse' && <Button variant='outline' color='error' onClick={() => keys.current.ban()} aria-keyshortcuts='B'>{t('proposals.toast.ban')}</Button>}
       </>
     )
 
     ;({ accept: toast.success, refuse: toast.error, ban: toast.error }[verdict] as any)(message, { id: 'proposal-pending', duration: DELAY, actions, countdown: true, title: label, icon: icon ? <span sx={{ display: 'flex', svg: { color } }}><Icon value={icon} active={true} width='1.25em' height='1.25em' /></span> : emoji })
-  }, [undo, entity?.name])
+  }, [undo, entity?.name, t])
 
   const answer = useCallback((release, verdict) => {
     flush()
@@ -168,11 +169,12 @@ export const useProposals = ({ entity, metadata, episodes, proceedRelease, banRe
 // A pending proposal laid out like a movie's (../../Details/components/Releases.tsx): its release row, the
 // comparison centered under it, then its buttons. `reach` for a season or wider, an episode row says it already
 const UIProposal = ({ row: { release, fills, swap, diff }, policy, answer, shortcuts = false, reach = false }) => {
+  const { t } = useTranslation()
   const { device } = useDeviceContext()
   const label = reach && reachOf(fills, swap)
 
   return (
-    <div role='group' aria-label={`Pending proposal for ${coverageLabel(release.coverage || [], release.level || undefined)}`} data-proposal={release.id} sx={styles.proposal}>
+    <div role='group' aria-label={t('shows.proposals.group', { coverage: coverageLabel(release.coverage || [], release.level || undefined) })} data-proposal={release.id} sx={styles.proposal}>
       <Release entity={release} display={device === 'mobile' ? 'column' : 'row'} actions={false} />
       <Swap rows={diff.rows} policy={policy} shortcuts={shortcuts} onGesture={verdict => answer(release, verdict)}>
         {/* The owned files of the covered episodes against the proposal, like a movie's size pill (Releases.tsx) */}

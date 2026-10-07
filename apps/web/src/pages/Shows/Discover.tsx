@@ -16,6 +16,7 @@ import {
   Select,
 } from '@sensorr/ui'
 import { useEffect, useState } from 'react'
+import { Trans } from 'react-i18next'
 import { compose, countries, emojize, scrollToTop, useHistoryState } from '@sensorr/utils'
 import { fields, useFieldsComputedStatistics } from '@sensorr/tmdb'
 import i18n from '@sensorr/i18n'
@@ -35,18 +36,18 @@ import withBulk from '../../components/enhancers/withBulk'
 
 // `discover/tv` takes a status and a type by their index in TMDB's lists. Talk Show and News are left to the
 // genres, which the default already excludes
-const STATUSES = [
-  { value: 0, label: emojize('📡', 'Returning Series') },
-  { value: 2, label: emojize('🏗️', 'In Production') },
-  { value: 1, label: emojize('📅', 'Planned') },
-  { value: 5, label: emojize('🧪', 'Pilot') },
-  { value: 3, label: emojize('🏁', 'Ended') },
-  { value: 4, label: emojize('🪦', 'Canceled') },
+const STATUSES = () => [
+  { value: 0, label: emojize('📡', i18n.t('shows.discover.statuses.returning')) },
+  { value: 2, label: emojize('🏗️', i18n.t('shows.discover.statuses.production')) },
+  { value: 1, label: emojize('📅', i18n.t('shows.discover.statuses.planned')) },
+  { value: 5, label: emojize('🧪', i18n.t('shows.discover.statuses.pilot')) },
+  { value: 3, label: emojize('🏁', i18n.t('shows.discover.statuses.ended')) },
+  { value: 4, label: emojize('🪦', i18n.t('shows.discover.statuses.canceled')) },
 ]
 
-const TYPES = SHOW_TYPES
+const TYPES = () => SHOW_TYPES
   .filter(({ name }) => !['Talk Show', 'News'].includes(name))
-  .map(({ name, index, emoji }) => ({ value: index, label: emojize(emoji, name) }))
+  .map(({ key, index, emoji }) => ({ value: index, label: emojize(emoji, i18n.t(`showFields.types.${key}`)) }))
 
 const oneOf = (label, options) => ({
   initial: { values: [] },
@@ -54,8 +55,8 @@ const oneOf = (label, options) => ({
   component: ({ statistics, ...props }) => (
     <Checkbox
       {...props as any}
-      label={label}
-      options={options}
+      label={label()}
+      options={options()}
       value={props.value.values}
       onChange={values => props.onChange({ ...props.value, values })}
     />
@@ -115,7 +116,7 @@ export const FIELDS = {
           checked={value}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)}
         >
-          Hide Library
+          <Trans i18nKey='shows.discover.hideLibrary' />
         </Option>
       </div>
     ),
@@ -126,12 +127,12 @@ export const FIELDS = {
       <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 } }}>
         <Warning
           emoji="🌐"
-          title="Discover"
+          title={<Trans i18nKey='pages.discover.title' />}
           subtitle={(
             <span>
-              Discover shows with various filters like <strong>genres</strong>, <strong>networks</strong>, <strong>type</strong>, <strong>first air date</strong>, etc...
+              <Trans i18nKey='shows.discover.head' components={[<strong />, <strong />, <strong />, <strong />]} />
               <br/>
-              <small><em>Combine filters to discover new shows !</em></small>
+              <small><em><Trans i18nKey='shows.discover.hint' /></em></small>
             </span>
           )}
         />
@@ -196,8 +197,8 @@ export const FIELDS = {
     statistics: null,
     component: withProps({ field: 'episode_runtime', label: i18n.t('ui.filters.episode_runtime') })(FilterRuntime),
   },
-  with_type: oneOf(i18n.t('ui.filters.type'), TYPES),
-  with_status: oneOf(i18n.t('ui.filters.status'), STATUSES),
+  with_type: oneOf(() => i18n.t('ui.filters.type'), TYPES),
+  with_status: oneOf(() => i18n.t('ui.filters.status'), STATUSES),
   with_networks: networks,
   with_companies: {
     ...fields.companies,
@@ -288,10 +289,10 @@ export const Discover = compose(
     props: () => ({ focus: 'vote_average' }),
     empty: {
       emoji: '📺',
-      title: "Oh no, your request didn't return results",
+      title: <Trans i18nKey='entities.empty.title' />,
       subtitle: (
         <span>
-          Try something like, what are the <em>highest rated</em> <em>crime</em> shows that first aired in the <em>2000s</em> ?
+          <Trans i18nKey='shows.discover.empty' components={[<em />, <em />, <em />]} />
         </span>
       ),
     },

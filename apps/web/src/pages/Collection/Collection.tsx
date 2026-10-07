@@ -43,7 +43,7 @@ const Collection = ({ ...props }) => {
         tabs: {
           saga: {
             id: `saga-${id}`,
-            label: t('items.movies.belongs_to_collection.label', { collection: details.title || 'Saga' }),
+            label: t('items.movies.belongs_to_collection.label', { collection: details.title || t('collection.saga') }),
             entities: details.parts,
             child: MovieWithCreditsAndReviews,
             props: () => ({ display: device !== 'mobile' ? 'pretty' : 'poster' }),
@@ -59,7 +59,7 @@ const Collection = ({ ...props }) => {
     return (
       <Warning
         emoji='💢'
-        title='Sorry, unable to display collection...'
+        title={t('collection.error')}
         subtitle={error.message}
       />
     )

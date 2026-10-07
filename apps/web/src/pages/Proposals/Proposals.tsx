@@ -2,6 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useLayoutEffect, use
 import { flushSync } from 'react-dom'
 import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
 import toast from 'react-hot-toast'
+import { Trans, useTranslation } from 'react-i18next'
+import i18n from '@sensorr/i18n'
 import { Bulk, Button, Controls, Icon, Link, Option, Range, Slider, Sorting, Warning } from '@sensorr/ui'
 import { Global } from 'theme-ui'
 import { useLocation } from 'react-router-dom'
@@ -31,8 +33,8 @@ const THRESHOLDS = [0, 500 * MB, 1024 * MB, 2048 * MB, 5120 * MB]
 const thresholdOf = (value) => value ? `${filesize.stringify(value)}+` : '0 MB'
 
 const SIDES = {
-  current: { emoji: '📀', label: 'Current size' },
-  proposed: { emoji: '💿', label: 'Proposed size' },
+  current: { emoji: '📀' },
+  proposed: { emoji: '💿' },
 }
 
 const SWAP = Object.keys(SIDES)
@@ -49,8 +51,8 @@ const LABELS = {
   report: 'report',
   refine: 'refine',
   shrink: 'shrink',
-  rest: 'ignored',
-  overdue: 'overdue',
+  get rest() { return i18n.t('proposals.groups.rest') },
+  get overdue() { return i18n.t('proposals.groups.overdue') },
 }
 
 // The groups a title can select whole. The ignored group holds swaps that bring a language
@@ -66,12 +68,13 @@ const SLICE = 50
 const SelectAllContext = createContext(null)
 
 const UISelectAll = ({ id = 'swaps', style = {}, strip = false }: { id?: string, style?: object, strip?: boolean }) => {
+  const { t } = useTranslation()
   const { count, selectable, setSelected } = useContext(SelectAllContext)
 
   return (
     <div style={style} sx={{ ...UISelectAll.styles.element, display: strip ? 'flex' : ['none', 'flex'], justifyContent: strip ? 'flex-end' : 'flex-start' }}>
       <Option id={id} type='checkbox' checked={count !== 0} disabled={!selectable.length} onChange={() => setSelected(count ? [] : selectable.map(({ id }) => id))}>
-        {count === 0 ? 'Select All' : `${count} Selected`}
+        {count === 0 ? t('proposals.group.selectAll') : t('proposals.selected', { count })}
       </Option>
     </div>
   )
@@ -99,14 +102,15 @@ const SHAPES = [[9, 6.5, 6.5], [7, 11.5, 5.5, 9], [11, 9, 6], [16, 9, 6, 5.5], [
 
 // A proposal that frees less disk space than this goes to the ignored group, one that grows included.
 const UIThreshold = ({ value, onChange, style = {}, ...props }) => {
+  const { t } = useTranslation()
   const index = Math.max(0, THRESHOLDS.indexOf(value))
   const [draft, setDraft] = useState(index)
 
   useEffect(() => setDraft(index), [index])
 
   return (
-    <div style={style} sx={UIThreshold.styles.element} title='A proposal that frees less disk space than this is ignored'>
-      <label id='threshold-label'>Min. freed</label>
+    <div style={style} sx={UIThreshold.styles.element} title={t('proposals.threshold.title')}>
+      <label id='threshold-label'>{t('proposals.threshold.label')}</label>
       <div>
         <Slider
           aria-labelledby='threshold-label'
@@ -156,6 +160,7 @@ UIThreshold.styles = {
 // The disk now, then what each command moves: a lighter group eats into it before the
 // tick, a heavier one runs past it. Same stroke as the slider next to it.
 const UIBalance = ({ balance, compact = false, style = {}, ...props }) => {
+  const { t } = useTranslation()
   const commands = ['refine', 'shrink'].filter(command => balance[command])
   const frees = commands.filter(command => balance[command] < 0)
   const takes = commands.filter(command => balance[command] > 0)
@@ -168,7 +173,7 @@ const UIBalance = ({ balance, compact = false, style = {}, ...props }) => {
   }
 
   return (
-    <div style={style} sx={{ ...UIBalance.styles.element, ...(props.inline ? UIBalance.styles.inline : {}) }} title={`The Plex files of these movies weigh ${filesize.stringify(balance.now)}, and ${filesize.stringify(balance.after)} once every swap is accepted`}>
+    <div style={style} sx={{ ...UIBalance.styles.element, ...(props.inline ? UIBalance.styles.inline : {}) }} title={t('proposals.balance.title', { now: filesize.stringify(balance.now), after: filesize.stringify(balance.after) })}>
       <div sx={UIBalance.styles.meter} data-meter={true}>
         <div sx={{ ...UIBalance.styles.rail, height: compact ? '0.25em' : '0.5em' }}>
           <i sx={UIBalance.styles.kept} style={{ width: width(balance.now - freed) }} />
@@ -179,10 +184,10 @@ const UIBalance = ({ balance, compact = false, style = {}, ...props }) => {
         {!compact && (
           <>
             <small sx={{ ...UIBalance.styles.label, bottom: 'calc(100% + 0.75em)' }} style={{ right: `calc(100% - ${width(balance.now)})` }}>
-              now <code>{filesize.stringify(balance.now)}</code>
+              <Trans t={t} i18nKey='proposals.balance.now' values={{ size: filesize.stringify(balance.now) }} components={[<code />]} />
             </small>
             <small sx={{ ...UIBalance.styles.label, top: 'calc(100% + 0.75em)', right: '0%' }}>
-              after <code>{filesize.stringify(balance.after)}</code>
+              <Trans t={t} i18nKey='proposals.balance.after' values={{ size: filesize.stringify(balance.after) }} components={[<code />]} />
             </small>
           </>
         )}
@@ -300,7 +305,7 @@ const SizeFilter = ({ side, ...props }) => (
     max={SIZE_MAX}
     marks={[...Array(SIZE_MAX).fill(true).map((foo, value) => ({ value }))]}
     data={null}
-    label={emojize(SIDES[side].emoji, SIDES[side].label)}
+    label={emojize(SIDES[side].emoji, i18n.t(`proposals.sides.${side}`))}
     labelize={(value) => `${value} GB`}
     value={props.value || [0, SIZE_MAX]}
     step={null}
@@ -333,8 +338,8 @@ const fields = {
         <Sorting
           {...props as any}
           options={[
-            { label: emojize('📅', 'Processed'), value: 'time' },
-            { label: emojize('📦', 'Space freed'), value: 'gain' },
+            { label: emojize('📅', i18n.t('proposals.sorting.time')), value: 'time' },
+            { label: emojize('📦', i18n.t('proposals.sorting.gain')), value: 'gain' },
           ]}
         />
       </div>
@@ -344,7 +349,7 @@ const fields = {
     initial: null,
     component: () => (
       <div sx={{ paddingBottom: 4, whiteSpace: 'normal !important', '>div': { padding: 12 }, gridArea: 'head' }}>
-        <Warning emoji='🔀' title='Release filters' subtitle='Click a tag to cycle it: 📀 Current, an owned release carries it; 💿 Proposed, the proposed release carries it; 🔕 it does not count' />
+        <Warning emoji='🔀' title={i18n.t('proposals.filters.title')} subtitle={i18n.t('proposals.filters.subtitle')} />
       </div>
     ),
   },
@@ -481,6 +486,7 @@ const MORPH = {
 const omit = (object, ids) => Object.keys(object).filter(key => !ids.map(String).includes(key)).reduce((acc, key) => ({ ...acc, [key]: object[key] }), {})
 
 const UIProposals = ({ entities = {}, ready: loaded = true, error = null, ...props }) => {
+  const { t } = useTranslation()
   const api = useAPI()
   const sensorr = useSensorr()
   const { metadata, setMovieMetadata } = useMoviesMetadataContext() as any
@@ -520,7 +526,7 @@ const UIProposals = ({ entities = {}, ready: loaded = true, error = null, ...pro
       .catch((error) => {
         console.warn(error)
         setOverdue([])
-        toast.error('Error while loading the overdue swaps')
+        toast.error(t('proposals.errors.overdue'))
       })
   }, [])
 
@@ -613,7 +619,7 @@ const UIProposals = ({ entities = {}, ready: loaded = true, error = null, ...pro
     const id = previous.current?.id
 
     if (id && !decided[id] && !items.some(item => item.id === id)) {
-      toast(<span>{emojize('🛎️', `${previous.current.entity?.title} was treated elsewhere`)}</span>, { id: 'proposal-elsewhere' })
+      toast(<span>{emojize('🛎️', t('proposals.elsewhere', { title: previous.current.entity?.title }))}</span>, { id: 'proposal-elsewhere' })
     }
 
     previous.current = active
@@ -651,9 +657,9 @@ const UIProposals = ({ entities = {}, ready: loaded = true, error = null, ...pro
     if (failed.length && verdict === 'retry') {
       toast.error((
         <span sx={UIProposals.styles.toast}>
-          <span>Retry failed for <strong>{failed[0].entity?.title}</strong>, the swap is kept</span>
+          <span><Trans t={t} i18nKey='proposals.retryFailed' values={{ title: failed[0].entity?.title }} components={[<strong />]} /></span>
           <span>
-            <Button variant='outline' color='gray' onClick={(e) => { toast.dismiss('proposal-retry'); search(e, failed[0]) }}>Search</Button>
+            <Button variant='outline' color='gray' onClick={(e) => { toast.dismiss('proposal-retry'); search(e, failed[0]) }}>{t('proposals.overdue.search.button')}</Button>
           </span>
         </span>
       ), { id: 'proposal-retry' })
@@ -662,14 +668,14 @@ const UIProposals = ({ entities = {}, ready: loaded = true, error = null, ...pro
         setActiveId(failed[0].id)
       }
 
-      toast.error(`Error while sending **${VERDICTS[verdict].label}** for ${failed.length > 1 ? `**${failed.length}** proposals` : `**${failed[0].entity?.title}**`}`)
+      toast.error(failed.length > 1 ? t('proposals.toast.errorMany', { verdict: VERDICTS[verdict].label, count: failed.length }) : t('proposals.toast.error', { verdict: VERDICTS[verdict].label, target: failed[0].entity?.title }))
 
       // A batch sent from the selection comes back checked, so it can be sent again.
       if (selection) {
         setSelected(failed.map(({ id }) => id))
       }
     }
-  }, [setMovieMetadata, search, setSelected])
+  }, [setMovieMetadata, search, setSelected, t])
 
   const onUndo = useCallback((current) => {
     decidedRef.current = omit(decidedRef.current, current.targets.map(({ id }) => id))
@@ -692,7 +698,7 @@ const UIProposals = ({ entities = {}, ready: loaded = true, error = null, ...pro
     const item = target.pick ? { ...target, proposal: target.pick, diff: proposalDiff(target.owned, target.pick, target.policy) } : target
     const { entity, proposal } = item
     const year = entity?.release_date && new Date(entity.release_date).getFullYear()
-    const message = targets.length > 1 ? `**${targets.length}** proposals` : (
+    const message = targets.length > 1 ? t('proposals.toast.many', { count: targets.length }) : (
       <span sx={UIProposals.styles.pending}>
         <span>
           <span><span>{entity?.title}</span>{!!year && <small>{year}</small>}</span>
@@ -703,13 +709,13 @@ const UIProposals = ({ entities = {}, ready: loaded = true, error = null, ...pro
     )
     const actions = (
       <>
-        <Button variant='outline' color='gray' onClick={undo} aria-keyshortcuts='Z'>Undo</Button>
-        {verdict === 'refuse' && <Button variant='outline' color='error' onClick={() => keys.current.ban()} aria-keyshortcuts='B'>Ban</Button>}
+        <Button variant='outline' color='gray' onClick={undo} aria-keyshortcuts='Z'>{t('proposals.toast.undo')}</Button>
+        {verdict === 'refuse' && <Button variant='outline' color='error' onClick={() => keys.current.ban()} aria-keyshortcuts='B'>{t('proposals.toast.ban')}</Button>}
       </>
     )
 
     ;({ accept: toast.success, replace: toast.success, refuse: toast.error, ban: toast.error, retry: toast, drop: toast }[verdict] as any)(message, { id: 'proposal-pending', duration: DELAY, actions, countdown: true, title: label, icon: icon ? <span sx={{ display: 'flex', svg: { color } }}><Icon value={icon} active={true} width='1.25em' height='1.25em' /></span> : emoji })
-  }, [undo, threshold])
+  }, [undo, threshold, t])
 
   // `next` is the card to open once this one has left, when it was the open one.
   const decideTargets = useCallback((candidates, verdict: Verdict, next = undefined, selection = false) => {
@@ -935,8 +941,8 @@ const UIProposals = ({ entities = {}, ready: loaded = true, error = null, ...pro
 
   if (error) {
     return (
-      <Warning emoji='🚨' title='Error' subtitle={error?.message || `${error}`}>
-        <Button variant='outline' color='gray' onClick={() => window.location.reload()}>Retry</Button>
+      <Warning emoji='🚨' title={t('jobs.job.error')} subtitle={error?.message || `${error}`}>
+        <Button variant='outline' color='gray' onClick={() => window.location.reload()}>{t('proposals.reload')}</Button>
       </Warning>
     )
   }
@@ -944,7 +950,7 @@ const UIProposals = ({ entities = {}, ready: loaded = true, error = null, ...pro
   const nav = (
     <SelectAllContext.Provider value={selectAll}>
       <Controls
-        title='Swaps'
+        title={t('proposals.title')}
         components={{ balance: Balance, bulk: UISelectAll }}
         layout={layout as any}
         fields={fields as any}
@@ -974,18 +980,18 @@ const UIProposals = ({ entities = {}, ready: loaded = true, error = null, ...pro
       <>
         {nav}
         {(all.length && !items.length) ? (
-          <Warning emoji='🔍' title='No match' subtitle='No swap matches the release filters' />
+          <Warning emoji='🔍' title={t('proposals.empty.match.title')} subtitle={t('proposals.empty.match.subtitle')} />
         ) : total ? (
           <Warning
             emoji='📼'
-            title='All decided'
-            subtitle={Object.keys(session).filter(verdict => session[verdict]).map(verdict => `${session[verdict]} ${VERDICTS[verdict].label.toLowerCase()}`).join(' · ')}
+            title={t('proposals.empty.decided')}
+            subtitle={Object.keys(session).filter(verdict => session[verdict]).map(verdict => t(`proposals.session.${verdict}`, { count: session[verdict] })).join(' · ')}
           />
         ) : (
           <Warning
             emoji='📭'
-            title='Nothing to decide'
-            subtitle={<span>Jobs with <code>proposalOnly</code> set wait here for a choice, see <Link to='/settings/schedule'>job settings</Link></span>}
+            title={t('proposals.empty.nothing.title')}
+            subtitle={<span><Trans t={t} i18nKey='proposals.empty.nothing.subtitle' components={[<code />, <Link to='/settings/schedule' />]} /></span>}
           />
         )}
       </>
@@ -1029,7 +1035,7 @@ const UIProposals = ({ entities = {}, ready: loaded = true, error = null, ...pro
                   <GroupTitle
                     group={row.group}
                     emoji={EMOJI[row.group] || '💤'}
-                    label={row.group === 'rest' ? (threshold ? `${LABELS.rest} (<${filesize.stringify(threshold)})` : `${LABELS.rest} (no change)`) : LABELS[row.group]}
+                    label={row.group === 'rest' ? (threshold ? `${LABELS.rest} (<${filesize.stringify(threshold)})` : t('proposals.groups.noChange', { label: LABELS.rest })) : LABELS[row.group]}
                     count={row.count}
                     open={!collapsed[row.group]}
                     onToggle={() => onToggle(row.group)}
@@ -1047,7 +1053,7 @@ const UIProposals = ({ entities = {}, ready: loaded = true, error = null, ...pro
                     mobile={mobile}
                     disabled={!connected}
                     onGesture={onGesture}
-                    onSearch={(e) => toggleSensorr.current?.(e, row.item.entity, (release) => keys.current.pick(row.item, release), { title: 'Replace', proposal: row.item.proposal })}
+                    onSearch={(e) => toggleSensorr.current?.(e, row.item.entity, (release) => keys.current.pick(row.item, release), { title: t('proposals.replace'), proposal: row.item.proposal })}
                     onClose={row.leaving ? null : keys.current.close}
                     selected={selected.has(row.item.id)}
                     selectedVisible={chosen.length > 0}
@@ -1062,10 +1068,10 @@ const UIProposals = ({ entities = {}, ready: loaded = true, error = null, ...pro
         </div>
         <Warning
           emoji='📼'
-          title="You've reached the end of the tape"
+          title={t('proposals.end.title')}
           subtitle={(
             <span>
-              Be kind, <em>rewind</em>, and let the next <em>refine</em> or <em>shrink</em> job record some more swaps.
+              <Trans t={t} i18nKey='proposals.end.subtitle' components={[<em />, <em />, <em />]} />
             </span>
           )}
         />
@@ -1078,7 +1084,7 @@ const UIProposals = ({ entities = {}, ready: loaded = true, error = null, ...pro
         disabled={!connected}
         actions={(['accept', 'refuse'] as const).map(verdict => ({
           key: verdict,
-          label: verdict === 'accept' ? 'Accept' : 'Refuse',
+          label: verdict === 'accept' ? t('sensorr.gestures.accept') : t('sensorr.gestures.refuse'),
           icon: verdict === 'accept' ? <Icon value='check' /> : <Icon value='clear' active={true} />,
           onClick: () => {
             decideTargets(chosen, verdict, undefined, true)

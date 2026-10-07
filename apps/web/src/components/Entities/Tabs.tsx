@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Bar, Entities } from '@sensorr/ui'
 import { useHistoryState } from '@sensorr/utils'
 import nanobounce from 'nanobounce'
+import { useTranslation } from 'react-i18next'
 
 // A tab of a row, the one not shown let through
 export const TAB = {
@@ -19,6 +20,7 @@ export const TAB = {
 
 export const withTabsBehavior = () => (WrappedComponent) => {
   const WithTabsBehavior = ({ id, tabs, ...props }) => {
+    const { t } = useTranslation()
     const [current, setCurrent] = useHistoryState(`${id}-tab`, null)
     const [optimistic, setOptimistic] = useState(null)
     const debounce = useMemo(() => nanobounce(400), [])
@@ -43,11 +45,11 @@ export const withTabsBehavior = () => (WrappedComponent) => {
         ready={ready && tab?.ready !== false}
         label={(
           <>
-            {((tab?.ready !== false ? Object.entries(tabs) : [['loading', { label: <Bar inline={true} width='7em' height='0.75em' /> }]]) as [string, any]).map(([key, { label: children }]) => (
+            {((tab?.ready !== false ? Object.entries(tabs) : Object.entries({ loading: { label: <Bar inline={true} width='7em' height='0.75em' /> } })) as [string, any]).map(([key, { label: children }]) => (
               <button
                 key={key}
                 // Its label is a bar while the tabs load: a disabled button with its name
-                {...(key === 'loading' ? { disabled: true, 'aria-label': 'Loading' } : {})}
+                {...(key === 'loading' ? { disabled: true, 'aria-label': t('state.loading') } : {})}
                 sx={{ ...TAB, ...(key !== optimistic && { opacity: 0.5 }) }}
                 onClick={() => {
                   setScroll([0, 0])

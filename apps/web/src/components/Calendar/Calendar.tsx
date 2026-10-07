@@ -4,7 +4,8 @@ import { Trans, useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { keyframes } from '@emotion/react'
 import { ControlsSelect, Icon, Link, Picture, Warning } from '@sensorr/ui'
-import { emojize, useResponsiveValue } from '@sensorr/utils'
+import i18n from '@sensorr/i18n'
+import { useResponsiveValue } from '@sensorr/utils'
 import { dateOf, day, monthRange, monthWeeks, originOf, settle } from './agenda'
 
 // Height of a list line, which the date beside it takes to sit on the same axis
@@ -13,9 +14,9 @@ const ROW = '4em'
 const EASING = 'cubic-bezier(0.4, 0, 0.2, 1)'
 
 const VIEWS = [
-  { value: 'grid', label: emojize('🖼️', 'Grid') },
-  { value: 'calendar', label: emojize('🗓️', 'Calendar'), desktop: true },
-  { value: 'list', label: emojize('📋', 'List') },
+  { value: 'grid' },
+  { value: 'calendar', desktop: true },
+  { value: 'list' },
 ]
 
 // The history state of a calendar page, read and written above its views so the month and the filters survive a switch
@@ -26,9 +27,10 @@ export const ControlsContext = createContext(null)
 // is the first of `initial` the device offers, and stays out of the query string.
 export const useView = (initial = ['grid']) => {
   const [params, setParams] = useSearchParams()
+  const { t, i18n: { language } } = useTranslation()
   const [controls] = useContext(ControlsContext) || []
   const desktop = useResponsiveValue([false, true])
-  const options = useMemo(() => VIEWS.filter(view => desktop || !view.desktop), [desktop])
+  const options = useMemo(() => VIEWS.filter(view => desktop || !view.desktop).map(view => ({ ...view, label: t(`calendar.views.${view.value}`) })), [desktop, language])
   const fallback = initial.find(value => options.some(option => option.value === value))
   const view = options.find(({ value }) => value === params.get('view'))?.value || fallback
 
@@ -510,7 +512,7 @@ export const useStreams = (
           setFailure(error)
         } else {
           console.warn(error)
-          toast.error(`Error while fetching ${noun}`)
+          toast.error(i18n.t('calendar.error', { noun }))
         }
       })
   }, [update, noun])
@@ -575,7 +577,7 @@ const offset = (key: string) => {
 }
 
 const UIAgenda = ({ days, today, origin, streams, onMore, onOrigin, month, onMonth, ready, error, fallback, empty, noun, label: name, render, keyOf }: AgendaProps) => {
-  const { i18n: { language } } = useTranslation()
+  const { t, i18n: { language } } = useTranslation()
   const past = useRef<HTMLDivElement>(null)
   const future = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState({ past: false, future: false })
@@ -697,7 +699,7 @@ const UIAgenda = ({ days, today, origin, streams, onMore, onOrigin, month, onMon
 
   if (!ready) {
     return (
-      <section sx={UIAgenda.styles.element} aria-label={`Loading ${noun}`} aria-busy={true}>
+      <section sx={UIAgenda.styles.element} aria-label={t('calendar.loading', { noun })} aria-busy={true}>
         {PLACEHOLDERS.map((widths, index) => (
           <section key={index} sx={UIAgenda.styles.day}>
             <div sx={UIAgenda.styles.date}>
@@ -729,7 +731,7 @@ const UIAgenda = ({ days, today, origin, streams, onMore, onOrigin, month, onMon
           </h5>
           <div>
             {key === today && (
-              <p sx={UIAgenda.styles.today}><span>Today</span></p>
+              <p sx={UIAgenda.styles.today}><span>{t('calendar.today')}</span></p>
             )}
             {!!entries.length && (
               <ul sx={UIAgenda.styles.list}>
@@ -821,23 +823,27 @@ UIAgenda.styles = {
 export const Agenda = memo(UIAgenda)
 
 // Where a stream loads its next page: its height is kept while it has one, so the days do not jump
-const UISentinel = ({ stream, state, noun, onMore }, ref) => (
-  <div ref={ref} data-stream={stream} sx={{ ...UISentinel.styles.element, ...(state.done ? { height: '0em' } : {}) }}>
-    {state.loading && (
-      <Icon value='spinner' />
-    )}
-    {state.failed && (
-      <button type='button' sx={UISentinel.styles.retry} onClick={() => onMore(stream)}>
-        Unable to load the {stream === 'past' ? 'previous' : 'next'} {noun}, retry
-      </button>
-    )}
-    {state.paused && (
-      <button type='button' sx={UISentinel.styles.retry} onClick={() => onMore(stream)}>
-        Load {stream === 'past' ? 'older' : 'later'} {noun}
-      </button>
-    )}
-  </div>
-)
+const UISentinel = ({ stream, state, noun, onMore }, ref) => {
+  const { t } = useTranslation()
+
+  return (
+    <div ref={ref} data-stream={stream} sx={{ ...UISentinel.styles.element, ...(state.done ? { height: '0em' } : {}) }}>
+      {state.loading && (
+        <Icon value='spinner' />
+      )}
+      {state.failed && (
+        <button type='button' sx={UISentinel.styles.retry} onClick={() => onMore(stream)}>
+          {t('calendar.retry', { stream, noun })}
+        </button>
+      )}
+      {state.paused && (
+        <button type='button' sx={UISentinel.styles.retry} onClick={() => onMore(stream)}>
+          {t('calendar.more', { stream, noun })}
+        </button>
+      )}
+    </div>
+  )
+}
 
 UISentinel.styles = {
   element: {

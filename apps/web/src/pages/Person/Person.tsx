@@ -112,9 +112,9 @@ export const PersonContent = ({ id: drawn = null, variant = 'page', palette = nu
             with_release_type: {
               behavior: 'or',
               values: [
-                { value: 1, label: 'Premiere' },
-                { value: 2, label: 'Theatrical' },
-                { value: 3, label: 'Digital' },
+                { value: 1, label: t('tmdb.release_type.premiere') },
+                { value: 2, label: t('tmdb.release_type.limited') },
+                { value: 3, label: t('tmdb.release_type.theatrical') },
               ],
             },
             with_runtime: [20, 6000],
@@ -126,8 +126,8 @@ export const PersonContent = ({ id: drawn = null, variant = 'page', palette = nu
             without_genres: {
               behavior: 'or',
               values: [
-                { value: 99, label: 'Documentary' },
-                { value: 10770, label: 'TV Movie' },
+                { value: 99, label: t('person.genres.documentary') },
+                { value: 10770, label: t('person.genres.tvMovie') },
               ],
             },
           },
@@ -210,9 +210,9 @@ export const PersonContent = ({ id: drawn = null, variant = 'page', palette = nu
             with_release_type: {
               behavior: 'or',
               values: [
-                { value: 1, label: 'Premiere' },
-                { value: 2, label: 'Theatrical' },
-                { value: 3, label: 'Digital' },
+                { value: 1, label: t('tmdb.release_type.premiere') },
+                { value: 2, label: t('tmdb.release_type.limited') },
+                { value: 3, label: t('tmdb.release_type.theatrical') },
               ],
             },
             with_runtime: [20, 6000],
@@ -224,8 +224,8 @@ export const PersonContent = ({ id: drawn = null, variant = 'page', palette = nu
             without_genres: {
               behavior: 'or',
               values: [
-                { value: 99, label: 'Documentary' },
-                { value: 10770, label: 'TV Movie' },
+                { value: 99, label: t('person.genres.documentary') },
+                { value: 10770, label: t('person.genres.tvMovie') },
               ],
             },
           },
@@ -335,7 +335,7 @@ export const PersonContent = ({ id: drawn = null, variant = 'page', palette = nu
     return (
       <Warning
         emoji='💢'
-        title='Sorry, unable to display person...'
+        title={t('person.error')}
         subtitle={error.message}
       />
     )

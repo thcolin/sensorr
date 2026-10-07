@@ -1,7 +1,8 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
+import i18n from '@sensorr/i18n'
 import { Button, DragScroll, Pane, Picture, pictureSrc, Warning } from '@sensorr/ui'
 import { useAPI } from '../../store/api'
 import { useTMDB } from '../../store/tmdb'
@@ -11,10 +12,10 @@ import { useConfigContext } from '../../contexts/Config/Config'
 import { ArtworkChoice, ArtworkKind, Candidate, CandidateGroup, candidatesOf, linkOf, ratingKeyOf, setCandidatesOf } from './candidates'
 import { LogoTone, LOGO_FILTERS, toneOfImage } from './tone'
 
-const KINDS: { kind: ArtworkKind, emoji: string, label: string, tmdb: string, width: string, height: string, size: string, preview: string }[] = [
-  { kind: 'poster', emoji: '🖼️', label: 'Poster', tmdb: 'posters', width: '5.75em', height: '8.625em', size: 'w154', preview: 'w342' },
-  { kind: 'backdrop', emoji: '🌄', label: 'Backdrop', tmdb: 'backdrops', width: '12.5em', height: '7.03em', size: 'w300', preview: 'w780' },
-  { kind: 'logo', emoji: '🔤', label: 'Logo', tmdb: 'logos', width: '9.375em', height: '3.75em', size: 'w185', preview: 'w500' },
+const KINDS: { kind: ArtworkKind, emoji: string, tmdb: string, width: string, height: string, size: string, preview: string }[] = [
+  { kind: 'poster', emoji: '🖼️', tmdb: 'posters', width: '5.75em', height: '8.625em', size: 'w154', preview: 'w342' },
+  { kind: 'backdrop', emoji: '🌄', tmdb: 'backdrops', width: '12.5em', height: '7.03em', size: 'w300', preview: 'w780' },
+  { kind: 'logo', emoji: '🔤', tmdb: 'logos', width: '9.375em', height: '3.75em', size: 'w185', preview: 'w500' },
 ]
 
 type Chosen = Partial<Record<ArtworkKind, { id: string, choice: ArtworkChoice, thumb: string, link?: boolean }>>
@@ -27,6 +28,7 @@ export const useArtworksOf = (behavior: 'movie' | 'tv', id: number, metadata) =>
 // A season (`{ number, name, key, seasons }`, its show's `plex_seasons`) only has a poster, written to its own Plex item
 const UIArtworks = ({ behavior, entity, artworks, season = null, className = undefined }) => {
   const trigger = useRef<HTMLButtonElement>(null)
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   // Mounted from the start and kept through its way out: the pane slides in and out instead of popping
   const [shown, setShown] = useState(false)
@@ -53,7 +55,7 @@ const UIArtworks = ({ behavior, entity, artworks, season = null, className = und
 
   return (
     <>
-      <button ref={trigger} type='button' className={className} sx={UIArtworks.styles.button} onClick={() => setOpen(true)} title='Change artworks' aria-label='Change artworks' aria-haspopup='dialog'>
+      <button ref={trigger} type='button' className={className} sx={UIArtworks.styles.button} onClick={() => setOpen(true)} title={t('artworks.change')} aria-label={t('artworks.change')} aria-haspopup='dialog'>
         🖼️
       </button>
       {createPortal((
@@ -142,20 +144,20 @@ const hostOf = (url: string) => {
   try {
     return new URL(url).host.replace(/^www\./, '')
   } catch {
-    return 'link'
+    return i18n.t('artworks.link.fallback')
   }
 }
 
 const Picker = ({ behavior, entity, artworks, season, ratingKey, close }) => {
   const api = useAPI()
   const tmdb = useTMDB()
-  const { i18n: { language } } = useTranslation()
+  const { t, i18n: { language } } = useTranslation()
   const region = (language || 'en').split('-')[0]
   const { config } = useConfigContext()
   // MediUX sets are read for a show's own poster and backdrop, not its seasons'
   const mediux = !season && !!config.get('mediux.token')
   const kinds = useMemo(() => season ? KINDS.filter(({ kind }) => kind === 'poster') : KINDS, [season])
-  const title = season ? `${season.name} of ${entity?.name}` : entity?.title || entity?.name
+  const title = season ? t('artworks.seasonOf', { season: season.name, show: entity?.name }) : entity?.title || entity?.name
   const [lists, setLists] = useState({ loading: true, plex: null, tmdb: null, sets: null, errors: [] as string[] })
   const [chosen, setChosen] = useState<Chosen>({})
   const [links, setLinks] = useState<Partial<Record<ArtworkKind, Candidate[]>>>({})
@@ -212,9 +214,9 @@ const Picker = ({ behavior, entity, artworks, season, ratingKey, close }) => {
         tmdb: images.status === 'fulfilled' ? images.value : null,
         sets: sets.status === 'fulfilled' ? sets.value.sets : null,
         errors: [
-          ...(sets.status === 'rejected' ? ['MediUX did not answer: its sets are missing'] : []),
-          ...(plex.status === 'rejected' ? ['Plex did not answer: its artworks are missing, and nothing can be written'] : []),
-          ...(images.status === 'rejected' ? ['TMDB did not answer: its artworks are missing'] : []),
+          ...(sets.status === 'rejected' ? [t('artworks.errors.mediux')] : []),
+          ...(plex.status === 'rejected' ? [t('artworks.errors.plex')] : []),
+          ...(images.status === 'rejected' ? [t('artworks.errors.tmdb')] : []),
         ],
       })
     })
@@ -277,13 +279,13 @@ const Picker = ({ behavior, entity, artworks, season, ratingKey, close }) => {
       ;({ artworks: written, failed } = await api.fetch(uri, params, init))
     } catch (err) {
       console.warn(err)
-      toast.error('Plex could not write the artworks, nothing changed')
+      toast.error(t('artworks.toasts.failed'))
       setWriting(false)
       return
     }
 
     if (!written) {
-      toast.error('Written on Plex, Sensorr shows it after the next sync')
+      toast.error(t('artworks.toasts.later'))
     } else try {
       const saving = season
         ? api.query.shows.postShows({ body: { [entity.id]: { id: entity.id, plex_seasons: { ...season.seasons, [season.number]: { key: season.key, poster: written.poster } } } } })
@@ -293,34 +295,34 @@ const Picker = ({ behavior, entity, artworks, season, ratingKey, close }) => {
       await api.fetch(saving.uri, saving.params, saving.init)
     } catch (err) {
       console.warn(err)
-      toast.error('Written on Plex, Sensorr shows it after the next sync')
+      toast.error(t('artworks.toasts.later'))
     }
 
     setWriting(false)
 
     if (Object.keys(failed || {}).length) {
-      toast.error(`Plex refused the ${Object.keys(failed).join(' and ')}: ${Object.values(failed).join(', ')}`)
+      toast.error(t('artworks.toasts.refused', { kinds: new Intl.ListFormat(language).format(Object.keys(failed).map((kind) => t(`artworks.kinds.${kind}`).toLowerCase())), reasons: Object.values(failed).join(', ') }))
       setChosen((chosen) => Object.fromEntries(Object.entries(chosen).filter(([kind]) => kind in failed)))
       load()
       return
     }
 
-    toast.success('Artworks written on Plex')
+    toast.success(t('artworks.toasts.success'))
     close()
   }
 
   return (
-    <div ref={dialog} tabIndex={-1} sx={Picker.styles.element} role='dialog' aria-modal='true' aria-label={`Artworks of ${title}`} onKeyDown={trap}>
+    <div ref={dialog} tabIndex={-1} sx={Picker.styles.element} role='dialog' aria-modal='true' aria-label={t('artworks.dialog', { title })} onKeyDown={trap}>
       <div sx={Picker.styles.body} style={preview ? { '--artworks-preview': `${preview}px` } as any : undefined}>
         <div sx={Picker.styles.head}>
           <Warning
             emoji='🖼️'
-            title='Artworks'
+            title={t('artworks.title')}
             subtitle={(
               <span>
                 {season
-                  ? <>Choose the <strong>poster</strong> Plex shows for <strong>{title}</strong>, from Plex, TMDB or a pasted link</>
-                  : <>Choose the <strong>poster</strong>, <strong>backdrop</strong> and <strong>logo</strong> Plex shows for <strong>{title}</strong>, from Plex, TMDB, MediUX sets or a pasted link</>}
+                  ? <Trans t={t} i18nKey='artworks.subtitle.season' values={{ title }} components={[<strong />, <strong />]} />
+                  : <Trans t={t} i18nKey='artworks.subtitle.entity' values={{ title }} components={[<strong />, <strong />, <strong />, <strong />]} />}
               </span>
             )}
           />
@@ -337,11 +339,11 @@ const Picker = ({ behavior, entity, artworks, season, ratingKey, close }) => {
           <section sx={Picker.styles.section}>
             <h3>
               <span aria-hidden={true}>🎨</span>
-              Sets
+              {t('artworks.sets.title')}
               <span>{lists.loading ? '…' : (lists.sets || []).length}</span>
             </h3>
             {!lists.loading && lists.sets !== null && !lists.sets.length && (
-              <p sx={Picker.styles.empty}>No MediUX set for this title</p>
+              <p sx={Picker.styles.empty}>{t('artworks.sets.empty')}</p>
             )}
             <DragScroll sx={Picker.styles.row} onKeyDown={rove}>
               {(lists.sets || []).map((set, index) => (
@@ -349,7 +351,7 @@ const Picker = ({ behavior, entity, artworks, season, ratingKey, close }) => {
                   key={set.id}
                   type='button'
                   tabIndex={index ? -1 : 0}
-                  aria-label={['Set', set.title, set.author && `by ${set.author}`].filter(Boolean).join(' ')}
+                  aria-label={set.author ? t('artworks.sets.setBy', { title: set.title, author: set.author }) : t('artworks.sets.set', { title: set.title })}
                   sx={Picker.styles.set}
                   aria-pressed={[['poster', set.poster], ['backdrop', set.backdrop]].every(([kind, image]) => !image || chosen[kind]?.id === `mediux:${set.id}:${kind}`)}
                   title={[set.title, set.author].filter(Boolean).join(' · ')}
@@ -366,35 +368,35 @@ const Picker = ({ behavior, entity, artworks, season, ratingKey, close }) => {
             </DragScroll>
           </section>
         )}
-        {kinds.map(({ kind, emoji, label, width, height, size }) => (
+        {kinds.map(({ kind, emoji, width, height, size }) => (
           <section key={kind} sx={Picker.styles.section}>
             <h3>
               <span aria-hidden={true}>{emoji}</span>
-              {label}
+              {t(`artworks.kinds.${kind}`)}
               <span>{lists.loading ? '…' : groups[kind].reduce((count, { items, label }) => count + (label === 'links' ? 0 : items.length), 0)}</span>
             </h3>
             {adding === kind && (
               <Link
-                label={label}
+                label={t(`artworks.kinds.${kind}`)}
                 onAdd={(url) => { addLink(kind, url); setAdding(null) }}
                 onCancel={() => setAdding(null)}
                 disabled={writing}
               />
             )}
             {!lists.loading && !groups[kind].length && (
-              <p sx={Picker.styles.empty}>No {label.toLowerCase()} on Plex nor on TMDB, add one from a link</p>
+              <p sx={Picker.styles.empty}>{t('artworks.empty', { kind })}</p>
             )}
             {(groups[kind].length ? groups[kind] : [{ label: null, items: [] }]).map(({ label: group, items }, row) => (
               <div key={group || 'none'}>
-                {!!group && <small sx={Picker.styles.group}>{group} · {items.length}</small>}
+                {!!group && <small sx={Picker.styles.group}>{['current', 'others', 'links'].includes(group) ? t(`artworks.groups.${group}`) : group} · {items.length}</small>}
                 <DragScroll sx={Picker.styles.row} onKeyDown={rove}>
                   {!row && (
                     <button
                       type='button'
                       tabIndex={0}
-                      aria-label={`Add a ${label.toLowerCase()} from a link`}
+                      aria-label={t('artworks.add', { kind })}
                       aria-expanded={adding === kind}
-                      title='Paste a link: ThePosterDB, MediUX, any image'
+                      title={t('artworks.paste')}
                       sx={{ ...Picker.styles.add, width, height }}
                       onClick={() => setAdding(adding === kind ? null : kind)}
                       disabled={writing || (!lists.loading && !lists.plex)}
@@ -407,7 +409,7 @@ const Picker = ({ behavior, entity, artworks, season, ratingKey, close }) => {
                       key={candidate.id}
                       type='button'
                       tabIndex={-1}
-                      aria-label={`${label}, ${candidate.lang || 'no language'}, from ${candidate.source === 'link' ? hostOf(candidate.thumb) : candidate.source}${candidate.current ? ', current' : ''}`}
+                      aria-label={t('artworks.candidate', { label: t(`artworks.kinds.${kind}`), lang: candidate.lang || t('artworks.noLanguage'), source: candidate.source === 'link' ? hostOf(candidate.thumb) : candidate.source, current: String(!!candidate.current) })}
                       sx={{ ...Picker.styles.thumb, width, height, ...(kind === 'logo' ? Picker.styles.logo : {}) }}
                       aria-pressed={chosen[kind]?.id === candidate.id}
                       data-current={candidate.current}
@@ -416,7 +418,7 @@ const Picker = ({ behavior, entity, artworks, season, ratingKey, close }) => {
                       disabled={writing || !lists.plex}
                     >
                       <Picture path={candidate.thumb} size={size as any} empty={candidate.source === 'link' ? LinkEmpty : undefined} />
-                      {candidate.current && <em>current</em>}
+                      {candidate.current && <em>{t('artworks.current')}</em>}
                       <code>{candidate.source === 'link' ? hostOf(candidate.thumb) : candidate.lang || candidate.source}</code>
                     </button>
                   ))}
@@ -427,9 +429,9 @@ const Picker = ({ behavior, entity, artworks, season, ratingKey, close }) => {
         ))}
       </div>
       <div sx={Picker.styles.foot}>
-        <Button type='button' variant='outline' onClick={close} disabled={writing}>Cancel</Button>
+        <Button type='button' variant='outline' onClick={close} disabled={writing}>{t('ui.controls.cancel')}</Button>
         <Button type='button' onClick={apply} disabled={writing || !changed.length || !lists.plex}>
-          {writing ? 'Writing…' : 'Apply'}
+          {writing ? t('artworks.writing') : t('ui.controls.apply')}
         </Button>
       </div>
     </div>
@@ -701,9 +703,10 @@ Picker.styles = {
 // TMDB answers with CORS headers: its logos can be read to pick their tone
 const isTMDB = (path) => typeof path === 'string' && (path.startsWith('https://image.tmdb.org/') || /^\/[\w-]+\.\w+$/.test(path))
 
-const LinkEmpty = (props) => <small {...props} sx={{ fontFamily: 'monospace', fontSize: '0.6875em', color: 'grayDarkest', textAlign: 'center', height: 'auto !important', width: '90% !important' }}>Plex fetches it on Apply</small>
+const LinkEmpty = (props) => <small {...props} sx={{ fontFamily: 'monospace', fontSize: '0.6875em', color: 'grayDarkest', textAlign: 'center', height: 'auto !important', width: '90% !important' }}>{i18n.t('artworks.fetchOnApply')}</small>
 
 const Preview = ({ artworks, current: listed, chosen, reset, onHeight }) => {
+  const { t } = useTranslation()
   const api = useAPI()
   const element = useRef<HTMLDivElement>(null)
   const current = (kind: ArtworkKind) => listed[kind] || (artworks?.[kind] ? artworkOf(artworks[kind], null, api.access_token) : null)
@@ -725,9 +728,9 @@ const Preview = ({ artworks, current: listed, chosen, reset, onHeight }) => {
         <div sx={Preview.styles.poster} data-changed={!!chosen.poster}><Picture path={shown('poster')} size='w342' empty={chosen.poster?.link ? LinkEmpty : undefined} /></div>
         {shown('logo')
           ? <div sx={Preview.styles.logo} data-changed={!!chosen.logo} style={{ filter: LOGO_FILTERS[tone] }}><Picture path={shown('logo')} size='w500' empty={chosen.logo?.link ? LinkEmpty : undefined} onReady={onLogo} crossOrigin={isTMDB(shown('logo')) ? 'anonymous' : undefined} /></div>
-          : <div sx={Preview.styles.none}><small>No logo</small></div>}
+          : <div sx={Preview.styles.none}><small>{t('artworks.noLogo')}</small></div>}
       </div>
-      {edited && <button type='button' sx={Preview.styles.reset} onClick={reset}>Reset all</button>}
+      {edited && <button type='button' sx={Preview.styles.reset} onClick={reset}>{t('artworks.reset')}</button>}
     </div>
   )
 }
@@ -832,6 +835,7 @@ Preview.styles = {
 }
 
 const Link = ({ label, onAdd, onCancel, disabled = false }) => {
+  const { t } = useTranslation()
   const [value, setValue] = useState('')
   const [error, setError] = useState(null)
 
@@ -840,7 +844,7 @@ const Link = ({ label, onAdd, onCancel, disabled = false }) => {
     const url = linkOf(value)
 
     if (!url) {
-      setError('Not an image link')
+      setError(t('artworks.link.invalid'))
       return
     }
 
@@ -867,9 +871,9 @@ const Link = ({ label, onAdd, onCancel, disabled = false }) => {
   return (
     <form sx={Link.styles.element} onSubmit={submit} onKeyDown={cancel} onBlur={leave}>
       <div>
-        <input type='url' autoFocus={true} disabled={disabled} value={value} onChange={(e) => { setValue(e.target.value); setError(null) }} placeholder='Paste a link: ThePosterDB, MediUX, any image' aria-label={`${label} link`} aria-invalid={!!error} />
+        <input type='url' autoFocus={true} disabled={disabled} value={value} onChange={(e) => { setValue(e.target.value); setError(null) }} placeholder={t('artworks.paste')} aria-label={t('artworks.link.label', { label })} aria-invalid={!!error} />
         {/* Safari and Firefox on macOS do not focus a clicked button: the input would lose it to nothing, and close the form before Add */}
-        <Button type='submit' variant='outline' disabled={disabled || !value.trim()} onMouseDown={(e) => e.preventDefault()}>Add</Button>
+        <Button type='submit' variant='outline' disabled={disabled || !value.trim()} onMouseDown={(e) => e.preventDefault()}>{t('artworks.link.add')}</Button>
       </div>
       {!!error && <small role='alert'>{error}</small>}
     </form>

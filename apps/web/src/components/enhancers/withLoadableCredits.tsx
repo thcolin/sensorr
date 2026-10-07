@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { MovieProps } from '@sensorr/ui'
+import i18n from '@sensorr/i18n'
 import { utils } from '@sensorr/tmdb'
 import { usePersonsMetadataContext } from '../../contexts/PersonsMetadata/PersonsMetadata'
 import { useTMDB } from '../../store/tmdb'
@@ -28,7 +29,7 @@ export const useLoadableCredits = (id, includes, more) => {
     } catch (err) {
       setCredits([])
       console.warn(err)
-      toast.error('Error while fetching credits')
+      toast.error(i18n.t('enhancers.loadableCredits.error'))
     }
   }, [id, persons, credits])
 

@@ -1,8 +1,10 @@
 import { memo, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Picture, Empty, Guests, MovieState, PersonState, ShowState, reveal } from '@sensorr/ui'
 import { useGuestsContext } from '../../../contexts/Guests/Guests'
 
 const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, setState, requested_by = [], artworks = null, variant = 'page', ...props }) => {
+  const { t } = useTranslation()
   const guestsContext = useGuestsContext() as any
   const guests = useMemo(() => guestsContext.loading ? [] : (requested_by || []).reduce((guests, email) => [
     ...guests,
@@ -29,7 +31,7 @@ const UIPoster = ({ path, palette, ready, onReady, behavior = 'movie', state, se
       />
       {!!State && ready && state !== 'loading' && (
         <div sx={badge(drawer ? UIPoster.styles.astride : UIPoster.styles.state)}>
-          <State value={state} onChange={setState} compact={true} aria-label='State' />
+          <State value={state} onChange={setState} compact={true} aria-label={t('details.poster.state')} />
         </div>
       )}
       {!!artworks && ready && <div sx={badge(drawer ? UIPoster.styles.compact : UIPoster.styles.artworks)}>{artworks}</div>}

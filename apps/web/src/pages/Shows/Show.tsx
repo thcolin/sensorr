@@ -82,10 +82,10 @@ export const ShowContent = ({ id: drawn = null, variant = 'page', palette = null
   const proceedRelease = useCallback((release, choice) => setShowMetadata(Number(id), 'proposal', { id: release.id, choice }), [id])
   const banRelease = useCallback((release) => banShowRelease(Number(id), release.title), [id])
   // `setShowState` toasts a show it adds to or removes from the library, `setShowMetadata` nothing for a follow
-  const setState = useCallback(value => setShowState(Number(id), value).catch(() => inLibrary && toast.error('Error while following the show')), [id, setShowState, inLibrary])
+  const setState = useCallback(value => setShowState(Number(id), value).catch(() => inLibrary && toast.error(t('shows.show.errors.show'))), [id, setShowState, inLibrary, t])
   // A season is a bulk and toasts its own outcome, a single episode does not
   const followEpisodes = useCallback((ids, value) => setEpisodesMetadata(Number(id), ids, 'monitored', value)
-    .catch(() => ids.length === 1 && toast.error('Error while following the episode')), [id])
+    .catch(() => ids.length === 1 && toast.error(t('shows.show.errors.episode'))), [id, t])
 
   // Until the metadata tells whether the show is in the library, and its episodes load if it is, the seasons are
   // unknown: out of the library, their drawers would fetch TMDB for nothing
@@ -126,16 +126,16 @@ export const ShowContent = ({ id: drawn = null, variant = 'page', palette = null
         <ProgressPill {...progress} airing={diffusion.airing} followed={followed} detail={diffusion.detail} />
         {!!size && <ReleaseSize size={size} data-size={true} />}
         {!!pending && (
-          <a href={`#seasons-${id}`} onClick={toProposals} title={`${pending} pending proposal${pending > 1 ? 's' : ''}`} sx={ShowContent.styles.anchor}>
+          <a href={`#seasons-${id}`} onClick={toProposals} title={t('shows.seasons.proposed', { count: pending })} sx={ShowContent.styles.anchor}>
             <Badge emoji={EpisodeStatusOptions.proposed.emoji} label={pending} compact={true} size='small' />
           </a>
         )}
         {!!wanted && (
-          <Badge emoji={EpisodeStatusOptions.wanted.emoji} label={wanted} compact={true} size='small' title={`${wanted} wanted episode${wanted > 1 ? 's' : ''}`} />
+          <Badge emoji={EpisodeStatusOptions.wanted.emoji} label={wanted} compact={true} size='small' title={t('shows.show.wanted', { count: wanted })} />
         )}
       </span>,
     ]
-  }, [diffusion, progress, followed, episodes, proposals.rows.length, id])
+  }, [diffusion, progress, followed, episodes, proposals.rows.length, id, t])
 
   const additional = useMemo(() => ({
     externals: {
@@ -206,7 +206,7 @@ export const ShowContent = ({ id: drawn = null, variant = 'page', palette = null
     return (
       <Warning
         emoji='💢'
-        title='Sorry, unable to display show...'
+        title={t('shows.show.errors.display')}
         subtitle={show.error.message}
       />
     )
@@ -244,7 +244,7 @@ export const ShowContent = ({ id: drawn = null, variant = 'page', palette = null
       {episodesError ? (
         <Warning
           emoji='🚨'
-          title='Sorry, unable to load the episodes...'
+          title={t('shows.show.errors.episodes')}
           subtitle={episodesError.message}
         />
       ) : (

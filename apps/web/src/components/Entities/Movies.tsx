@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { Trans } from 'react-i18next'
 import { compose } from '@sensorr/utils'
 import { Entities, EntitiesProps } from '@sensorr/ui'
 import i18n from '@sensorr/i18n'
@@ -16,10 +17,10 @@ export const TrendingMovies = compose(
   withProps({
     empty: {
       emoji: '🍿',
-      title: "Oh no, your request didn't return results",
+      title: <Trans i18nKey='entities.empty.title' />,
       subtitle: (
         <span>
-          Try something like, what are the <em>highest rated</em> <em>science fiction</em> movies that <em>Tom Cruise</em> has been in ?
+          <Trans i18nKey='entities.movies.empty.subtitle' components={[<em />, <em />, <em />]} />
         </span>
       ),
     },
@@ -36,10 +37,10 @@ export const TheatresMovies = compose(
   withProps({
     empty: {
       emoji: '🍿',
-      title: "Oh no, your request didn't return results",
+      title: <Trans i18nKey='entities.empty.title' />,
       subtitle: (
         <span>
-          Try something like, what are the <em>highest rated</em> <em>science fiction</em> movies that <em>Tom Cruise</em> has been in ?
+          <Trans i18nKey='entities.movies.empty.subtitle' components={[<em />, <em />, <em />]} />
         </span>
       ),
     },
@@ -56,10 +57,10 @@ export const UpcomingMovies = compose(
   withProps({
     empty: {
       emoji: '🍿',
-      title: "Oh no, your request didn't return results",
+      title: <Trans i18nKey='entities.empty.title' />,
       subtitle: (
         <span>
-          Try something like, what are the <em>highest rated</em> <em>science fiction</em> movies that <em>Tom Cruise</em> has been in ?
+          <Trans i18nKey='entities.movies.empty.subtitle' components={[<em />, <em />, <em />]} />
         </span>
       ),
     },
@@ -73,10 +74,10 @@ export const DiscoverMovies = compose(
   withProps({
     empty: {
       emoji: '🍿',
-      title: "Oh no, your request didn't return results",
+      title: <Trans i18nKey='entities.empty.title' />,
       subtitle: (
         <span>
-          Try something like, what are the <em>highest rated</em> <em>science fiction</em> movies that <em>Tom Cruise</em> has been in ?
+          <Trans i18nKey='entities.movies.empty.subtitle' components={[<em />, <em />, <em />]} />
         </span>
       ),
     },
@@ -100,10 +101,10 @@ export const CalendarMovies = ({ dateMin = new Date(), dateMax, ...props }: Omit
     withProps({
       empty: {
         emoji: '🍿',
-        title: "Oh no, your request didn't return results",
+        title: <Trans i18nKey='entities.empty.title' />,
         subtitle: (
           <span>
-            Try something like, what are the <em>highest rated</em> <em>science fiction</em> movies that <em>Tom Cruise</em> has been in ?
+            <Trans i18nKey='entities.movies.empty.subtitle' components={[<em />, <em />, <em />]} />
           </span>
         ),
       },
@@ -120,10 +121,10 @@ export const LibraryMovies = compose(
   withProps({
     empty: {
       emoji: '🍿',
-      title: "Oh no, your request didn't return results",
+      title: <Trans i18nKey='entities.empty.title' />,
       subtitle: (
         <span>
-          Try something like, what are the <em>highest rated</em> <em>science fiction</em> movies that <em>Tom Cruise</em> has been in ?
+          <Trans i18nKey='entities.movies.empty.subtitle' components={[<em />, <em />, <em />]} />
         </span>
       ),
     },
@@ -139,10 +140,10 @@ export const ArchivedMovies = compose(
   withProps({
     empty: {
       emoji: '🍿',
-      title: "Oh no, your request didn't return results",
+      title: <Trans i18nKey='entities.empty.title' />,
       subtitle: (
         <span>
-          Try something like, what are the <em>highest rated</em> <em>science fiction</em> movies that <em>Tom Cruise</em> has been in ?
+          <Trans i18nKey='entities.movies.empty.subtitle' components={[<em />, <em />, <em />]} />
         </span>
       ),
     },

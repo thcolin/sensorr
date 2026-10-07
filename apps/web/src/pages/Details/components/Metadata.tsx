@@ -1,4 +1,5 @@
 import { memo, useId, useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { entryPolicy, Policy } from '@sensorr/sensorr'
 import { Bar, Icon, QuerySelect, Option } from '@sensorr/ui'
 import { useSensorr } from '../../../store/sensorr'
@@ -12,6 +13,7 @@ export const termsValuesOf = (query) => [
 ]
 
 const UIMetadata = ({ entity, metadata, setMetadata, help = true, lists = false, ...props }) => {
+  const { t } = useTranslation()
   const sensorr = useSensorr()
   const query = useMemo(() => sensorr.getQuery(entity, metadata.query), [entity?.id, metadata.query])
   const policy = useMemo(() => (!metadata.policy || typeof metadata.policy === 'string') ? new Policy(metadata.policy || entryPolicy({ original_language: entity?.original_language }, metadata, sensorr.policies)?.name || '', sensorr.policies) : metadata.policy, [metadata.policy, metadata.state, entity?.original_language, sensorr.policies])
@@ -30,7 +32,7 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, lists = false,
     <div>
       <div sx={lists ? { ...UIMetadata.styles.container, ...UIMetadata.styles.listed } : UIMetadata.styles.container}>
         <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.wide, ...UIMetadata.styles.line }}>
-          <span id={ids.terms}>Terms</span>
+          <span id={ids.terms}>{t('sensorr.terms.label')}</span>
           <QueryInput
             aria-labelledby={ids.terms}
             value={values.terms}
@@ -41,10 +43,10 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, lists = false,
               })
             }}
           />
-          {help && <small title="Sensorr will search for all selected terms on configured indexers">Sensorr will search for all selected terms on configured indexers</small>}
+          {help && <small title={t('sensorr.terms.help')}>{t('sensorr.terms.help')}</small>}
         </div>
         <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.column }}>
-          <span id={ids.years}>Years</span>
+          <span id={ids.years}>{t('sensorr.years.label')}</span>
           <QueryInput
             aria-labelledby={ids.years}
             value={values.years}
@@ -55,7 +57,7 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, lists = false,
               })
             }}
           />
-          {help && <small title="Sensorr will filter releases with selected years">Sensorr will filter releases with selected years</small>}
+          {help && <small title={t('sensorr.years.help')}>{t('sensorr.years.help')}</small>}
         </div>
         {lists && (
           <ListsInput
@@ -65,29 +67,29 @@ const UIMetadata = ({ entity, metadata, setMetadata, help = true, lists = false,
           />
         )}
         <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.column }}>
-          <span>Policy</span>
+          <span>{t('sensorr.policy.label')}</span>
           <PolicyInput
             value={policy}
             onChange={value => setMetadata('policy', value)}
           />
-          {help && <small title="Sensorr will apply selected policy to sort and select the best release">Sensorr will apply selected policy to sort and select the best release</small>}
+          {help && <small title={t('details.preferences.policy')}>{t('details.preferences.policy')}</small>}
         </div>
         {help && (
           <div sx={UIMetadata.styles.options}>
             <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.option }}>
-              <span>Refine for better release</span>
+              <span>{t('details.preferences.refine.label')}</span>
               <OptionInput
                 id={`refine-${entity?.id}`}
-                children="Sensorr will regularly search for better release than the current archived one"
+                children={t('details.preferences.refine.help')}
                 value={metadata?.refine}
                 onChange={value => setMetadata('refine', value)}
               />
             </div>
             <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.option }}>
-              <span>Shrink for smaller release</span>
+              <span>{t('details.preferences.shrink.label')}</span>
               <OptionInput
                 id={`shrink-${entity?.id}`}
-                children="Sensorr will regularly search for smaller release than the current archived one"
+                children={t('details.preferences.shrink.help')}
                 value={metadata?.shrink}
                 onChange={value => setMetadata('shrink', value)}
               />
@@ -229,24 +231,25 @@ export const MetadataStyles = UIMetadata.styles
 
 // The custom lists of a movie or a show; a name typed starts a new one
 const UIListsInput = ({ media, value = [], onChange, disabled = false }) => {
+  const { t } = useTranslation()
   const { lists, idsOf } = useCustomLists(media)
   const options = useMemo(() => lists.map((list) => ({ value: list.id, label: list.name })), [lists])
   const id = useId()
 
   return (
     <div sx={{ ...UIMetadata.styles.block, ...UIMetadata.styles.wide, ...UIMetadata.styles.line }}>
-      <span id={id}>Lists</span>
+      <span id={id}>{t('lists.action.label')}</span>
       <fieldset disabled={disabled} aria-labelledby={id} sx={UIMetadata.styles.fieldset}>
         <QueryInput
           options={options}
-          placeholder='Add to a list'
+          placeholder={t('details.lists.placeholder')}
           aria-labelledby={id}
           value={options.filter((option) => (value || []).includes(option.value))}
           // The metadata contexts tell a failure in their toast
           onChange={(values) => idsOf(values).then(onChange).catch(() => null)}
         />
       </fieldset>
-      <small title='Type a new name to create a list'>Type a new name to create a list</small>
+      <small title={t('details.lists.help')}>{t('details.lists.help')}</small>
     </div>
   )
 }
@@ -426,6 +429,7 @@ const UIQueryInput = ({ value, onChange, direction = 'row', options = [], placeh
 export const QueryInput = memo(UIQueryInput)
 
 const UIPolicyInput = ({ value, onChange, ...props }) => {
+  const { t } = useTranslation()
   const sensorr = useSensorr()
 
   return (
@@ -442,7 +446,7 @@ const UIPolicyInput = ({ value, onChange, ...props }) => {
         ))}
       </select>
       <span sx={UIPolicyInput.styles.container}>
-        <span>{value?.name || 'default'}</span>
+        <span>{value?.name || t('details.preferences.defaultPolicy')}</span>
       </span>
       <span sx={UIPolicyInput.styles.button}>
         <Icon value='chevron' direction={false} width='0.625em' height='0.625em' />
