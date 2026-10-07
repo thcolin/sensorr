@@ -1,4 +1,5 @@
 import type { WrappedTheme } from '@sensorr/sensorr'
+import type { Translator } from '@sensorr/i18n/server'
 
 // Mail clients ignore stylesheets and most modern CSS: every mail is tables with inline styles, fonts fall back in Gmail
 export interface Mail {
@@ -27,47 +28,47 @@ const GREEN = '#01d076'
 // The test card of the app, `apps/web/src/layout/LoadingBar.tsx`
 const BARS = ['rgb(235, 235, 235)', 'rgb(235, 235, 16)', 'rgb(16, 235, 235)', 'rgb(16, 235, 16)', 'rgb(235, 16, 235)', 'rgb(235, 16, 16)', 'rgb(16, 16, 235)']
 
-const LOOKS: Record<WrappedTheme, { band: (year: number) => string, button: { background: string, color: string, font?: string } }> = {
+const LOOKS: Record<WrappedTheme, { band: (year: number, label: string) => string, button: { background: string, color: string, font?: string } }> = {
   tele: {
-    band: (year) => `
+    band: (year, label) => `
       ${stripe(['#f4efe4', '#f8d44a', '#63b7c9', '#5aa457', '#b14e9e', '#d1312b', '#2135a3'], 44)}
       <tr><td style="background:#f4efe4;padding:22px 26px 20px">
-        <div style="font:400 12px/1 ${MONO};letter-spacing:2px;text-transform:uppercase;color:#5c564a">Rétrospective</div>
+        <div style="font:400 12px/1 ${MONO};letter-spacing:2px;text-transform:uppercase;color:#5c564a">${label}</div>
         <div style="font:italic 800 44px/1 'Barlow Condensed','Arial Narrow',Arial,sans-serif;color:#d1312b;padding-top:6px">${year}</div>
       </td></tr>`,
     button: { background: '#d1312b', color: '#ffffff', font: `italic 600 16px/1 ${BODY}` },
   },
   labo: {
-    band: (year) => `
+    band: (year, label) => `
       ${perforations()}
       <tr><td style="background:#2a1c12;padding:18px 26px">
-        <div style="font:400 12px/1 ${MONO};letter-spacing:2px;text-transform:uppercase;color:#ff4b1f">Rétrospective</div>
+        <div style="font:400 12px/1 ${MONO};letter-spacing:2px;text-transform:uppercase;color:#ff4b1f">${label}</div>
         <div style="font:800 46px/1 'Big Shoulders Display','Arial Narrow',Arial,sans-serif;color:#ffb238;padding-top:6px">${year}</div>
       </td></tr>
       ${perforations()}`,
     button: { background: '#ffb238', color: '#120c08' },
   },
   videoclub: {
-    band: (year) => `
+    band: (year, label) => `
       ${stripe(['#ff3fa4', '#3ef2ff', '#ff3fa4'], 6)}
       <tr><td style="background:#221a3d;padding:34px 26px 20px">
-        <div style="font:400 12px/1 ${MONO};letter-spacing:2px;text-transform:uppercase;color:#3ef2ff">Rétrospective</div>
+        <div style="font:400 12px/1 ${MONO};letter-spacing:2px;text-transform:uppercase;color:#3ef2ff">${label}</div>
         <div style="font:400 44px/1 'Tilt Neon','Trebuchet MS',sans-serif;color:#ff3fa4;text-shadow:0 0 6px #ff3fa4;padding-top:6px">${year}</div>
       </td></tr>`,
     button: { background: '#ff3fa4', color: '#0c0a1a' },
   },
   scenario: {
-    band: (year) => `
+    band: (year, label) => `
       <tr><td style="background:#fbfaf5;padding:40px 26px 20px">
-        <div style="font:700 14px/1 'Courier Prime','Courier New',monospace;color:#a3201a">Rétrospective</div>
+        <div style="font:700 14px/1 'Courier Prime','Courier New',monospace;color:#a3201a">${label}</div>
         <div style="font:700 28px/1.2 'Courier Prime','Courier New',monospace;color:#1b1a17;padding-top:8px"><span style="background:#fff06a;padding:0 4px">${year}</span></div>
       </td></tr>`,
     button: { background: '#fbfaf5', color: '#1b1a17', font: `700 16px/1 'Courier Prime','Courier New',monospace` },
   },
   affiche: {
-    band: (year) => `
+    band: (year, label) => `
       <tr><td style="background:#b8955a;padding:40px 26px 20px">
-        <div style="font:600 12px/1 ${BODY};letter-spacing:2px;text-transform:uppercase;color:#241a2e">Rétrospective</div>
+        <div style="font:600 12px/1 ${BODY};letter-spacing:2px;text-transform:uppercase;color:#241a2e">${label}</div>
         <div style="font:400 42px/1 'Permanent Marker',Impact,'Arial Black',sans-serif;color:#241a2e;padding-top:6px">${year}</div>
       </td></tr>
       ${stripe(['#5c4668', '#b3221a', '#5c4668'], 8)}`,
@@ -98,13 +99,13 @@ function button(label: string, href: string, look: { background: string, color: 
   return `<table role="presentation" cellpadding="0" cellspacing="0"${center ? ' align="center" style="margin:0 auto"' : ''}><tr><td style="background:${look.background};mso-padding-alt:17px 24px"><a href="${escape(safe(href))}" style="display:inline-block;padding:17px 24px;font:${look.font || `600 16px/1 ${BODY}`};color:${look.color};text-decoration:none">${escape(label)}</a></td></tr></table>`
 }
 
-function plain(href: string) {
-  return `<p style="margin:16px 0 0;font:400 13px/1.4 ${MONO};color:#808080;word-break:break-all">or open ${escape(href)}</p>`
+function plain(t: Translator, href: string) {
+  return `<p style="margin:16px 0 0;font:400 13px/1.4 ${MONO};color:#808080;word-break:break-all">${escape(t('mail.or', { href }))}</p>`
 }
 
-function document(subject: string, rows: string, preheader = '') {
+function document(t: Translator, subject: string, rows: string, preheader = '') {
   return `<!doctype html>
-<html lang="en">
+<html lang="${t.language}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -127,6 +128,7 @@ ${rows}
 }
 
 interface Layout {
+  t: Translator
   subject: string
   picto: Picto
   word: string
@@ -138,8 +140,8 @@ interface Layout {
   foot: string[]
 }
 
-function layout({ subject, picto, word, greeting, title, paragraphs, arrivals, action, foot }: Layout): Mail {
-  const html = document(subject, `
+function layout({ t, subject, picto, word, greeting, title, paragraphs, arrivals, action, foot }: Layout): Mail {
+  const html = document(t, subject, `
 ${stripe(BARS, 6)}
 <tr><td align="center" style="background:${CARD};padding:30px 26px 24px">
   <img src="cid:${picto}" width="72" height="72" alt="" style="display:block;border:0;width:72px;height:72px">
@@ -151,7 +153,7 @@ ${stripe(BARS, 6)}
   ${paragraphs.map((paragraph) => `<p style="margin:0 0 22px">${escape(paragraph)}</p>`).join('')}
   ${arrivals?.length ? posters(arrivals) : ''}
   ${button(action.label, action.href)}
-  ${plain(action.href)}
+  ${plain(t, action.href)}
 </td></tr>
 <tr><td style="border-top:1px solid #262626;padding:18px 26px 22px;text-align:center;font:400 13px/1.5 ${BODY};color:#8c8c8c">${foot.join(' ')}</td></tr>`, paragraphs[0])
 
@@ -188,108 +190,113 @@ const SHOWN = 12
 const link = (href: string, label: string) => `<a href="${escape(safe(href))}" style="color:#b8b8b8">${escape(label)}</a>`
 
 export const mails = {
-  test: ({ url }: { url: string }) => layout({
-    subject: 'Mail works',
+  test: ({ t, url }: { t: Translator, url: string }) => layout({
+    t,
+    subject: t('mail.test.subject'),
     picto: 'test',
-    word: 'Test',
-    title: 'Mail works',
-    paragraphs: ['Your friends will get their invitation, welcome, reminders, movies ready to watch and wrapped from this address.'],
-    action: { label: 'Open the Mail settings', href: `${url}/settings/mail` },
-    foot: ['Sent by your Sensorr from its Mail settings.'],
+    word: t('mail.test.word'),
+    title: t('mail.test.subject'),
+    paragraphs: [t('mail.test.paragraph')],
+    action: { label: t('mail.test.action'), href: `${url}/settings/mail` },
+    foot: [t('mail.test.foot')],
   }),
-  invitation: ({ url, sender, service, name }: { url: string, sender: string, service: string, name?: string }) => layout({
-    subject: `${sender} invites you to share your movie wishes`,
+  invitation: ({ t, url, sender, service, name }: { t: Translator, url: string, sender: string, service: string, name?: string }) => layout({
+    t,
+    subject: t('mail.invitation.subject', { sender }),
     picto: 'invitation',
-    word: 'Invitation',
-    greeting: name ? `Hi ${name},` : undefined,
-    title: `${sender} invites you to share your movie wishes`,
-    paragraphs: [`Add movies to your Plex Watchlist, and ${service} gets them for you on ${sender}'s Plex. Connect your Plex account once to start, it takes a minute.`],
-    action: { label: 'Connect my Plex', href: `${url}/keep-in-touch` },
-    foot: [`Sent by ${escape(sender)} with Sensorr. You got this mail because ${escape(sender)} ${name ? 'shares their Plex with you' : 'typed your address'}.`],
+    word: t('mail.invitation.word'),
+    greeting: name ? t('mail.greeting', { name }) : undefined,
+    title: t('mail.invitation.subject', { sender }),
+    paragraphs: [t('mail.invitation.paragraph', { sender, service })],
+    action: { label: t('mail.invitation.action'), href: `${url}/keep-in-touch` },
+    foot: [escape(t('mail.invitation.foot', { sender, named: name ? 'yes' : 'no' }))],
   }),
-  welcome: ({ url, sender, service, name, wrapped }: { url: string, sender: string, service: string, name: string, wrapped?: string }) => layout({
-    subject: "You're all set",
+  welcome: ({ t, url, sender, service, name, wrapped }: { t: Translator, url: string, sender: string, service: string, name: string, wrapped?: string }) => layout({
+    t,
+    subject: t('mail.welcome.subject'),
     picto: 'welcome',
-    word: 'Welcome',
-    greeting: `Hi ${name},`,
-    title: "You're all set",
+    word: t('mail.welcome.word'),
+    greeting: t('mail.greeting', { name }),
+    title: t('mail.welcome.subject'),
     paragraphs: [
-      `Every movie you add to your Plex Watchlist now reaches ${service}. You will get a mail when your movies are ready to watch.`,
-      ...(wrapped ? [`Your year on ${sender}'s Plex has its own page too, it fills up as you watch: ${url}/wrapped/${wrapped}`] : []),
+      t('mail.welcome.paragraph', { service }),
+      ...(wrapped ? [t('mail.welcome.wrapped', { sender, href: `${url}/wrapped/${wrapped}` })] : []),
     ],
-    action: { label: 'Open my Watchlist', href: 'https://app.plex.tv/desktop/#!/watchlist' },
-    foot: [`Sent by ${escape(sender)} with Sensorr.`],
+    action: { label: t('mail.watchlist'), href: 'https://app.plex.tv/desktop/#!/watchlist' },
+    foot: [escape(t('mail.sent', { sender }))],
   }),
-  reconnect: ({ url, sender, service, name, reminder, unsubscribe }: { url: string, sender: string, service: string, name: string, reminder: number, unsubscribe: string }) => layout({
-    subject: `Your movie wishes no longer reach ${service}`,
+  reconnect: ({ t, url, sender, service, name, reminder, unsubscribe }: { t: Translator, url: string, sender: string, service: string, name: string, reminder: number, unsubscribe: string }) => layout({
+    t,
+    subject: t('mail.reconnect.subject', { service }),
     picto: 'reconnect',
-    word: 'Reconnect',
-    greeting: `Hi ${name},`,
-    title: 'Reconnect your Plex account',
-    paragraphs: [`Plex disconnected your account from ${service}, so the movies you add to your Watchlist no longer reach it. Reconnect once and it works again.`],
-    action: { label: 'Reconnect Plex', href: `${url}/keep-in-touch` },
-    foot: [`Sent by ${escape(sender)} with Sensorr.`, reminder ? `Reminder ${reminder} of 3.` : '', link(unsubscribe, 'Stop these reminders')].filter(Boolean),
+    word: t('mail.reconnect.word'),
+    greeting: t('mail.greeting', { name }),
+    title: t('mail.reconnect.title'),
+    paragraphs: [t('mail.reconnect.paragraph', { service })],
+    action: { label: t('mail.reconnect.action'), href: `${url}/keep-in-touch` },
+    foot: [escape(t('mail.sent', { sender })), reminder ? escape(t('mail.reconnect.reminder', { reminder })) : '', link(unsubscribe, t('mail.reconnect.stop'))].filter(Boolean),
   }),
-  reconnected: ({ sender, service, name }: { sender: string, service: string, name: string }) => layout({
-    subject: `Your movie wishes reach ${service} again`,
+  reconnected: ({ t, sender, service, name }: { t: Translator, sender: string, service: string, name: string }) => layout({
+    t,
+    subject: t('mail.reconnected.subject', { service }),
     picto: 'reconnect',
-    word: 'Reconnected',
-    greeting: `Hi ${name},`,
-    title: "You're reconnected",
-    paragraphs: [`Every movie you add to your Plex Watchlist reaches ${service} again.`],
-    action: { label: 'Open my Watchlist', href: 'https://app.plex.tv/desktop/#!/watchlist' },
-    foot: [`Sent by ${escape(sender)} with Sensorr.`],
+    word: t('mail.reconnected.word'),
+    greeting: t('mail.greeting', { name }),
+    title: t('mail.reconnected.title'),
+    paragraphs: [t('mail.reconnected.paragraph', { service })],
+    action: { label: t('mail.watchlist'), href: 'https://app.plex.tv/desktop/#!/watchlist' },
+    foot: [escape(t('mail.sent', { sender }))],
   }),
-  requests: ({ sender, name, arrivals, unsubscribe }: { sender: string, name: string, arrivals: Arrival[], unsubscribe: string }) => layout({
-    subject: arrivals.length === 1 ? `${arrivals[0].title} is ready to watch` : `${arrivals.length} of your requests are ready to watch`,
+  requests: ({ t, sender, name, arrivals, unsubscribe }: { t: Translator, sender: string, name: string, arrivals: Arrival[], unsubscribe: string }) => layout({
+    t,
+    subject: t('mail.requests.subject', { count: arrivals.length, title: arrivals[0]?.title }),
     picto: 'requests',
-    word: 'Ready to watch',
-    greeting: `Hi ${name},`,
-    title: arrivals.length === 1 ? `${arrivals[0].title} is ready to watch` : `${arrivals.length} of your requests are ready to watch`,
-    paragraphs: [`${arrivals.length === 1 ? 'It just reached' : 'They just reached'} ${sender}'s Plex.`, ...(arrivals.length > SHOWN ? [`And ${arrivals.length - SHOWN} more, all on Plex.`] : [])],
+    word: t('mail.requests.word'),
+    greeting: t('mail.greeting', { name }),
+    title: t('mail.requests.subject', { count: arrivals.length, title: arrivals[0]?.title }),
+    paragraphs: [t('mail.requests.paragraph', { count: arrivals.length, sender }), ...(arrivals.length > SHOWN ? [t('mail.requests.more', { count: arrivals.length - SHOWN })] : [])],
     arrivals: arrivals.slice(0, SHOWN),
-    action: { label: 'Open Plex', href: 'https://app.plex.tv' },
-    foot: [`Sent by ${escape(sender)} with Sensorr, once a week when something new arrives.`, link(unsubscribe, 'Stop these mails')],
+    action: { label: t('mail.requests.action'), href: 'https://app.plex.tv' },
+    foot: [escape(t('mail.requests.foot', { sender })), link(unsubscribe, t('mail.requests.stop'))],
   }),
-  wrapped: ({ url, sender, name, token, year, look, open = false }: { url: string, sender: string, name: string, token: string, year: number, look: WrappedTheme, open?: boolean }): Mail => {
+  wrapped: ({ t, url, sender, name, token, year, look, open = false }: { t: Translator, url: string, sender: string, name: string, token: string, year: number, look: WrappedTheme, open?: boolean }): Mail => {
     // Sent by hand before the edition closes, the page is still filling up
-    const subject = open ? `Your ${year} on Plex, so far` : `Your ${year} on Plex is ready`
-    const title = open ? 'Your year on Plex, so far' : 'Your year on Plex is ready'
-    const body = open
-      ? `Every evening you spent on ${sender}'s Plex since 1 December ${year - 1}, on one page made for you. It fills up until 1 December ${year}.`
-      : `Every evening you spent on ${sender}'s Plex, from 1 December ${year - 1} to 1 December ${year}, on one page made for you.`
+    // Years go as strings, a number would be formatted 2,026
+    const values = { open: open ? 'yes' : 'no', sender, year: String(year), previous: String(year - 1) }
+    const subject = t('mail.wrapped.subject', values)
+    const title = t('mail.wrapped.title', values)
+    const body = t('mail.wrapped.body', values)
+    const foot = t('mail.wrapped.foot', values)
     const href = `${url}/wrapped/${token}`
     const { band, button: colors } = LOOKS[look] || LOOKS.tele
-    const html = document(subject, `
-${band(year)}
+    const html = document(t, subject, `
+${band(year, escape(t('mail.wrapped.band')))}
 <tr><td style="padding:30px 26px 28px;font:400 16px/1.6 ${BODY};color:#e6e6e6">
-  <p style="margin:0 0 14px;color:#bfbfbf">Hi ${escape(name)},</p>
+  <p style="margin:0 0 14px;color:#bfbfbf">${escape(t('mail.greeting', { name }))}</p>
   <h1 style="margin:0 0 14px;font:800 26px/1.25 ${DISPLAY};color:#ffffff">${escape(title)}</h1>
   <p style="margin:0 0 22px">${escape(body)}</p>
-  ${button('Open my wrapped', href, colors, false)}
-  ${plain(href)}
+  ${button(t('mail.wrapped.action'), href, colors, false)}
+  ${plain(t, href)}
 </td></tr>
-<tr><td style="border-top:1px solid #262626;padding:18px 26px 22px;font:400 13px/1.5 ${BODY};color:#8c8c8c">Sent by ${escape(sender)} with Sensorr${open ? '' : ', once a year'}.</td></tr>`, body)
-    const text = [`Hi ${name},`, title, body, `Open my wrapped: ${href}`, `Sent by ${sender} with Sensorr${open ? '' : ', once a year'}.`].join('\n\n')
+<tr><td style="border-top:1px solid #262626;padding:18px 26px 22px;font:400 13px/1.5 ${BODY};color:#8c8c8c">${escape(foot)}</td></tr>`, body)
+    const text = [t('mail.greeting', { name }), title, body, `${t('mail.wrapped.action')}: ${href}`, foot].join('\n\n')
     return { subject, html, text }
   },
 }
 
-const KINDS: Record<string, string> = { reconnect: 'the reminders to reconnect your Plex account', requests: 'the weekly mail of your requests ready to watch' }
-
 // The page behind an unsubscribe link: a mail scanner opens every link, so opening it stops nothing until the button is pressed
-export const unsubscribePage = ({ kind, done, found }: { kind: string, done: boolean, found: boolean }) => {
-  const what = KINDS[kind]
-  const title = !what || !found ? 'This link no longer works' : done ? 'Done, no more of these mails' : 'Stop these mails?'
-  const body = !what || !found
-    ? 'Ask the person who sent you the mail to stop it for you.'
-    : done ? `You will no longer get ${what}.` : `You will no longer get ${what}. The other mails keep coming.`
+export const unsubscribePage = ({ t, kind, done, found }: { t: Translator, kind: string, done: boolean, found: boolean }) => {
+  const known = ['reconnect', 'requests'].includes(kind) && found
+  const what = known && t(`mail.unsubscribe.kinds.${kind}`)
+  const state = !known ? 'broken' : done ? 'done' : 'ask'
+  const title = t(`mail.unsubscribe.${state}.title`)
+  const body = t(`mail.unsubscribe.${state}.body`, { what })
 
-  return document(title, `
+  return document(t, title, `
 ${stripe(BARS, 6)}
 <tr><td align="center" style="padding:40px 26px;text-align:center;font:400 16px/1.6 ${BODY};color:#e6e6e6">
   <h1 style="margin:0 0 14px;font:800 26px/1.25 ${DISPLAY};color:#ffffff">${escape(title)}</h1>
   <p style="margin:0 0 22px">${escape(body)}</p>
-  ${what && found && !done ? `<form method="post"><button type="submit" style="border:0;cursor:pointer;background:${GREEN};color:#000000;padding:17px 24px;font:600 16px/1 ${BODY}">Stop these mails</button></form>` : ''}
+  ${state === 'ask' ? `<form method="post"><button type="submit" style="border:0;cursor:pointer;background:${GREEN};color:#000000;padding:17px 24px;font:600 16px/1 ${BODY}">${escape(t('mail.unsubscribe.action'))}</button></form>` : ''}
 </td></tr>`)
 }

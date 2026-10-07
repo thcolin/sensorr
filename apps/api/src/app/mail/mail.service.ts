@@ -6,6 +6,7 @@ import { Model } from 'mongoose'
 import { BadGatewayException, BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { createTransport } from 'nodemailer'
+import { translatorOf } from '@sensorr/i18n/server'
 import { ConfigService } from '../config/config.service'
 import { Guest as GuestDocument } from '../guests/guest.schema'
 import { Movie } from '../movies/movie.schema'
@@ -63,6 +64,10 @@ export class MailService {
 
   sender() {
     return senderOf(this.config.get('mail.from'))
+  }
+
+  t() {
+    return translatorOf(this.config.get('region'))
   }
 
   // Read once from Tautulli, asked again an hour after a failure; without it the wrapped page names no server
@@ -156,7 +161,7 @@ export class MailService {
 
     for (const { email, name } of invitees) {
       try {
-        await this.send(email, mails.invitation({ url: this.url(), sender: this.sender(), service, name }))
+        await this.send(email, mails.invitation({ t: this.t(), url: this.url(), sender: this.sender(), service, name }))
       } catch (error) {
         this.logger.warn(`Invitation "${email}" not sent: ${error.message}`)
         results.push({ email, error: error.message })
@@ -193,7 +198,7 @@ export class MailService {
       const movies = await this.movieModel.find({ requested_by: guest.email, archived_at: { $gt: since } }, { title: 1, release_date: 1, poster_path: 1, plex_url: 1, archived_at: 1 }).lean()
       const shows = await this.showModel.find({ requested_by: guest.email }, { name: 1, poster_path: 1 }).lean()
       const episodes = shows.length ? await this.episodeModel.find({ show_id: { $in: shows.map(({ _id }) => _id) }, files_at: { $gt: since } }, { show_id: 1, season_number: 1, files_at: 1 }).lean() : []
-      const arrivals = arrivalsOf({ movies: movies as any, shows: shows as any, episodes: episodes as any })
+      const arrivals = arrivalsOf(this.t(), { movies: movies as any, shows: shows as any, episodes: episodes as any })
 
       if (!arrivals.length) {
         continue
@@ -201,7 +206,7 @@ export class MailService {
 
       try {
         const { href, headers } = await this.unsubscribeOf(guest.email, 'requests')
-        await this.send(guest.email, mails.requests({ sender: this.sender(), name: guest.name, arrivals, unsubscribe: href }), headers)
+        await this.send(guest.email, mails.requests({ t: this.t(), sender: this.sender(), name: guest.name, arrivals, unsubscribe: href }), headers)
         await this.guestModel.updateOne({ email: guest.email }, { requests_mailed_at: now })
         mailed++
       } catch (error) {
