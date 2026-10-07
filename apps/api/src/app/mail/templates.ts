@@ -261,8 +261,7 @@ export const mails = {
   }),
   wrapped: ({ t, url, sender, name, token, year, look, open = false }: { t: Translator, url: string, sender: string, name: string, token: string, year: number, look: WrappedTheme, open?: boolean }): Mail => {
     // Sent by hand before the edition closes, the page is still filling up
-    // Years go as strings, a number would be formatted 2,026
-    const values = { open: open ? 'yes' : 'no', sender, year: String(year), previous: String(year - 1) }
+    const values = { open: open ? 'yes' : 'no', sender, year, previous: year - 1 }
     const subject = t('mail.wrapped.subject', values)
     const title = t('mail.wrapped.title', values)
     const body = t('mail.wrapped.body', values)

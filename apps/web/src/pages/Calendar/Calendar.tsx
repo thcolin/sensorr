@@ -259,7 +259,7 @@ const nav = (areas: string[]) => ({
 })
 
 const controls = ({ release, sort = false, hooks = {}, useStatistics }) => withControls({
-  title: i18n.t('pages.calendar.title'),
+  get title() { return i18n.t('pages.calendar.title') },
   useStatistics,
   hooks,
   layout: {

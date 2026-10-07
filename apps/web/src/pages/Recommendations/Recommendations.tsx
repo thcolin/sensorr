@@ -34,7 +34,7 @@ export const Recommendations = (id) => compose(
   }),
   withFetchQuery({ uri: `movie/${id}/recommendations` }, 1, useTMDB, useControlsHistoryState),
   withControls({
-    title: i18n.t('pages.recommendations.title'),
+    get title() { return i18n.t('pages.recommendations.title') },
     useStatistics,
     hooks: {
       onChange: () => scrollToTop(),

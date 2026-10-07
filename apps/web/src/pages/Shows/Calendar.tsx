@@ -187,7 +187,7 @@ const useStatistics = () => {
 const VIEWS = ['calendar', 'list']
 
 const controls = (fields, hooks = {}) => withControls({
-  title: i18n.t('pages.calendar.title'),
+  get title() { return i18n.t('pages.calendar.title') },
   useStatistics,
   hooks,
   layout: { nav, aside },

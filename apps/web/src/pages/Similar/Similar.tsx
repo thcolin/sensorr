@@ -34,7 +34,7 @@ export const Similar = (id) => compose(
   }),
   withFetchQuery({ uri: `movie/${id}/similar` }, 1, useTMDB, useControlsHistoryState),
   withControls({
-    title: i18n.t('pages.similar.title'),
+    get title() { return i18n.t('pages.similar.title') },
     useStatistics,
     hooks: {
       onChange: () => scrollToTop(),

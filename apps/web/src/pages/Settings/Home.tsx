@@ -6,7 +6,7 @@ import { nanoid } from 'nanoid'
 import { DndContext, DragOverlay, PointerSensor, closestCenter, pointerWithin, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core'
 import { Button, Option } from '@sensorr/ui'
 import { emojize, useTitle } from '@sensorr/utils'
-import { languageOf } from '@sensorr/i18n'
+import { LANGUAGES, languageOf } from '@sensorr/i18n'
 import Body from '../../layout/Body/Body'
 import { useConfigContext } from '../../contexts/Config/Config'
 import { BUILTINS, GROUPABLE, LOCKED, HomeKey, List, Row, dropRow, fits, isGroup, listRowId, listsOf, rowsOf } from '../Home/rows'
@@ -104,7 +104,7 @@ const Home = ({ ...props }) => {
             }}
             options={[
               { value: 'auto', label: t('settings.home.language.auto', { language: t(`settings.home.language.options.${languageOf({ region: config.get('region') })}`) }) },
-              ...['en', 'fr'].map((value) => ({ value, label: <span lang={value}>{t(`settings.home.language.options.${value}`)}</span> })),
+              ...LANGUAGES.map((value) => ({ value, label: <span lang={value}>{t(`settings.home.language.options.${value}`)}</span> })),
             ]}
           />
           <h2 id='home-home' sx={{ marginTop: '2em' }}>{t('settings.sections.home')}</h2>
