@@ -20,6 +20,8 @@ const SHOWS = 12
 const PERSONS = 12
 const DAY = 86400000
 const NOW = Date.now()
+// The friend whose Plex watchlist became requests
+const FRIEND = 'alex@sensorr.demo'
 
 const hash = (value: string) => [...value].reduce((acc, char) => (Math.imul(acc ^ char.charCodeAt(0), 16777619) >>> 0), 2166136261)
 
@@ -117,13 +119,13 @@ const log = (job: { id: string, command: string, type: string, at: number }, off
 })
 
 // A run of a job, as the CLI logs it: opening, counters, the lines of each movie, closing
-const run = (command: string, type: string, at: number, description: string, counters: { [key: string]: [string, number] }, lines: (job: any, offset: () => number) => any[]) => {
+const run = (command: string, type: string, at: number, description: string, counters: { [key: string]: [string, number, object?] }, lines: (job: any, offset: () => number) => any[]) => {
   const job = { id: jobId(), command, type, at }
   let elapsed = 0
   const offset = () => (elapsed += 1 + Math.floor(next() * 6))
   const logs = [
-    log(job, 0, description, { config: config().jobs[command]?.[type] || {}, summary: true }),
-    ...Object.entries(counters).filter(([, [, count]]) => count).map(([key, [message, count]]) => log(job, 1, `${message.replace('%d', `${count}`)}`, { summary: { [key]: count } })),
+    log(job, 0, description, { config: config().jobs[command]?.[`${type}s`] || {}, summary: true }),
+    ...Object.entries(counters).filter(([, [, count]]) => count).map(([key, [message, count, extra]]) => log(job, 1, `${message.replace('%d', `${count}`)}`, { summary: { [key]: count, ...extra } })),
     ...lines(job, offset),
   ]
 
@@ -175,10 +177,9 @@ const movies = async () => {
         results: (movie.release_dates?.results || []).map((result) => ({ ...result, release_dates: result.release_dates.map((date) => ({ ...date, release_date: iso(date.release_date) })) })),
       },
       state: owned ? state : (state === 'archived' ? 'wished' : state),
-      query: { titles: [...new Set([movie.title, movie.original_title])], terms: [movie.title.replace(/[^\p{L}\p{N}\s]/gu, '')], years: [year] },
       updated_at: NOW - Math.floor(next() * 200) * DAY,
       ...(owned ? { archived_at: NOW - Math.floor(next() * 700) * DAY, releases: [owned] } : { releases: [] }),
-      ...(next() < 0.08 ? { requested_by: ['a.friend@sensorr.demo'], requested_at: NOW - Math.floor(next() * 30) * DAY } : {}),
+      ...(next() < 0.08 ? { requested_by: [FRIEND], requested_at: NOW - Math.floor(next() * 30) * DAY } : {}),
     }
   })
 
@@ -203,7 +204,10 @@ const movies = async () => {
     }
   }
 
-  const refine = run('refine', 'movie', NOW - 6 * DAY, '✨ Refine archived movies', { refined: ['🪨 %d Archived movies ready for refining', archived.length], proposal: ['🛎️  %d Proposed movies', swaps.refine.length] }, (job, offset) => swaps.refine.flatMap(({ movie, item }) => {
+  // As `proposedSpaceOf` in apps/cli/src/utils/swaps.js: what the proposals would weigh against the files they replace
+  const spaceOf = (swapped: any[]) => ({ proposed: swapped.reduce((acc, { movie, item }) => acc + item.size - movie.releases[0].size, 0) })
+
+  const refine = run('refine', 'movie', NOW - 6 * DAY, '✨ Refine archived movies', { refined: ['🪨 %d Archived movies ready for refining', archived.length], proposal: ['🛎️  %d Proposed movies', swaps.refine.length, spaceOf(swaps.refine)] }, (job, offset) => swaps.refine.flatMap(({ movie, item }) => {
     const release = releaseOf(item, { from: 'refine', job: job.id, proposal: true })
     movie.releases.push(release)
     movie.refined_at = job.at
@@ -213,7 +217,7 @@ const movies = async () => {
     ]
   }))
 
-  const shrink = run('shrink', 'movie', NOW - 2 * DAY, '✂️ Shrink refined movies', { shrinked: ['💎 %d Refined movies ready for shrinking', archived.length], proposal: ['🛎️  %d Proposed movies', swaps.shrink.length] }, (job, offset) => swaps.shrink.flatMap(({ movie, item }) => {
+  const shrink = run('shrink', 'movie', NOW - 2 * DAY, '✂️ Shrink refined movies', { shrinked: ['💎 %d Refined movies ready for shrinking', archived.length], proposal: ['🛎️  %d Proposed movies', swaps.shrink.length, spaceOf(swaps.shrink)] }, (job, offset) => swaps.shrink.flatMap(({ movie, item }) => {
     const release = releaseOf(item, { from: 'shrink', job: job.id, proposal: true })
     movie.releases.push(release)
     movie.shrinked_at = job.at
@@ -295,9 +299,10 @@ const shows = async () => {
       first_air_date: iso(show.first_air_date),
       last_air_date: iso(show.last_air_date),
       seasons: lightened.seasons.map((season) => ({ ...season, air_date: iso(season.air_date) })),
+      // Followed or not, a show in the library is wished: `showStateOf` in apps/web reads `monitored` next to it
+      state: 'wished',
       monitored,
       monitor_new_seasons: monitored,
-      query: { titles: [...new Set([show.name, show.original_name])] },
       releases,
     })
   }
@@ -317,13 +322,15 @@ const main = async () => {
     throw new Error('SENSORR_DEMO_TMDB_KEY is not set')
   }
 
-  // Bind the run to this month: a seed of another month drops what a visitor had
-  const version = new Date(NOW).toISOString().slice(0, 7)
   const { movies: movieDocs, logs } = await movies()
   const { shows: showDocs, episodes } = await shows()
   const personDocs = await persons()
 
-  fs.writeFileSync(OUTPUT, `${JSON.stringify({ version, config: config(), collections: { movies: movieDocs, shows: showDocs, episodes, persons: personDocs, log: logs } })}\n`)
+  const guests = [{ _id: objectId(), email: FRIEND, name: 'Alex', avatar: '' }]
+  const data = { config: config(), collections: { movies: movieDocs, shows: showDocs, episodes, persons: personDocs, log: logs, guests } }
+  // Other data, another version: the page drops what a visitor had changed on the previous one
+  const version = hash(JSON.stringify(data)).toString(16)
+  fs.writeFileSync(OUTPUT, `${JSON.stringify({ version, ...data })}\n`)
   console.log(`${OUTPUT}: ${(fs.statSync(OUTPUT).size / 1e6).toFixed(1)} MB`)
 }
 

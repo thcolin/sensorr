@@ -26,13 +26,15 @@ import { Episode } from '../../../../api/src/app/shows/episode.schema'
 import { Person } from '../../../../api/src/app/persons/person.schema'
 import { Log } from '../../../../api/src/app/logs/log.schema'
 import { Subscription } from '../../../../api/src/app/notifications/subscription.schema'
+import { Guest } from '../../../../api/src/app/guests/guest.schema'
 import { mount } from './shims/files'
 import { Model } from './model'
 import { ProxyController } from './proxy.controller'
+import { GuestsController } from './guests.controller'
 import { Store } from './store'
 
-const CONTROLLERS = [AuthController, ConfigController, MoviesController, ShowsController, EpisodesController, PersonsController, LogsController, JobsController, SensorrController, NotificationsController, ProxyController]
-const SCHEMAS = [Movie, Show, Episode, Person, Log, Subscription]
+const CONTROLLERS = [AuthController, ConfigController, MoviesController, ShowsController, EpisodesController, PersonsController, LogsController, JobsController, SensorrController, NotificationsController, ProxyController, GuestsController]
+const SCHEMAS = [Movie, Show, Episode, Person, Log, Subscription, Guest]
 
 export type Response = { status: number, body?: any, stream?: Observable<any> }
 
@@ -96,7 +98,8 @@ export class App {
     if (!this.instances.has(type)) {
       const declared = Reflect.getMetadata('design:paramtypes', type) || []
       const named = injections.get(type) || {}
-      const instance = new type(...declared.map((dependency, index) => named[index] ? this.models.get(named[index]) : this.resolve(dependency)))
+      const count = Math.max(declared.length, ...Object.keys(named).map((index) => Number(index) + 1))
+      const instance = new type(...Array.from({ length: count }, (_, index) => named[index] ? this.models.get(named[index]) : this.resolve(declared[index])))
       this.instances.set(type, instance)
       this.emitter.listen(instance)
     }
