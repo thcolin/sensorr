@@ -17,7 +17,7 @@ const OUTPUT = path.join(__dirname, '../../apps/web/src/demo/seed/seed.json')
 const MOVIES = 300
 const PROPOSALS = 80
 const SHOWS = 12
-const PERSONS = 12
+const PERSONS = 150
 const DAY = 86400000
 const NOW = Date.now()
 const FRIEND = 'alex@sensorr.demo'
@@ -310,9 +310,24 @@ const shows = async () => {
   return { shows: docs, episodes }
 }
 
+// The Calendar lists the movies of the people followed, month by month: the directors and the leads of the movies in
+// theatres, coming and popular have some in the months around now, the most popular of them first
 const persons = async () => {
-  const listed = (await pages('person/popular', 2)).filter(({ adult }) => !adult).slice(0, PERSONS)
-  const docs = await all(listed.map(({ id }) => id), (id) => tmdb.fetch(`person/${id}`))
+  const movies = [...await pages('movie/now_playing', 3), ...await pages('movie/upcoming', 4), ...await pages('movie/popular', 3)]
+  const credits = await all([...new Set(movies.map(({ id }) => id))], (id) => tmdb.fetch(`movie/${id}/credits`))
+  const people = new Map<number, any>()
+
+  for (const { cast = [], crew = [] } of credits) {
+    for (const person of [...cast.slice(0, 5), ...crew.filter(({ job }) => job === 'Director')]) {
+      if (!person.adult && person.profile_path) {
+        people.set(person.id, person)
+      }
+    }
+  }
+
+  const followed = [...people.values()].sort((a, b) => b.popularity - a.popularity).slice(0, PERSONS)
+  const docs = await all(followed.map(({ id }) => id), (id) => tmdb.fetch(`person/${id}`))
+  console.log(`${docs.length} persons followed, out of ${people.size} credited`)
   return docs.map((person) => ({ ...person, _id: person.id, birthday: iso(person.birthday), deathday: iso(person.deathday), state: 'followed', updated_at: NOW - Math.floor(next() * 200) * DAY }))
 }
 
