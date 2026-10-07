@@ -41,7 +41,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/assets/readme/hero.webp" width="100%" alt="Sensorr's Home on a desktop browser and on an iPhone">
+  <img src="docs/assets/readme/hero.webp" width="100%" alt="Sensorr, Your Friendly Digital Video Recorder. Think VCR, but in modern times. Its Home on a desktop browser and on an iPhone">
 </p>
 
 <img src="docs/assets/readme/movies-tv.webp" width="100%" alt="One library for everything. Movies and shows side by side, with the same rules and the same jobs, kept in sync with your Plex. No Radarr next to Sonarr.">
