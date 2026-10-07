@@ -45,7 +45,7 @@ friends' watchlists) feeds the wishlist; it is not the subject.
 ## Capabilities and Constraints
 
 - Web app in React with theme-ui, Nx monorepo, API in NestJS on MongoDB.
-- The interface is in English; `fr.js` exists but is empty.
+- The interface, the mails and the wrapped are in English and French. The language set in Settings › Home wins, else the browser's, else the one of the TMDB region.
 - The repository is public: no host name, IP address or credential in tracked files.
 - Refusing a proposal removes the release but does not ban it, so the same release can be
   proposed again by the next `refine`. Banning adds it to `banned_releases`, which the jobs

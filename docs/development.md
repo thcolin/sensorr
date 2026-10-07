@@ -123,6 +123,18 @@ npx nx build web
 
 Not part of the gate; it exits 0. It writes a 7.9 MB `dist/apps/web`, measured on 2026-10-02, which is the figure to compare a bundle change against. `npx nx build api`, `npx nx build cli` and `npx nx build wrapped` exit 0 as well.
 
+## Translations
+
+Every text a reader sees goes through i18next, never in the code: `libs/i18n/src/translations/en/<zone>.js` and `fr/<zone>.js`, one file per zone, gathered by `en.js` and `fr.js`. A message uses ICU syntax, `{count, plural, one {# movie} other {# movies}}`, through `i18next-icu`. The names of Sensorr's concepts stay in English in both languages: Wished, Proposal, Policy, the jobs, Swap, Znab, Blackhole and the states.
+
+- `i18next/no-literal-string`, set by `literalStrings` in the root `eslint.config.mjs`, refuses JSX text and the visible attributes in `apps/web`, `apps/wrapped` and `libs/ui`. It does not see a string in an object: those are read in review.
+- `libs/i18n/src/language.spec.ts` fails when French and English stop carrying the same keys.
+- `languageOf` in `libs/i18n/src/language.ts` decides the language: the `language` of the config, else the browser's, else the one of the TMDB `region`, else English.
+- A text translated at import keeps the language of the import, and the language changes once the config loads: translate at render, with `t()` in the component, a getter, or `withTitle('<key>')`.
+- The API answers an error as `{ code, message, values }`. `errorOf` in `apps/web/src/store/api.tsx` translates `errors.<code>`; `message` stays in English for the CLI and the logs. The mails use `@sensorr/i18n/server`, and the wrapped `@sensorr/i18n/wrapped`, which load their own zone only: the full set pulls `@sensorr/utils` into a bundle.
+- `libs/sensorr` is bundled by the API and the CLI and imports no i18n: it writes its English for the logs and gives a `code` and `values` next to it, which the web translates (`policy.reasons`, `policy.diffusion`).
+- The CLI's logs, shown as they are on the Jobs screen, stay in English.
+
 ## Dependencies held back
 
 Measured on 2026-10-02. Each stays below its latest major until the reason goes away:
