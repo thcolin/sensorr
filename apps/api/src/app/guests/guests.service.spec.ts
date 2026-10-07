@@ -39,7 +39,7 @@ const serviceOf = (guests: Record<string, any>[]) => {
     enabled: jest.fn(() => true),
     url: () => 'https://sensorr.example',
     sender: () => 'Thomas',
-    t: () => translatorOf('en-US'),
+    t: () => translatorOf({ region: 'en-US' }),
     service: async () => "Living Room's Sensorr",
     send: jest.fn(async () => undefined),
     unsubscribeOf: async () => ({ href: 'u', headers: {} }),

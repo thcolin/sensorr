@@ -67,7 +67,7 @@ export class MailService {
   }
 
   t() {
-    return translatorOf(this.config.get('region'))
+    return translatorOf({ language: this.config.get('language'), region: this.config.get('region') })
   }
 
   // Read once from Tautulli, asked again an hour after a failure; without it the wrapped page names no server

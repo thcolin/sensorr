@@ -163,6 +163,15 @@ export default {
       },
     },
     home: {
+      language: {
+        title: 'Language',
+        help: 'Auto follows your browser, else the language of the TMDB region. A language set here also applies to the mails and the wrapped of your friends.',
+        options: {
+          auto: 'Auto',
+          en: 'English',
+          fr: 'Français',
+        },
+      },
       intro: 'The rows of each Home, in order. Drag a row to move it, drop it on the middle of another to show both as the tabs of one row, uncheck it to hide it. The <0>Browser</0> Home is the one of a browser, <1>Movies</1> and <2>TV</2> the ones of the installed app.',
       locked: 'A <0>🔒</0> row opens a screen the app reaches only from its Home: it moves, it stays shown.',
       homes: {

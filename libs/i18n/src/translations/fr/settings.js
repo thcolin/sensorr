@@ -163,6 +163,15 @@ export default {
       },
     },
     home: {
+      language: {
+        title: 'Langue',
+        help: 'Auto suit votre navigateur, sinon la langue de la région TMDB. Une langue choisie ici vaut aussi pour les mails et le wrapped de vos amis.',
+        options: {
+          auto: 'Auto',
+          en: 'English',
+          fr: 'Français',
+        },
+      },
       intro: 'Les lignes de chaque accueil, dans l’ordre. Glissez une ligne pour la déplacer, déposez-la au milieu d’une autre pour les afficher comme les onglets d’une même ligne, décochez-la pour la masquer. L’accueil <0>Navigateur</0> est celui d’un navigateur, <1>Films</1> et <2>TV</2> ceux de l’app installée.',
       locked: 'Une ligne <0>🔒</0> ouvre un écran que l’app n’atteint que depuis son accueil : elle se déplace, elle reste affichée.',
       homes: {

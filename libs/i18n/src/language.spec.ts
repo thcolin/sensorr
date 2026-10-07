@@ -15,16 +15,24 @@ describe('translations', () => {
 })
 
 describe('languageOf', () => {
+  it('takes the language set in Settings over the browser and the region', () => {
+    expect(languageOf({ language: 'en', region: 'fr-FR' }, ['fr-FR'])).toBe('en')
+  })
+
+  it('reads auto as no choice', () => {
+    expect(languageOf({ language: 'auto', region: 'en-US' }, ['fr-FR'])).toBe('fr')
+  })
+
   it('takes the first browser language Sensorr speaks', () => {
-    expect(languageOf('en-US', ['de-DE', 'fr-FR', 'en-GB'])).toBe('fr')
+    expect(languageOf({ region: 'en-US' }, ['de-DE', 'fr-FR', 'en-GB'])).toBe('fr')
   })
 
   it('falls back on the TMDB region when the browser speaks none', () => {
-    expect(languageOf('fr-FR', ['de-DE'])).toBe('fr')
+    expect(languageOf({ region: 'fr-FR' }, ['de-DE'])).toBe('fr')
   })
 
   it('falls back on English when neither does', () => {
-    expect(languageOf('de-DE', ['es-ES'])).toBe('en')
-    expect(languageOf(undefined, [])).toBe('en')
+    expect(languageOf({ region: 'de-DE' }, ['es-ES'])).toBe('en')
+    expect(languageOf({}, [])).toBe('en')
   })
 })

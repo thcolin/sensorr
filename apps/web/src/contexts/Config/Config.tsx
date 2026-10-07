@@ -20,7 +20,7 @@ export const Provider = ({ children = null, ...props }) => {
   const load = useCallback(async (raw) => {
     config.load(raw)
 
-    i18n.changeLanguage(languageOf(config.get('region') || localStorage.getItem('region')))
+    i18n.changeLanguage(languageOf({ language: config.get('language'), region: config.get('region') || localStorage.getItem('region') }))
 
     sensorr.znabs = config.get('znabs')
     sensorr.policies = config.get('policies')
