@@ -1,0 +1,119 @@
+{
+  "version": "0",
+  "config": {
+    "region": "en-US",
+    "adult": false,
+    "blackhole": "/blackhole",
+    "magnet": false,
+    "shows": {
+      "library": "/tvshows",
+      "blackhole": "/tvshows/.blackhole",
+      "staging": "/tvshows/.staging"
+    },
+    "jobs": {
+      "keep-in-touch": {
+        "cron": "0 16 * * *",
+        "paused": false
+      },
+      "record": {
+        "movies": {
+          "cron": "0 17 * * *",
+          "paused": false,
+          "proposalOnly": true
+        },
+        "shows": {
+          "cron": "0 17 * * *",
+          "paused": true,
+          "proposalOnly": true
+        }
+      },
+      "sync": {
+        "movies": {
+          "cron": "0 1 * * *",
+          "paused": false,
+          "cleanup": false
+        },
+        "shows": {
+          "cron": "0 2 * * *",
+          "paused": true,
+          "cleanup": false
+        }
+      },
+      "refresh": {
+        "movies": {
+          "cron": "0 3 * * 0",
+          "paused": false
+        },
+        "shows": {
+          "cron": "0 4 * * *",
+          "paused": true
+        }
+      },
+      "refine": {
+        "movies": {
+          "cron": "0 23 1 * *",
+          "paused": false,
+          "proposalOnly": true
+        }
+      },
+      "shrink": {
+        "movies": {
+          "cron": "0 5 * * 0",
+          "paused": false,
+          "proposalOnly": true,
+          "threshold": 4
+        }
+      },
+      "report": {
+        "movies": {
+          "cron": "0 * * * *",
+          "paused": true,
+          "proposalOnly": true
+        }
+      },
+      "airing": {
+        "shows": {
+          "cron": "0 * * * *",
+          "paused": true,
+          "proposalOnly": true
+        }
+      },
+      "import": {
+        "shows": {
+          "cron": "*/10 * * * *",
+          "paused": true
+        }
+      },
+      "wrapped": {
+        "cron": "0 6 * * *",
+        "paused": true
+      }
+    },
+    "tautulli": {
+      "url": "",
+      "key": ""
+    },
+    "wrapped": {
+      "looks": [
+        "tele",
+        "labo",
+        "videoclub",
+        "scenario",
+        "affiche"
+      ],
+      "theme": "tele",
+      "choice": true,
+      "editions": []
+    },
+    "plex": {},
+    "mediux": {
+      "token": ""
+    },
+    "znabs": [],
+    "policies": [],
+    "onboarding": {
+      "done": true
+    }
+  },
+  "collections": {}
+}

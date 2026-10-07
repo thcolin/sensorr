@@ -41,6 +41,28 @@
               "maximumError": "5mb"
             }
           ]
+        },
+        "demo": {
+          "fileReplacements": [
+            {
+              "replace": "apps/web/src/environments/environment.ts",
+              "with": "apps/web/src/environments/environment.prod.ts"
+            },
+            {
+              "replace": "apps/web/src/demo/index.ts",
+              "with": "apps/web/src/demo/index.demo.ts"
+            }
+          ],
+          "outputPath": "dist/apps/web-demo",
+          "baseHref": "/sensorr/",
+          "deployUrl": "/sensorr/",
+          "optimization": true,
+          "outputHashing": "all",
+          "sourceMap": false,
+          "extractCss": true,
+          "namedChunks": false,
+          "extractLicenses": true,
+          "vendorChunk": false
         }
       }
     },

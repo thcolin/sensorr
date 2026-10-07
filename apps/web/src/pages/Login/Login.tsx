@@ -5,6 +5,7 @@ import { useTitle } from '@sensorr/utils'
 import { useAPI } from '../../store/api'
 import { LoadingBar } from '../../layout/LoadingBar'
 import { useAuthContext } from '../../contexts/Auth/Auth'
+import { demo } from '../../demo'
 
 const Login = () => {
   useTitle('Login')
@@ -52,10 +53,15 @@ const Login = () => {
           <div sx={Login.styles.error}>{error}</div>
         )}
         <form sx={Login.styles.form} onSubmit={handleLogin}>
-          <input type='text' name='username' sx={{ variant: 'input.default' }} placeholder='Username' required={true} />
-          <input type='password' name='password' sx={{ variant: 'input.default' }} placeholder='Password' required={true} />
+          <input type='text' name='username' sx={{ variant: 'input.default' }} placeholder='Username' required={true} defaultValue={demo?.credentials.username} />
+          <input type='password' name='password' sx={{ variant: 'input.default' }} placeholder='Password' required={true} defaultValue={demo?.credentials.password} />
           <Button type='submit' variant='contain' color='primary' disabled={ongoing}>{ongoing ? 'Login...' : 'Login'}</Button>
         </form>
+        {!!demo && (
+          <small sx={Login.styles.tmdb}>
+            Sensorr is powered by <a href='https://www.themoviedb.org/' target='_blank' rel='noopener noreferrer'>The Movie Database</a> API, but is not endorsed or certified by TMDB
+          </small>
+        )}
       </div>
     </div>
   )
@@ -113,6 +119,12 @@ Login.styles = {
     borderColor: 'error',
     borderRadius: '0.25em',
     fontSize: 5,
+  },
+  tmdb: {
+    maxWidth: '14rem',
+    marginTop: 4,
+    color: 'grayDark',
+    textAlign: 'center',
   },
   form: {
     display: 'flex',
