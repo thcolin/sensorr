@@ -2324,6 +2324,7 @@ html[data-theme='tele'] {
 
 .tele-presentation-column .tele-photo,
 .tele-presentation .tele-logo,
+.tele-presentation .tele-sticker,
 .tele-presentation-contents a,
 .tele-presentation-contents a span,
 .tele-presentation-read,
@@ -2349,7 +2350,7 @@ html[data-theme='tele'] {
   }
 
   .tele-presentation .tele-sticker:hover {
-    animation: tele-wobble 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: rotate(-12deg) scale(1.08);
   }
 
   /* A line of the contents is marked like a programme circled in the TV guide */
@@ -2373,10 +2374,6 @@ html[data-theme='tele'] {
   }
 }
 
-@keyframes tele-wobble {
-  30% { transform: rotate(-10deg) scale(1.08); }
-  60% { transform: rotate(6deg) scale(1.04); }
-}
 
 .tele-presentation > .tele-barcode {
   position: absolute;
@@ -2385,8 +2382,7 @@ html[data-theme='tele'] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tele-presentation-column,
-  .tele-presentation .tele-sticker:hover {
+  .tele-presentation-column {
     animation: none;
   }
 }
