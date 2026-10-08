@@ -1,20 +1,14 @@
-import { Fragment, useEffect, useRef, useState } from 'react'
-import { Badge, Bar, Picture, Shadow, TransitionPill, buttonStyles, pictureSrc } from '@sensorr/ui'
+import { useState } from 'react'
+import { Badge, Bar, Icon, Picture, Shadow, TransitionPill, buttonStyles, pictureSrc } from '@sensorr/ui'
 import { usePalette, type Palette as Colors } from '@sensorr/palette'
 import { DEMO, type Film, type Films, type Release as File, type Row } from '../data'
-import { EASE, enter, useCountUp, useScrollProgress, useSeen } from './journey/motion'
+import { EASE, enter, useCountUp, useScrollProgress, useSeen, useSteps } from './journey/motion'
+import { Name, Statistics, Tags, gb, language, rangeOf } from './journey/release'
 
 type Palette = Colors | null
 type Visual = { film: Film | null, seen: boolean, palette: Palette, policy?: Films['policy'] }
 
 const tmdb = (size: string, path: string) => `https://image.tmdb.org/t/p/${size}${path}`
-const gb = (bytes: number) => `${(Math.abs(bytes) / 1024 ** 3).toFixed(1)} GB`
-
-// The title and the year are on screen already: a release shows what follows them
-const tail = (title: string, year: number) => {
-  const at = title.indexOf(`.${year}.`)
-  return at < 0 ? title : title.slice(at + `.${year}.`.length)
-}
 
 // Only the axes known on both sides, what changed first, then what stayed
 const ordered = (rows: Row[]) => {
@@ -39,51 +33,53 @@ const Pills = ({ rows, size }: { rows: Row[], size?: { from: number, to: number 
   </div>
 )
 
-// A release name breaks at its dots only: its hyphens are non-breaking, so a long one wraps on whole words
-const Release = ({ title, year, ...props }: { title: string, year: number } & React.HTMLAttributes<HTMLSpanElement>) => (
-  <span title={title} {...props}>
-    {tail(title, year).replace(/-/g, '‑').split('.').map((part, index, parts) => (
-      <Fragment key={index}>{part}{index < parts.length - 1 && <>.<wbr /></>}</Fragment>
-    ))}
+// A movie state badge pinned inside its poster's top-right corner, as the app's Poster pins its own; it pops when it changes
+const Corner = ({ emoji, label, palette }: { emoji: string, label: string, palette?: Palette }) => (
+  <span sx={Journey.styles.corner}>
+    <Badge key={emoji} emoji={emoji} label={label} compact={true} palette={palette} sx={Journey.styles.badge} />
   </span>
 )
 
-// A friend's watchlist on Plex, become a request in Sensorr
-const Wished = ({ film, seen, palette }: Visual) => (
-  <div sx={Journey.styles.wished}>
-    <div sx={{ ...Journey.styles.watch, ...enter(seen, 'translateY(3em)', 0, 700) }}>
-      {film?.backdrop && <img src={tmdb('w1280', film.backdrop)} alt='' loading='lazy' decoding='async' sx={Journey.styles.watchBackdrop} />}
-      <div sx={Journey.styles.watchPoster}>
+// The ways a movie becomes 🍿 Wished, each one drawing its line into the poster
+const Paths = ({ film, palette }: { film: Film | null, palette: Palette }) => {
+  const [ref, seen] = useSeen<HTMLDivElement>(0.4)
+  // The request lands first, then the three lines reach the poster, and the request is accepted
+  const step = useSteps(seen, [900, 2300])
+
+  return (
+    <div ref={ref} sx={Journey.styles.paths}>
+      <ul sx={Journey.styles.ways}>
+        <li sx={{ ...Journey.styles.way, ...enter(seen, 'translateX(-2em)', 300) }} data-joined={step > 1}>
+          <Icon value='plex' sx={Journey.styles.wayIcon} />
+          <span sx={Journey.styles.wayText}>
+            <strong><span aria-hidden='true'>🍻</span> Alex requests it</strong>
+            <span>From their Plex watchlist</span>
+          </span>
+        </li>
+        <li sx={{ ...Journey.styles.way, ...enter(seen, 'translateX(-2em)', 900) }} data-joined={step > 1}>
+          {film?.director?.profile
+            ? <img src={tmdb('w185', film.director.profile)} alt='' loading='lazy' decoding='async' sx={Journey.styles.wayIcon} />
+            : <span sx={Journey.styles.wayIcon} aria-hidden='true'>⭐</span>}
+          <span sx={Journey.styles.wayText}>
+            <strong><span aria-hidden='true'>📅</span> In your calendar</strong>
+            <span>{film?.director ? `You follow ${film.director.name}` : <Bar inline={true} width='8em' height='1em' />}</span>
+          </span>
+        </li>
+        <li sx={{ ...Journey.styles.way, ...enter(seen, 'translateX(-2em)', 1500) }} data-joined={step > 1}>
+          <span sx={Journey.styles.wayIcon} aria-hidden='true'>🔍</span>
+          <span sx={Journey.styles.wayText}>
+            <strong>You wish it yourself</strong>
+            <span>From Search or Discover</span>
+          </span>
+        </li>
+      </ul>
+      <div sx={{ ...Journey.styles.poster, ...enter(seen, 'scale(0.94)', 0, 700) }}>
         <Picture path={film?.poster} size='w342' ready={!!film} palette={palette} sx={Journey.styles.picture} />
-        <span sx={{ ...Journey.styles.corner, ...enter(seen, 'scale(2.2) rotate(-12deg)', 650, 500) }}>
-          <Badge emoji='🍿' label='Requested' compact={true} palette={palette} sx={Journey.styles.badge} />
-        </span>
+        {step > 0 && <Corner emoji={step > 1 ? '🍿' : '🍻'} label={step > 1 ? 'Wished' : 'Requested'} palette={palette} />}
       </div>
-      <p sx={Journey.styles.watchHead}>
-        <span sx={Journey.styles.avatar} aria-hidden='true'>A</span>
-        <span sx={Journey.styles.watchText}><strong>Alex</strong> added to their watchlist</span>
-        <span sx={Journey.styles.plex}>Plex</span>
-      </p>
-      <p sx={Journey.styles.watchTitle}>
-        {film ? <>{film.title} <span sx={Journey.styles.year}>{film.year}</span></> : <Bar inline={true} width='8em' height='1em' />}
-      </p>
-      <p sx={{ ...Journey.styles.watchRequest, ...enter(seen, 'translateY(1em)', 900) }}>
-        <span aria-hidden='true'>🍿</span> Requested by Alex in Sensorr
-      </p>
     </div>
-    {film?.director && (
-      <p sx={{ ...Journey.styles.director, ...enter(seen, 'translateY(1.5em)', 1050) }}>
-        {film.director.profile
-          ? <img src={tmdb('w185', film.director.profile)} alt='' loading='lazy' decoding='async' sx={Journey.styles.profile} />
-          : <span sx={Journey.styles.profile} aria-hidden='true' />}
-        <span>
-          <span sx={Journey.styles.eyebrow}><span aria-hidden='true' sx={{ marginRight: 9 }}>⭐</span>Following</span>
-          <span sx={Journey.styles.followName}>You follow {film.director.name}</span>
-        </span>
-      </p>
-    )}
-  </div>
-)
+  )
+}
 
 const AXES = ['resolution', 'source', 'encoding', 'language', 'dub', 'flags']
 
@@ -112,38 +108,44 @@ const Policy = ({ policy }: { policy?: Films['policy'] }) => {
   )
 }
 
+// The candidates as the app's release list draws them: state, name, axis tags, then 💯 🌍 📦
 const Record = ({ film, seen, policy }: Visual) => {
   const winner = film?.candidates.find(({ valid }) => valid)
-  const rows = film ? film.candidates.slice(0, 5) : Array.from({ length: 5 }, () => null)
+  const releases = film ? film.candidates.slice(0, 5) : []
+  const range = rangeOf(releases.length ? releases : [{ score: 0, seeders: 0, size: 1 } as File])
+  const landed = 300 + releases.length * 90 + 500
 
   return (
     <div sx={Journey.styles.record}>
       <Policy policy={policy} />
       <ol sx={Journey.styles.table}>
-        {rows.map((release, index) => {
-          const won = !!release && release === winner
+        {!film && Array.from({ length: 5 }, (_, index) => (
+          <li key={index} sx={Journey.styles.row}><span sx={{ gridColumn: '1 / -1' }}><Bar width='100%' height='1.5em' /></span></li>
+        ))}
+        {film && releases.map((release, index) => {
+          const won = release === winner
 
           return (
             <li
-              key={release?.title || index}
-              sx={{
-                ...Journey.styles.row,
-                ...enter(seen, 'translateX(-3em)', 200 + index * 90),
-                ...(won ? Journey.styles.won : {}),
-                color: !release ? 'text' : won ? 'primary' : release.valid ? 'text' : 'error',
-              }}
+              key={release.title}
+              sx={{ ...Journey.styles.row, ...enter(seen, 'translateY(1em)', 200 + index * 90), ...(won ? Journey.styles.won : {}) }}
             >
-              <span sx={Journey.styles.rank}>{won ? <span role='img' aria-label='Winner'>✓</span> : index + 1}</span>
-              {release && film ? (
-                <>
-                  <Release title={release.title} year={film.year} sx={Journey.styles.ellipsis} />
-                  <span sx={Journey.styles.number}>{gb(release.size)}</span>
-                  <span sx={Journey.styles.number}>{release.score}</span>
-                  {!release.valid && release.reason && <span sx={Journey.styles.reason}>{release.reason}</span>}
-                </>
-              ) : (
-                <span sx={{ gridColumn: '2 / -1' }}><Bar width='100%' height='1em' /></span>
-              )}
+              <span sx={Journey.styles.state}>
+                {!release.valid ? <span role='img' aria-label='Rejected'>🚨</span> : (
+                  <>
+                    <span aria-hidden={won} sx={won ? { ...Journey.styles.stateOut, transitionDelay: `${landed}ms`, opacity: seen ? 0 : 1 } : {}}>⭐</span>
+                    {won && (
+                      <span role='img' aria-label='Recorded' sx={{ ...Journey.styles.stateIn, ...enter(seen, 'scale(2.4)', landed, 500) }}>📼</span>
+                    )}
+                  </>
+                )}
+              </span>
+              <span sx={Journey.styles.name}>
+                <Name title={release.title} year={film.year} sx={!release.valid ? Journey.styles.rejected : {}} />
+                {!release.valid && release.reason && <code sx={Journey.styles.reason}>{release.reason}</code>}
+              </span>
+              <Tags meta={release.meta} sx={Journey.styles.rowTags} />
+              <Statistics release={release} range={range} sx={Journey.styles.rowStats} />
             </li>
           )
         })}
@@ -153,6 +155,11 @@ const Record = ({ film, seen, policy }: Visual) => {
 }
 
 const SPECS = ['resolution', 'source', 'encoding', 'language'] as const
+
+// The Plex logo, with its name beside it in the text's color
+const Plex = () => (
+  <span sx={Journey.styles.plex}><Icon value='plex' sx={Journey.styles.plexIcon} />Plex</span>
+)
 
 // The movie in the library, as Plex shows it: the release Record picked, over its backdrop
 const Archived = ({ film, seen, palette }: Visual) => {
@@ -176,7 +183,7 @@ const Archived = ({ film, seen, palette }: Visual) => {
       <div sx={{ ...Journey.styles.tile, ...enter(seen, 'translateY(-3em) scale(0.94)', 0, 700) }}>
         <Picture path={film?.poster} size='w500' ready={!!film} palette={palette} sx={Journey.styles.picture} />
         <span sx={{ ...Journey.styles.corner, ...enter(seen, 'scale(0)', 600, 500) }}>
-          <Badge emoji='📼' compact={true} palette={palette} role='img' aria-label='Archived' sx={Journey.styles.badge} />
+          <Badge emoji='📼' label='Archived' compact={true} palette={palette} sx={Journey.styles.badge} />
         </span>
       </div>
       <div sx={{ ...Journey.styles.file, ...enter(seen, 'translateY(1.5em)', 350) }}>
@@ -189,11 +196,11 @@ const Archived = ({ film, seen, palette }: Visual) => {
           )) : <Bar width='12em' height='1.5em' pill={true} />}
         </div>
         <p sx={Journey.styles.fileName}>
-          {film && file ? <Release title={file.title} year={film.year} /> : <Bar width='100%' height='1em' />}
+          {film && file ? <Name title={file.title} year={film.year} /> : <Bar width='100%' height='1em' />}
         </p>
         <p sx={Journey.styles.fileMeta}>
           {file ? <span>{gb(file.size)}</span> : <Bar inline={true} width='4em' height='1em' />}
-          <span sx={Journey.styles.play}><span aria-hidden='true'>{'▶\uFE0E'}</span> Ready in <span sx={Journey.styles.plex}>Plex</span></span>
+          <span sx={Journey.styles.play}><span aria-hidden='true'>{'▶︎'}</span> Ready in <Plex /></span>
         </p>
       </div>
     </div>
@@ -201,7 +208,7 @@ const Archived = ({ film, seen, palette }: Visual) => {
 }
 
 // One release swapped for another, as the Swaps screen draws it
-const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark }: {
+const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark, badge, lead }: {
   film: Film | null
   seen: boolean
   from?: File
@@ -209,18 +216,22 @@ const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark }: {
   rows?: Row[]
   struck?: string
   mark?: React.ReactNode
+  badge?: React.ReactNode
+  lead?: React.ReactNode
 }) => (
   <div sx={Journey.styles.swap}>
     {film?.backdrop && <img src={tmdb('w1280', film.backdrop)} alt='' loading='lazy' decoding='async' sx={Journey.styles.swapBackdrop} />}
-    <div sx={Journey.styles.swapPoster} aria-hidden='true'>
+    <div sx={Journey.styles.swapPoster}>
       <Picture path={film?.poster} size='w342' ready={!!film} sx={Journey.styles.picture} />
+      {badge}
     </div>
     <div sx={Journey.styles.swapBody}>
+      {lead}
       <p sx={{ ...Journey.styles.swapFrom, color: struck }}>
         {film && from ? (
           <>
-            <s sx={{ ...Journey.styles.strike, backgroundSize: seen ? '100% 2px' : '0% 2px' }}>
-              <Release title={from.title} year={film.year} />
+            <s sx={{ ...Journey.styles.strike, textDecorationColor: seen ? 'currentColor' : 'transparent' }}>
+              <Name title={from.title} year={film.year} />
             </s>
             <span sx={Journey.styles.swapSize}>{gb(from.size)}</span>
             {mark}
@@ -231,7 +242,7 @@ const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark }: {
       <p sx={{ ...Journey.styles.swapTo, ...enter(seen, 'translateY(1em)', 700) }}>
         {film && to ? (
           <>
-            <Release title={to.title} year={film.year} />
+            <Name title={to.title} year={film.year} />
             <span sx={Journey.styles.swapSize}>{gb(to.size)}</span>
           </>
         ) : <Bar width='80%' height='1em' />}
@@ -243,28 +254,71 @@ const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark }: {
   </div>
 )
 
-const Refine = ({ film, seen }: Visual) => (
-  <Swap film={film} seen={seen} from={film?.owned} to={film?.winner} rows={film?.refine.rows} />
+// What a Refine wins: a higher resolution, or a language closer to the policy
+const gains = (rows: Row[]) => rows.filter(({ axis, from, to, state }) => (
+  ['resolution', 'language'].includes(axis) && (from || null) !== (to || null) && ['held', 'moved'].includes(state)
+))
+
+const Refine = ({ film, seen, palette }: Visual) => (
+  <Swap
+    film={film}
+    seen={seen}
+    from={film?.owned}
+    to={film?.winner}
+    rows={film?.refine.rows}
+    badge={(
+      <span sx={enter(seen, 'scale(1.8)', 1100, 500)}>
+        <Corner emoji='💎' label='Refined' palette={palette} />
+      </span>
+    )}
+    lead={film && (
+      <div sx={Journey.styles.gains}>
+        {gains(film.refine.rows).map(({ axis, from, to }, index) => (
+          <p key={axis} sx={{ ...Journey.styles.gain, ...enter(seen, 'translateY(0.5em)', 200 + index * 200) }}>
+            <span sx={Journey.styles.gainAxis}>{axis}</span>
+            <span sx={Journey.styles.gainValue}>
+              <span sx={Journey.styles.gainFrom}>{axis === 'language' ? language(from) : from}</span>
+              <span aria-label='to' sx={Journey.styles.gainArrow}>→</span>
+              <span sx={Journey.styles.gainTo}>{axis === 'language' ? language(to) : to}</span>
+            </span>
+          </p>
+        ))}
+      </div>
+    )}
+  />
 )
 
-const Shrink = ({ film, seen }: Visual) => {
+const Shrink = ({ film, seen, palette }: Visual) => {
   const freed = useCountUp(film ? Math.abs(film.shrinked.size) : 0, seen && !!film)
+  const kept = film && (['resolution', 'language'] as const).map((axis) => [axis, axis === 'language' ? language(film.shrink.meta.language) : film.shrink.meta.resolution] as const)
 
   return (
-    <div sx={Journey.styles.shrink}>
-      <p sx={Journey.styles.counter} aria-label={film ? `${gb(film.shrinked.size)} freed` : undefined}>
-        {film ? <span aria-hidden='true'>−{gb(freed)}</span> : <Bar inline={true} width='4em' height='0.8em' />}
-      </p>
-      <div sx={Journey.styles.gauge} aria-hidden='true'>
-        <span
-          sx={{ ...Journey.styles.gaugeFill, transform: seen && film ? `scaleX(${film.shrink.size / film.winner.size})` : 'scaleX(1)' }}
-        />
+    <div sx={Journey.styles.swap}>
+      {film?.backdrop && <img src={tmdb('w1280', film.backdrop)} alt='' loading='lazy' decoding='async' sx={Journey.styles.swapBackdrop} />}
+      <div sx={Journey.styles.swapPoster}>
+        <Picture path={film?.poster} size='w342' ready={!!film} sx={Journey.styles.picture} />
+        <span sx={enter(seen, 'scale(1.8)', 1000, 500)}>
+          <Corner emoji='💍' label='Shrinked' palette={palette} />
+        </span>
       </div>
-      <p sx={Journey.styles.counterLine}>
-        {film ? <>{gb(film.winner.size)} <span aria-hidden='true'>→</span> {gb(film.shrink.size)}</> : <Bar inline={true} width='10em' height='1em' />}
-      </p>
-      <div sx={enter(seen, 'translateY(1em)', 500)}>
-        {film && <Pills rows={film.shrinked.rows} />}
+      <div sx={Journey.styles.shrink}>
+        <p sx={Journey.styles.counter} aria-label={film ? `${gb(film.shrinked.size)} freed` : undefined}>
+          {film ? <span aria-hidden='true'>−{gb(freed)}</span> : <Bar inline={true} width='4em' height='0.8em' />}
+        </p>
+        <div sx={Journey.styles.gauge} aria-hidden='true'>
+          <span sx={{ ...Journey.styles.gaugeFill, transform: seen && film ? `scaleX(${film.shrink.size / film.winner.size})` : 'scaleX(1)' }} />
+        </div>
+        <p sx={Journey.styles.counterLine}>
+          {film ? <>{gb(film.winner.size)} <span aria-hidden='true'>→</span> {gb(film.shrink.size)}</> : <Bar inline={true} width='10em' height='1em' />}
+        </p>
+        <ul sx={{ ...Journey.styles.kept, ...enter(seen, 'translateY(1em)', 600) }}>
+          {kept ? kept.map(([axis, value]) => (
+            <li key={axis}>
+              <span>Same {axis}</span>
+              <TransitionPill to={value} state='same' compact={true} title={`${axis}: ${value}`} />
+            </li>
+          )) : <Bar width='14em' height='1.5em' pill={true} />}
+        </ul>
       </div>
     </div>
   )
@@ -275,8 +329,8 @@ const Report = ({ film, seen }: Visual) => (
     <figure sx={{ ...Journey.styles.bubble, ...enter(seen, 'translateY(2em) scale(0.92)', 0, 600) }}>
       <figcaption sx={Journey.styles.bubbleHead}>
         <span sx={Journey.styles.avatar} aria-hidden='true'>A</span>
-        <span sx={Journey.styles.watchText}><strong>Alex</strong> reported an issue</span>
-        <span sx={Journey.styles.plex}>Plex</span>
+        <span sx={Journey.styles.bubbleText}><strong>Alex</strong> reported an issue</span>
+        <Icon value='plex' role='img' aria-label='on Plex' sx={Journey.styles.plexIcon} />
       </figcaption>
       <blockquote sx={Journey.styles.quote}>The French track has no sound.</blockquote>
     </figure>
@@ -297,11 +351,10 @@ const Report = ({ film, seen }: Visual) => (
 )
 
 const SCENES = [
-  { emoji: '🍿', label: 'Wished', title: 'A friend asks for it.', line: 'Alex adds it to their Plex watchlist, and it becomes a request.', Visual: Wished },
   { emoji: '📹', label: 'Record', title: 'Your rules, not a quality profile.', line: 'Your indexers answer, your policy ranks every release.', Visual: Record },
   { emoji: '📼', label: 'Archived', title: 'Recorded. In your library, in Plex.', line: 'The .torrent goes to the blackhole, your download client does the rest.', Visual: Archived },
-  { emoji: '✨', label: 'Refine', title: 'Closer to your rules.', line: 'An older copy in your library gets swapped for a release your policy ranks higher.', Visual: Refine },
-  { emoji: '✂️', label: 'Shrink', title: 'The same movie, lighter.', line: 'A smaller release, ranked by the same policy.', Visual: Shrink },
+  { emoji: '✨', label: 'Refine', title: 'Closer to your rules.', line: 'A release that wins on your policy replaces the copy you have: a higher resolution, or your language.', Visual: Refine },
+  { emoji: '✂️', label: 'Shrink', title: 'The same movie, lighter.', line: 'A smaller release that loses nothing: the same resolution, the same language, the space back on your disk.', Visual: Shrink },
   { emoji: '🚨', label: 'Report', title: 'A friend reports, Sensorr swaps.', line: 'The release they watched is banned, another one takes its place.', Visual: Report },
 ]
 
@@ -310,7 +363,7 @@ const Scene = ({ index, film, palette, policy }: { index: number, film: Film | n
   const { emoji, label, title, line, Visual } = SCENES[index]
 
   return (
-    <article ref={ref} data-scene={index} aria-labelledby={`journey-${label.toLowerCase()}`} sx={Journey.styles.scene}>
+    <article ref={ref} aria-labelledby={`journey-${label.toLowerCase()}`} sx={Journey.styles.scene}>
       <header sx={Journey.styles.text}>
         <p sx={Journey.styles.label}><span aria-hidden='true'>{emoji}</span> {label}</p>
         <h3 id={`journey-${label.toLowerCase()}`} sx={{ ...Journey.styles.title, ...enter(seen, 'translateY(0.4em)', 0, 700) }}>{title}</h3>
@@ -325,6 +378,7 @@ const Scene = ({ index, film, palette, policy }: { index: number, film: Film | n
   )
 }
 
+// The movie over its backdrop, and how it becomes 🍿 Wished
 const Opening = ({ film, palette }: { film: Film | null, palette: Palette }) => {
   const ref = useScrollProgress<HTMLDivElement>('--opening')
   const [logo, setLogo] = useState(false)
@@ -343,72 +397,46 @@ const Opening = ({ film, palette }: { film: Film | null, palette: Palette }) => 
         <div sx={Journey.styles.veil} />
       </div>
       <div sx={Journey.styles.openingContent}>
-        <h2 sx={Journey.styles.film}>
-          {!film ? (
-            <Bar width='min(28rem, 70vw)' height='60%' />
-          ) : film.logo ? (
-            <img
-              src={tmdb('w500', film.logo)}
-              alt={film.title}
-              decoding='async'
-              onLoad={() => setLogo(true)}
-              sx={{ ...Journey.styles.logo, opacity: logo ? 1 : 0, transform: logo ? 'none' : 'translateY(0.5em) scale(0.97)' }}
-            />
-          ) : (
-            <span sx={Journey.styles.filmTitle}>{film.title}</span>
-          )}
-        </h2>
-        <p sx={Journey.styles.meta}>
-          {film
-            ? [film.year, `${film.runtime} min`, film.director?.name].filter(Boolean).join(' · ')
-            : <Bar inline={true} width='16em' height='1em' />}
-        </p>
-        <p sx={Journey.styles.openingLine}>One movie, from a friend's wish to your library.</p>
+        <div sx={Journey.styles.openingText}>
+          <h2 sx={Journey.styles.film}>
+            {!film ? (
+              <Bar width='min(28rem, 70vw)' height='60%' />
+            ) : film.logo ? (
+              <img
+                src={tmdb('w500', film.logo)}
+                alt={film.title}
+                decoding='async'
+                onLoad={() => setLogo(true)}
+                sx={{ ...Journey.styles.logo, opacity: logo ? 1 : 0, transform: logo ? 'none' : 'translateY(0.5em) scale(0.97)' }}
+              />
+            ) : (
+              <span sx={Journey.styles.filmTitle}>{film.title}</span>
+            )}
+          </h2>
+          <p sx={Journey.styles.meta}>
+            {film
+              ? [film.year, `${film.runtime} min`, film.director?.name].filter(Boolean).join(' · ')
+              : <Bar inline={true} width='16em' height='1em' />}
+          </p>
+          <div sx={Journey.styles.openingScene}>
+            <p sx={Journey.styles.label}><span aria-hidden='true'>🍿</span> Wished</p>
+            <h3 id='journey-wished' sx={Journey.styles.openingTitle}>Wish it, or let it come to you.</h3>
+            <p sx={Journey.styles.line}>A friend's request, a star you follow, or your own search: each way ends wished.</p>
+          </div>
+        </div>
+        <Paths film={film} palette={palette} />
       </div>
     </div>
   )
 }
 
-// While the visitor is in the scenes, which movie this is and which job it is at
-const Chip = ({ film, step, shown }: { film: Film | null, step: number, shown: boolean }) => (
-  <div sx={{ ...Journey.styles.chip, opacity: shown && film ? 1 : 0, transform: shown && film ? 'none' : 'translateY(1em)' }} aria-hidden='true'>
-    {film && <img src={tmdb('w92', film.poster)} alt='' decoding='async' sx={Journey.styles.chipPoster} />}
-    <span sx={Journey.styles.chipTitle}>{film?.title}</span>
-    <span key={step} sx={Journey.styles.chipEmoji}>{SCENES[step].emoji}</span>
-  </div>
-)
-
 export const Journey = ({ film, policy }: { film: Film | null, policy?: Films['policy'] }) => {
   const { palette } = usePalette(film && pictureSrc(film.poster, 'w92'), null, film?.poster)
   const stage = useScrollProgress<HTMLDivElement>('--stage')
-  const [step, setStep] = useState(0)
-  const [inside, setInside] = useState(false)
-  const scenes = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const root = scenes.current
-    if (!root) {
-      return
-    }
-
-    // The scene that crosses the middle of the viewport is the current job
-    const steps = new IntersectionObserver((entries) => entries
-      .filter(({ isIntersecting }) => isIntersecting)
-      .forEach(({ target }) => setStep(Number((target as HTMLElement).dataset.scene))), { rootMargin: '-50% 0px -50% 0px' })
-    const within = new IntersectionObserver(([entry]) => setInside(entry.isIntersecting), { rootMargin: '-40% 0px -40% 0px' })
-
-    root.querySelectorAll('[data-scene]').forEach((element) => steps.observe(element))
-    within.observe(root)
-
-    return () => {
-      steps.disconnect()
-      within.disconnect()
-    }
-  }, [])
 
   return (
     <section aria-labelledby='journey' sx={Journey.styles.element}>
-      <span id='journey' sx={Journey.styles.hidden}>One movie, from a friend's wish to your library</span>
+      <span id='journey' sx={Journey.styles.hidden}>One movie, from a wish to your library</span>
       <Opening film={film} palette={palette} />
       <div ref={stage} sx={Journey.styles.stage}>
         <div sx={Journey.styles.ambient} aria-hidden='true'>
@@ -416,15 +444,12 @@ export const Journey = ({ film, policy }: { film: Film | null, policy?: Films['p
           {palette && <Shadow palette={palette} fade={0.6} />}
           <div sx={Journey.styles.ambientVeil} />
         </div>
-        <div ref={scenes}>
-          {SCENES.map((_, index) => <Scene key={index} index={index} film={film} palette={palette} policy={policy} />)}
-        </div>
+        {SCENES.map((_, index) => <Scene key={index} index={index} film={film} palette={palette} policy={policy} />)}
       </div>
       <div sx={Journey.styles.close}>
         <p sx={Journey.styles.closeTitle}>Try it with your own rules.</p>
         <a href={DEMO} sx={{ ...buttonStyles.contain({ color: 'primary' }), ...Journey.styles.action }}>Try the demo</a>
       </div>
-      <Chip film={film} step={step} shown={inside} />
     </section>
   )
 }
@@ -475,6 +500,9 @@ const card = {
   backdropFilter: 'blur(12px)',
 }
 
+// The width of the line a way draws into the poster
+const reach = ['1.25em', '3em']
+
 Journey.styles = {
   element: {
     position: 'relative',
@@ -492,7 +520,6 @@ Journey.styles = {
     display: 'flex',
     alignItems: 'flex-end',
     minHeight: ['85svh', '100svh'],
-    paddingY: [0, 0],
     overflow: 'hidden',
     isolation: 'isolate',
   },
@@ -537,28 +564,36 @@ Journey.styles = {
     position: 'absolute',
     inset: '0px',
     background: [
-      'linear-gradient(to top, var(--theme-ui-colors-white) 8%, color-mix(in srgb, var(--theme-ui-colors-white) 55%, transparent) 50%, color-mix(in srgb, var(--theme-ui-colors-white) 20%, transparent) 100%)',
-      'linear-gradient(to right, var(--theme-ui-colors-white) 0%, color-mix(in srgb, var(--theme-ui-colors-white) 60%, transparent) 30%, transparent 55%), linear-gradient(to top, var(--theme-ui-colors-white) 0%, color-mix(in srgb, var(--theme-ui-colors-white) 70%, transparent) 30%, transparent 60%)',
+      'linear-gradient(to top, var(--theme-ui-colors-white) 30%, color-mix(in srgb, var(--theme-ui-colors-white) 55%, transparent) 65%, color-mix(in srgb, var(--theme-ui-colors-white) 20%, transparent) 100%)',
+      'linear-gradient(to right, var(--theme-ui-colors-white) 0%, color-mix(in srgb, var(--theme-ui-colors-white) 60%, transparent) 35%, transparent 60%), linear-gradient(to top, var(--theme-ui-colors-white) 0%, color-mix(in srgb, var(--theme-ui-colors-white) 70%, transparent) 30%, transparent 60%)',
     ],
   },
   openingContent: {
     ...column,
+    display: 'grid',
+    gridTemplateColumns: ['minmax(0px, 1fr)', 'minmax(0px, 1fr) auto'],
+    alignItems: 'end',
+    gap: ['2.5em', '3em'],
+    paddingTop: ['40svh', '6em'],
+    paddingBottom: ['3em', '5em'],
+  },
+  openingText: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'flex-start',
     gap: 6,
-    paddingBottom: ['3em', '5em'],
+    minWidth: '0px',
   },
   film: {
     display: 'flex',
     alignItems: 'flex-end',
-    height: 'clamp(7rem, 22vw, 15rem)',
+    height: 'clamp(6rem, 16vw, 11rem)',
     width: '100%',
     margin: '0px',
   },
   logo: {
     display: 'block',
-    maxWidth: 'min(36rem, 80vw)',
+    maxWidth: 'min(30rem, 80vw)',
     maxHeight: '100%',
     width: 'auto',
     height: 'auto',
@@ -573,8 +608,7 @@ Journey.styles = {
   },
   filmTitle: {
     ...display,
-    fontSize: 'clamp(3rem, 9vw, 8rem)',
-    color: 'textLightest',
+    fontSize: 'clamp(3rem, 8vw, 6.5rem)',
   },
   meta: {
     margin: '0px',
@@ -583,13 +617,105 @@ Journey.styles = {
     color: 'textLightest',
     fontVariantNumeric: 'tabular-nums',
   },
-  openingLine: {
+  openingScene: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+    marginTop: [4, 2],
+  },
+  openingTitle: {
+    ...display,
+    fontSize: 'clamp(2.25rem, 4.5vw, 4rem)',
+    maxWidth: '12em',
+  },
+  // 🍿 Wished: the ways in, then the poster they reach
+  paths: {
+    display: 'grid',
+    gridTemplateColumns: ['minmax(0px, 1fr) 6.5em', '20em 13em'],
+    alignItems: 'center',
+    columnGap: reach,
+    fontSize: [5, 4],
+  },
+  ways: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: [8, 6],
     margin: '0px',
-    maxWidth: '22em',
-    fontSize: [3, 2],
-    lineHeight: 'heading',
+    padding: '0px',
+    listStyle: 'none',
+  },
+  way: {
+    ...card,
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    gap: [8, 6],
+    paddingX: [8, 6],
+    paddingY: 8,
+    // The line into the poster, drawn once every way is in
+    '::after': {
+      content: '""',
+      position: 'absolute',
+      top: '50%',
+      left: '100%',
+      width: reach,
+      height: '2px',
+      marginLeft: '1px',
+      backgroundColor: 'primary',
+      transformOrigin: 'left center',
+      transform: 'scaleX(0)',
+      transition: `transform 500ms ${EASE}`,
+    },
+    '&[data-joined="true"]': {
+      borderColor: 'color-mix(in srgb, var(--theme-ui-colors-primary) 60%, transparent)',
+      '::after': {
+        transform: 'scaleX(1)',
+      },
+    },
+    '@media (prefers-reduced-motion: reduce)': {
+      '::after': {
+        transition: 'none',
+      },
+    },
+  },
+  wayIcon: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    width: '2.25em',
+    height: '2.25em',
+    borderRadius: '50%',
+    objectFit: 'cover',
+    backgroundColor: 'grayDark',
+    fontSize: '1em',
+    lineHeight: 1,
+    'svg&': {
+      borderRadius: '0.25em',
+      backgroundColor: 'transparent',
+    },
+  },
+  wayText: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 11,
+    minWidth: '0px',
     color: 'textLight',
-    textWrap: 'balance',
+    fontSize: [6, 5],
+    lineHeight: 'heading',
+    strong: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      fontFamily: 'heading',
+      fontWeight: 800,
+      fontSize: [5, 4],
+      color: 'textLightest',
+    },
+  },
+  poster: {
+    position: 'relative',
+    aspectRatio: '2 / 3',
   },
   stage: {
     position: 'relative',
@@ -659,7 +785,7 @@ Journey.styles = {
   },
   line: {
     margin: '0px',
-    maxWidth: '44em',
+    maxWidth: '40em',
     fontSize: [3, 2],
     lineHeight: 'heading',
     color: 'textLight',
@@ -672,96 +798,6 @@ Journey.styles = {
     borderRadius: '0.25em',
     overflow: 'hidden',
   },
-  // 🍿 Wished
-  wished: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: [6, 4],
-  },
-  watch: {
-    ...card,
-    position: 'relative',
-    display: 'grid',
-    gridTemplateColumns: ['7em minmax(0px, 1fr)', '13em minmax(0px, 1fr)'],
-    gridTemplateRows: ['auto auto auto', 'auto 1fr auto'],
-    gridTemplateAreas: ['"head head" "poster title" "request request"', '"poster head" "poster title" "poster request"'],
-    columnGap: [6, 2],
-    rowGap: [6, 4],
-    padding: [6, 4],
-    overflow: 'hidden',
-    isolation: 'isolate',
-  },
-  // The film's backdrop behind the card's right side, faded out towards the poster
-  watchBackdrop: {
-    ...backdropFade,
-    opacity: 0.4,
-  },
-  watchPoster: {
-    gridArea: 'poster',
-    position: 'relative',
-    aspectRatio: '2 / 3',
-    alignSelf: 'start',
-  },
-  watchHead: {
-    gridArea: 'head',
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    margin: '0px',
-    fontSize: [5, 4],
-    color: 'text',
-  },
-  watchText: {
-    flex: 1,
-    minWidth: '0px',
-    strong: {
-      color: 'textLightest',
-    },
-  },
-  avatar: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    width: '2em',
-    height: '2em',
-    borderRadius: '50%',
-    backgroundColor: 'plex',
-    fontFamily: 'heading',
-    fontWeight: 800,
-    color: 'blackPure',
-  },
-  plex: {
-    fontFamily: 'heading',
-    fontWeight: 800,
-    color: 'plex',
-  },
-  watchTitle: {
-    gridArea: 'title',
-    alignSelf: ['center', 'end'],
-    margin: '0px',
-    fontFamily: 'heading',
-    fontWeight: 800,
-    fontSize: ['1.5em', 'clamp(2em, 3.5vw, 3em)'],
-    lineHeight: 1.05,
-    letterSpacing: '-0.02em',
-    color: 'textLightest',
-    textWrap: 'balance',
-    overflowWrap: 'anywhere',
-  },
-  watchRequest: {
-    gridArea: 'request',
-    alignSelf: 'end',
-    justifySelf: 'start',
-    margin: '0px',
-    paddingX: 6,
-    paddingY: 9,
-    borderRadius: '1em',
-    backgroundColor: 'color-mix(in srgb, var(--theme-ui-colors-white) 70%, transparent)',
-    fontFamily: 'monospace',
-    fontSize: [5, 4],
-    color: 'textLightest',
-  },
   // A badge pinned inside its poster's top-right corner, as the app's Poster pins its own
   corner: {
     position: 'absolute',
@@ -770,11 +806,18 @@ Journey.styles = {
     zIndex: 1,
     fontSize: [6, 4],
   },
-  // The label sits next to its emoji, not a full em away
+  // The label sits next to its emoji, not a full em away; a new state pops in
   badge: {
     fontSize: '1em',
     '& > span + span': {
       marginLeft: '0.375em',
+    },
+    animation: `journey-pop 500ms ${EASE} backwards`,
+    '@keyframes journey-pop': {
+      from: { transform: 'scale(1.8)', opacity: 0 },
+    },
+    '@media (prefers-reduced-motion: reduce)': {
+      animation: 'none',
     },
   },
   year: {
@@ -784,37 +827,32 @@ Journey.styles = {
     letterSpacing: '0em',
     color: 'textLight',
   },
-  director: {
-    ...card,
-    display: 'flex',
+  avatar: {
+    display: 'inline-flex',
     alignItems: 'center',
-    gap: 6,
-    margin: '0px',
-    paddingX: [6, 4],
-    paddingY: 6,
-  },
-  profile: {
+    justifyContent: 'center',
     flexShrink: 0,
-    width: '3.5em',
-    height: '3.5em',
+    width: '2em',
+    height: '2em',
     borderRadius: '50%',
-    objectFit: 'cover',
     backgroundColor: 'grayDark',
-  },
-  eyebrow: {
-    display: 'block',
-    fontSize: 6,
-    letterSpacing: '0.08em',
-    textTransform: 'uppercase',
-    color: 'textLight',
-  },
-  followName: {
-    display: 'block',
     fontFamily: 'heading',
     fontWeight: 800,
-    fontSize: [3, 1],
-    lineHeight: 'heading',
     color: 'textLightest',
+  },
+  plex: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 10,
+    verticalAlign: 'bottom',
+    fontFamily: 'heading',
+    fontWeight: 800,
+  },
+  plexIcon: {
+    display: 'block',
+    flexShrink: 0,
+    width: '1.25em',
+    height: '1.25em',
   },
   // 📹 Record
   record: {
@@ -858,8 +896,10 @@ Journey.styles = {
     fontSize: 6,
     color: 'whitePure',
   },
+  // The release list, on the app's black, one rule under each row
   table: {
     ...card,
+    backgroundColor: 'color-mix(in srgb, var(--theme-ui-colors-white) 92%, transparent)',
     margin: '0px',
     padding: '0px',
     listStyle: 'none',
@@ -867,45 +907,72 @@ Journey.styles = {
   },
   row: {
     display: 'grid',
-    gridTemplateColumns: ['1.5em minmax(0px, 1fr) 4.5em', '2em minmax(0px, 1fr) 6em 4em'],
-    alignItems: 'baseline',
-    columnGap: 6,
-    rowGap: 11,
-    paddingX: 6,
-    paddingY: 8,
-    fontFamily: 'monospace',
-    fontSize: [6, 5],
-    fontVariantNumeric: 'tabular-nums',
+    gridTemplateColumns: ['1.75em minmax(0px, 1fr)', '2.25em minmax(0px, 1fr) auto auto'],
+    gridTemplateAreas: ['"state name" ". tags" ". stats"', '"state name tags stats"'],
+    alignItems: 'center',
+    columnGap: [8, 4],
+    rowGap: 8,
+    paddingLeft: [8, 6],
+    paddingRight: [8, 4],
+    paddingY: [6, 8],
     borderLeft: '3px solid transparent',
     ':not(:last-of-type)': {
       borderBottom: '1px solid',
-      borderBottomColor: 'grayDark',
-    },
-    '>:nth-of-type(4)': {
-      display: ['none', 'block'],
+      borderBottomColor: 'gray',
     },
   },
   won: {
     borderLeftColor: 'primary',
-    backgroundColor: 'color-mix(in srgb, var(--theme-ui-colors-primary) 14%, transparent)',
-    fontWeight: 600,
+    backgroundColor: 'color-mix(in srgb, var(--theme-ui-colors-primary) 10%, transparent)',
   },
-  rank: {
-    color: 'inherit',
-    opacity: 0.7,
+  state: {
+    gridArea: 'state',
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: [4, 3],
+    lineHeight: 1,
   },
-  ellipsis: {
-    overflow: 'hidden',
-    whiteSpace: 'nowrap',
-    textOverflow: 'ellipsis',
+  stateOut: {
+    transition: `opacity 200ms ${EASE}`,
+    '@media (prefers-reduced-motion: reduce)': {
+      opacity: '0 !important',
+      transition: 'none',
+    },
   },
-  number: {
-    textAlign: 'right',
-    whiteSpace: 'nowrap',
+  stateIn: {
+    position: 'absolute',
+  },
+  name: {
+    gridArea: 'name',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+    minWidth: '0px',
+    fontFamily: 'monospace',
+    fontSize: [6, 5],
+    lineHeight: 'heading',
+    color: 'textLightest',
+    textWrap: 'balance',
+  },
+  rejected: {
+    color: 'grayDarker',
+    textDecorationLine: 'line-through',
   },
   reason: {
-    gridColumn: '2 / -1',
+    fontFamily: 'monospace',
     fontSize: 6,
+    color: 'grayDarker',
+  },
+  rowTags: {
+    gridArea: 'tags',
+    justifyContent: ['flex-start', 'flex-end'],
+    fontSize: [5, 4],
+  },
+  rowStats: {
+    gridArea: 'stats',
+    fontSize: [6, 7],
   },
   // 📼 Archived
   archived: {
@@ -984,7 +1051,7 @@ Journey.styles = {
     fontSize: [5, 4],
     lineHeight: 'heading',
     color: 'text',
-    overflowWrap: 'anywhere',
+    textWrap: 'balance',
   },
   fileMeta: {
     display: 'flex',
@@ -999,12 +1066,15 @@ Journey.styles = {
     fontVariantNumeric: 'tabular-nums',
   },
   play: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 9,
     paddingX: 6,
     paddingY: 9,
     borderRadius: '1em',
     backgroundColor: 'color-mix(in srgb, var(--theme-ui-colors-white) 70%, transparent)',
   },
-  // ✨ Refine, and the swap of 🚨 Report
+  // ✨ Refine, ✂️ Shrink, and the swap of 🚨 Report
   swap: {
     ...card,
     display: 'grid',
@@ -1023,8 +1093,10 @@ Journey.styles = {
   },
   // Above the release on a phone, so the pills get the card's whole width
   swapPoster: {
-    width: ['5em', 'auto'],
+    position: 'relative',
+    width: ['7em', 'auto'],
     aspectRatio: '2 / 3',
+    fontSize: [6, 5],
   },
   swapBody: {
     display: 'flex',
@@ -1038,22 +1110,23 @@ Journey.styles = {
     flexWrap: 'wrap',
     alignItems: 'baseline',
     columnGap: 6,
+    rowGap: 10,
     width: '100%',
     margin: '0px',
     fontFamily: 'monospace',
     fontSize: [5, 4],
-    overflowWrap: 'anywhere',
+    lineHeight: 'heading',
   },
-  // Drawn across the name, line after line as it wraps
+  // Struck line after line as the name wraps: a text decoration, inline, fading in
   strike: {
-    textDecoration: 'none',
-    backgroundImage: 'linear-gradient(currentColor, currentColor)',
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: '0 55%',
-    transition: `background-size 700ms ${EASE} 300ms`,
+    minWidth: '0px',
+    textDecorationLine: 'line-through',
+    textDecorationThickness: '2px',
+    textWrap: 'balance',
+    transition: `text-decoration-color 600ms ${EASE} 400ms`,
     '@media (prefers-reduced-motion: reduce)': {
       transition: 'none',
-      backgroundSize: '100% 2px !important',
+      textDecorationColor: 'currentColor !important',
     },
   },
   swapSize: {
@@ -1072,6 +1145,7 @@ Journey.styles = {
     flexWrap: 'wrap',
     alignItems: 'baseline',
     columnGap: 6,
+    rowGap: 10,
     width: '100%',
     margin: '0px',
     fontFamily: 'monospace',
@@ -1079,7 +1153,10 @@ Journey.styles = {
     fontSize: [4, 2],
     lineHeight: 'heading',
     color: 'primary',
-    overflowWrap: 'anywhere',
+    '>:first-of-type': {
+      minWidth: '0px',
+      textWrap: 'balance',
+    },
   },
   pills: {
     display: 'flex',
@@ -1088,17 +1165,61 @@ Journey.styles = {
     marginTop: 8,
     fontSize: [4, 3],
   },
+  // What Refine wins, before the names
+  gains: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    columnGap: 2,
+    rowGap: 6,
+    marginBottom: 6,
+  },
+  gain: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+    margin: '0px',
+  },
+  gainAxis: {
+    fontFamily: 'heading',
+    fontWeight: 800,
+    fontSize: 6,
+    letterSpacing: '0.14em',
+    textTransform: 'uppercase',
+    color: 'textLight',
+  },
+  gainValue: {
+    display: 'flex',
+    alignItems: 'baseline',
+    gap: 8,
+    fontFamily: 'monospace',
+    fontWeight: 600,
+    fontSize: ['1.75em', 'clamp(2em, 3.5vw, 3em)'],
+    lineHeight: 1,
+    whiteSpace: 'nowrap',
+  },
+  gainFrom: {
+    fontSize: '0.6em',
+    color: 'textLight',
+  },
+  gainArrow: {
+    fontSize: '0.6em',
+    color: 'textLight',
+  },
+  gainTo: {
+    color: 'primary',
+  },
   // ✂️ Shrink
   shrink: {
     display: 'flex',
     flexDirection: 'column',
     gap: 6,
+    minWidth: '0px',
   },
   counter: {
     margin: '0px',
     fontFamily: 'heading',
     fontWeight: 800,
-    fontSize: 'clamp(4.5rem, 15vw, 12rem)',
+    fontSize: 'clamp(3.5rem, 11vw, 9rem)',
     lineHeight: 0.95,
     letterSpacing: '-0.03em',
     color: 'primary',
@@ -1130,6 +1251,23 @@ Journey.styles = {
     color: 'text',
     fontVariantNumeric: 'tabular-nums',
   },
+  kept: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    columnGap: 4,
+    rowGap: 8,
+    margin: '0px',
+    marginTop: 8,
+    padding: '0px',
+    listStyle: 'none',
+    li: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      fontSize: [5, 4],
+      color: 'textLight',
+    },
+  },
   // 🚨 Report
   // The report lands on the swap card's corner, as a speech bubble
   report: {
@@ -1159,6 +1297,13 @@ Journey.styles = {
     gap: 8,
     fontSize: 5,
     color: 'text',
+  },
+  bubbleText: {
+    flex: 1,
+    minWidth: '0px',
+    strong: {
+      color: 'textLightest',
+    },
   },
   quote: {
     margin: '0px',
@@ -1204,53 +1349,5 @@ Journey.styles = {
     paddingY: 6,
     textDecoration: 'none',
     ...focus,
-  },
-  // The chip
-  chip: {
-    position: 'fixed',
-    left: '1.5em',
-    bottom: '1.5em',
-    zIndex: 10,
-    display: ['none', 'flex'],
-    alignItems: 'center',
-    gap: 8,
-    maxWidth: '20em',
-    padding: 9,
-    paddingRight: 6,
-    ...card,
-    borderRadius: '0.5em',
-    pointerEvents: 'none',
-    transition: `opacity 400ms ${EASE}, transform 400ms ${EASE}`,
-    '@media (prefers-reduced-motion: reduce)': {
-      transition: 'none',
-      transform: 'none',
-    },
-  },
-  chipPoster: {
-    width: '2.25em',
-    aspectRatio: '2 / 3',
-    borderRadius: '0.25em',
-    objectFit: 'cover',
-  },
-  chipTitle: {
-    minWidth: '0px',
-    overflow: 'hidden',
-    whiteSpace: 'nowrap',
-    textOverflow: 'ellipsis',
-    fontFamily: 'heading',
-    fontWeight: 800,
-    fontSize: 5,
-    color: 'textLightest',
-  },
-  chipEmoji: {
-    fontSize: 3,
-    lineHeight: 1,
-    animation: `journey-pop 400ms ${EASE} backwards`,
-    '@keyframes journey-pop': {
-      from: { transform: 'scale(0.4)', opacity: 0 },
-    },
-    '@media (prefers-reduced-motion: reduce)': {
-      animation: 'none',
-    },
   },
 }

@@ -73,6 +73,29 @@ export const useCountUp = (target: number, active: boolean, duration = 900) => {
   return value
 }
 
+// How many of the moments `at` (ms after `active` turns true) have passed; all of them at once under reduced motion
+export const useSteps = (active: boolean, at: number[]) => {
+  const [step, setStep] = useState(0)
+  const key = at.join(',')
+
+  useEffect(() => {
+    if (!active) {
+      return
+    }
+
+    const moments = key.split(',').map(Number)
+    if (reduced()) {
+      setStep(moments.length)
+      return
+    }
+
+    const timers = moments.map((ms, index) => setTimeout(() => setStep(index + 1), ms))
+    return () => timers.forEach(clearTimeout)
+  }, [active, key])
+
+  return step
+}
+
 // Writes how far the element has scrolled through the viewport, 0 as its top meets the viewport's bottom and 1 as its
 // bottom leaves the viewport's top, in a CSS variable on it: one passive listener, one write per frame
 export const useScrollProgress = <T extends HTMLElement>(name: string) => {
