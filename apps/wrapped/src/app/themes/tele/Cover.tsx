@@ -24,7 +24,7 @@ const postersOf = (value: unknown, found = new Map<string, WrappedPoster>()) => 
 }
 
 // The issue on the newsstand, the size of the frame Keep in touch opens it in: the year's posters roll behind its front
-const Cover = ({ share, sheets, art }: ThemeProps) => {
+const Cover = ({ share, sheets, art, link }: ThemeProps) => {
   const [opening, ...inside] = sheets
   const sheet = opening as Extract<SheetModel, { kind: 'opening' }>
   const posters = postersOf([sheets, share.wrapped])
@@ -53,11 +53,11 @@ const Cover = ({ share, sheets, art }: ThemeProps) => {
           <p className="tele-headline"><Trans i18nKey="wrapped.tele.contents.title" components={[<span className="tele-band" />]} /></p>
           <ol>
             {inside.slice(0, CONTENTS).map((other, index) => (
-              <li key={index}><span>{rubric(other)}</span>{other.label}</li>
+              <li key={index}><a href={link?.(index + 1)} target="_blank" rel="noopener noreferrer"><span>{rubric(other)}</span> {other.label}</a></li>
             ))}
           </ol>
         </div>
-        <p className="tele-presentation-read">{t('wrapped.tele.read')}</p>
+        <a className="tele-presentation-read" href={link?.(0)} target="_blank" rel="noopener noreferrer">{t('wrapped.tele.read')}</a>
       </div>
       <Barcode />
     </main>

@@ -2233,12 +2233,21 @@ html[data-theme='tele'] {
   position: absolute;
   inset: 0;
   z-index: 1;
+  pointer-events: none;
   background: linear-gradient(180deg, rgb(22 20 15 / 0.6), rgb(22 20 15 / 0.2) 28%, rgb(22 20 15 / 0.75) 55%, rgb(22 20 15 / 0.96) 80%);
 }
 
 .tele-presentation > :not(.tele-presentation-wall) {
   position: relative;
   z-index: 2;
+  /* The posters under the lines stay in reach of the pointer, only what reacts takes it */
+  pointer-events: none;
+}
+
+.tele-presentation a,
+.tele-presentation .tele-logo,
+.tele-presentation .tele-sticker {
+  pointer-events: auto;
 }
 
 .tele-presentation .tele-sticker {
@@ -2279,7 +2288,7 @@ html[data-theme='tele'] {
 }
 
 .tele-presentation-contents li span {
-  margin-right: 0.5em;
+  margin-right: 0.25em;
   color: var(--yellow);
   font-style: italic;
   font-weight: 900;
@@ -2287,6 +2296,8 @@ html[data-theme='tele'] {
 
 .tele-presentation-read {
   justify-self: start;
+  color: #fff;
+  text-decoration: none;
   padding: 10px 18px 8px;
   background: var(--red);
   font: italic 900 clamp(22px, 4cqi, 30px)/1 var(--cond);
@@ -2294,7 +2305,77 @@ html[data-theme='tele'] {
 }
 
 .tele-presentation-read::after {
-  content: ' →';
+  content: '→' / '';
+  display: inline-block;
+  margin-left: 0.25em;
+}
+
+.tele-presentation-contents a {
+  display: inline-block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.tele-presentation-contents a:focus-visible,
+.tele-presentation-read:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 3px;
+}
+
+.tele-presentation-column .tele-photo,
+.tele-presentation .tele-logo,
+.tele-presentation-contents a,
+.tele-presentation-contents a span,
+.tele-presentation-read,
+.tele-presentation-read::after {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s, color 0.2s, box-shadow 0.35s;
+}
+
+@media (hover: hover) {
+  /* The column under the pointer stops, the poster comes off the wall and straightens */
+  .tele-presentation-column:hover {
+    animation-play-state: paused;
+  }
+
+  .tele-presentation-column .tele-photo:hover {
+    position: relative;
+    z-index: 1;
+    transform: rotate(6deg) scale(1.12);
+    box-shadow: 0 18px 40px -12px rgb(0 0 0 / 0.7);
+  }
+
+  .tele-presentation .tele-logo:hover {
+    transform: rotate(-2deg) scale(1.03);
+  }
+
+  .tele-presentation .tele-sticker:hover {
+    animation: tele-wobble 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* A line of the contents is marked like a programme circled in the TV guide */
+  .tele-presentation-contents a:hover {
+    transform: translateX(8px);
+  }
+
+  .tele-presentation-contents a:hover span {
+    background: var(--blue);
+    color: #fff;
+    box-shadow: 0 0 0 3px var(--blue);
+  }
+
+  .tele-presentation-read:hover {
+    background: var(--red-deep);
+    transform: rotate(-1.5deg);
+  }
+
+  .tele-presentation-read:hover::after {
+    transform: translateX(6px);
+  }
+}
+
+@keyframes tele-wobble {
+  30% { transform: rotate(-10deg) scale(1.08); }
+  60% { transform: rotate(6deg) scale(1.04); }
 }
 
 .tele-presentation > .tele-barcode {
@@ -2304,7 +2385,8 @@ html[data-theme='tele'] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tele-presentation-column {
+  .tele-presentation-column,
+  .tele-presentation .tele-sticker:hover {
     animation: none;
   }
 }

@@ -330,7 +330,7 @@ const KeepInTouch = () => {
         </div>
         <Splash
           emblem={<Emblem icon={<Icon value='plex' sx={{ height: '4em' }} />} label='Plex' />}
-          cover={share && <WrappedPage token={pin.wrapped.token} look={look} />}
+          cover={share && <WrappedPage token={pin.wrapped.token} theme={share.look.theme} look={look} />}
         />
         {look && <LookFont look={look} />}
       </div>

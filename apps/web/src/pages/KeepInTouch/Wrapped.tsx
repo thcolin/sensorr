@@ -64,14 +64,13 @@ const actionStyle = {
 }
 
 // The opening of their wrapped, in its look, takes the place of the splash once it has loaded
-export const WrappedPage = ({ token, look }) => {
+export const WrappedPage = ({ token, theme, look }) => {
   const { t } = useTranslation()
   const [loaded, setLoaded] = useState(false)
 
   return (
     <div sx={{ ...WrappedPage.styles.element, backgroundColor: look.ground }} data-loaded={loaded}>
-      <iframe src={`${linkOf(token)}?cover`} title={t('keepInTouch.done.wrapped.open')} tabIndex={-1} onLoad={() => setLoaded(true)} sx={WrappedPage.styles.frame} />
-      <a href={linkOf(token)} target='_blank' rel='noopener noreferrer' aria-label={t('keepInTouch.done.wrapped.open')} sx={WrappedPage.styles.link} />
+      <iframe src={`${linkOf(token)}?cover&look=${theme}`} title={t('keepInTouch.done.wrapped.open')} onLoad={() => setLoaded(true)} sx={WrappedPage.styles.frame} />
     </div>
   )
 }
@@ -95,13 +94,6 @@ WrappedPage.styles = {
     width: '100%',
     height: '100%',
     border: 'none',
-    pointerEvents: 'none',
-  },
-  // The whole presentation opens the wrapped
-  link: {
-    position: 'absolute',
-    inset: '0px',
-    cursor: 'pointer',
   },
 }
 
