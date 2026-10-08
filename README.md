@@ -31,7 +31,7 @@
 </p>
 
 <p align="center">
-  <a href="https://thcolin.github.io/sensorr/demo/"><b>Try the demo</b></a>, login <code>demo</code> / <code>demo</code>, and a friend's wrapped, <a href="https://thcolin.github.io/sensorr/demo/wrapped/demo"><b>Alex's</b></a>.<br>
+  <a href="https://thcolin.github.io/sensorr/"><b>Take the tour</b></a> or <a href="https://thcolin.github.io/sensorr/demo/"><b>try the demo</b></a>, login <code>demo</code> / <code>demo</code>, and a friend's wrapped, <a href="https://thcolin.github.io/sensorr/demo/wrapped/demo"><b>Alex's</b></a>.<br>
   <sub><i>It runs in your browser on made-up libraries, and your changes stay there until you reset them.</i></sub>
 </p>
 
