@@ -63,14 +63,15 @@ const actionStyle = {
   },
 }
 
-// Their wrapped itself takes the place of the splash, revealed over the poster wall once it has loaded
+// The opening of their wrapped, in its look, takes the place of the splash once it has loaded
 export const WrappedPage = ({ token, look }) => {
   const { t } = useTranslation()
   const [loaded, setLoaded] = useState(false)
 
   return (
     <div sx={{ ...WrappedPage.styles.element, backgroundColor: look.ground }} data-loaded={loaded}>
-      <iframe src={linkOf(token)} title={t('keepInTouch.done.wrapped.open')} onLoad={() => setLoaded(true)} sx={WrappedPage.styles.frame} />
+      <iframe src={`${linkOf(token)}?cover`} title={t('keepInTouch.done.wrapped.open')} tabIndex={-1} onLoad={() => setLoaded(true)} sx={WrappedPage.styles.frame} />
+      <a href={linkOf(token)} target='_blank' rel='noopener noreferrer' aria-label={t('keepInTouch.done.wrapped.open')} sx={WrappedPage.styles.link} />
     </div>
   )
 }
@@ -94,6 +95,13 @@ WrappedPage.styles = {
     width: '100%',
     height: '100%',
     border: 'none',
+    pointerEvents: 'none',
+  },
+  // The whole presentation opens the wrapped
+  link: {
+    position: 'absolute',
+    inset: '0px',
+    cursor: 'pointer',
   },
 }
 
@@ -235,7 +243,7 @@ WrappedTicket.styles = {
 // The edge of the object: film perforations for the labo look, the band of colours of the others
 const Edge = ({ look }: { look: WrappedLook }) => look.stripe ? (
   <div sx={{ display: 'flex', height: '0.5em' }}>
-    {look.stripe.map((color, index) => <span key={index} sx={{ flex: 1, backgroundColor: color }} />)}
+    {look.stripe.filter((color) => color !== look.ground).map((color, index) => <span key={index} sx={{ flex: 1, backgroundColor: color }} />)}
   </div>
 ) : look === WRAPPED_LOOKS.labo ? (
   <div sx={{ height: '1.25em', backgroundColor: '#1d130c', backgroundImage: 'repeating-linear-gradient(90deg, transparent 0 0.5em, #f6ecd8 0.5em 1.1em, transparent 1.1em 1.6em)', backgroundSize: '100% 0.5em', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }} />
