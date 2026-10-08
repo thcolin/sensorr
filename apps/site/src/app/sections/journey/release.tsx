@@ -82,10 +82,10 @@ export const Release = {
       display: 'flex',
       flexWrap: 'wrap',
       alignItems: 'center',
-      gap: 8,
+      gap: 9,
       '>code': {
-        paddingX: 8,
-        paddingY: 10,
+        paddingX: 9,
+        paddingY: 11,
         borderRadius: '0.25em',
         backgroundColor: 'gray',
         fontFamily: 'monospace',
@@ -100,17 +100,17 @@ export const Release = {
       color: 'textLightest',
       svg: {
         display: 'block',
-        height: '1.75em',
+        height: '1.2em',
         width: 'auto',
         // A wide logo stays as wide as a value box
-        maxWidth: '3.5em',
+        maxWidth: '2.5em',
       },
     },
     flag: {
       position: 'relative',
       display: 'inline-block',
       paddingRight: '0.375em',
-      fontSize: 3,
+      fontSize: 4,
       lineHeight: 1,
       textDecoration: 'none',
     },
@@ -119,18 +119,17 @@ export const Release = {
       top: '0.375em',
       left: '0.375em',
     },
-    // On a phone, one line without the bars, as the app's rows draw them when they have no room
+    // One line, a short bar under each value on a wide screen, none on a phone, as the app's rows draw them without room
     statistics: {
       display: 'flex',
-      flexDirection: ['row', 'column'],
       flexWrap: 'wrap',
-      columnGap: 4,
+      columnGap: 6,
       rowGap: 11,
       fontSize: 6,
     },
     statistic: {
       display: 'grid',
-      gridTemplateColumns: ['1.25em auto', '1.25em 6em auto'],
+      gridTemplateColumns: ['1.25em auto', '1.25em 2.5em auto'],
       alignItems: 'center',
       columnGap: 8,
       whiteSpace: 'nowrap',
