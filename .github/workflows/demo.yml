@@ -34,15 +34,15 @@ jobs:
       - run: npx nx run web:build:demo
         env:
           SENSORR_DEMO_TMDB_KEY: ${{ secrets.SENSORR_DEMO_TMDB_KEY }}
-      # GitHub Pages answers an unknown path with 404.html: the app routes it
-      - run: cp dist/apps/web-demo/index.html dist/apps/web-demo/404.html
+      # GitHub Pages answers an unknown path with the 404.html at its root: the demo routes it
+      - run: cp dist/apps/pages/demo/index.html dist/apps/pages/404.html
       # Alex's wrapped, next to the app, at the one address the demo has: `wrapped/demo`, the folder its data is in
       - run: npx nx run wrapped:build:demo
-      - run: cp dist/apps/web-demo/wrapped/index.html dist/apps/web-demo/wrapped/demo/index.html
+      - run: cp dist/apps/pages/demo/wrapped/index.html dist/apps/pages/demo/wrapped/demo/index.html
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          path: dist/apps/web-demo
+          path: dist/apps/pages
 
   deploy:
     # A run dispatched from another branch builds, and publishes nothing

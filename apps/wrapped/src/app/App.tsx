@@ -27,7 +27,7 @@ export interface Share {
 
 type State = { status: 'loading' } | { status: 'gone' } | { status: 'error' } | { status: 'done', share: Share }
 
-// The page's <base href>: `/wrapped/`, or `/sensorr/wrapped/` in the demo
+// The page's <base href>: `/wrapped/`, or `/sensorr/demo/wrapped/` in the demo
 const BASE = new URL(document.baseURI).pathname
 
 const tokenOf = (path: string) => {
