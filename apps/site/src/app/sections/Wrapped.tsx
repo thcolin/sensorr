@@ -235,7 +235,7 @@ Wrapped.styles = {
     gap: [2, 0],
     paddingTop: [3, 1],
     paddingBottom: ['3em', '6em'],
-    overflow: 'hidden',
+    overflow: 'clip',
     // Its own floor, so nothing from the section above shows under the glow
     backgroundColor: 'white',
   },
@@ -366,7 +366,7 @@ Wrapped.styles = {
   frame: {
     display: 'block',
     position: 'relative',
-    overflow: 'hidden',
+    overflow: 'clip',
     borderRadius: '0.25em',
     backgroundColor: 'grayDark',
   },

@@ -131,7 +131,7 @@ Hero.styles = {
     flexDirection: 'column',
     alignItems: 'center',
     paddingTop: ['5em', 'clamp(6em, 14vh, 9em)'],
-    overflow: 'hidden',
+    overflow: 'clip',
     isolation: 'isolate',
   },
   wall: {
@@ -167,7 +167,7 @@ Hero.styles = {
     width: ['6em', '8em'],
     aspectRatio: '2 / 3',
     borderRadius: '0.25em',
-    overflow: 'hidden',
+    overflow: 'clip',
     backgroundColor: 'grayDark',
   },
   picture: {
@@ -206,7 +206,7 @@ Hero.styles = {
     position: 'absolute',
     width: '1px',
     height: '1px',
-    overflow: 'hidden',
+    overflow: 'clip',
     clipPath: 'inset(50%)',
     whiteSpace: 'nowrap',
   },
@@ -277,7 +277,7 @@ Hero.styles = {
     border: '1px solid',
     borderColor: 'grayDark',
     borderRadius: '0.5em',
-    overflow: 'hidden',
+    overflow: 'clip',
     backgroundColor: 'white',
   },
   bar: {

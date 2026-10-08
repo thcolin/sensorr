@@ -104,7 +104,7 @@ Wall.styles = {
     position: 'absolute',
     inset: '0px',
     zIndex: -2,
-    overflow: 'hidden',
+    overflow: 'clip',
     opacity: 0.85,
     filter: 'blur(9px) saturate(1.2)',
   },
@@ -125,7 +125,7 @@ Wall.styles = {
     display: 'block',
     aspectRatio: '2 / 3',
     borderRadius: '0.25em',
-    overflow: 'hidden',
+    overflow: 'clip',
     backgroundColor: 'grayDark',
   },
   picture: {
@@ -188,7 +188,7 @@ Cover.styles = {
     display: 'block',
     aspectRatio: '2 / 3',
     borderRadius: '0.25em',
-    overflow: 'hidden',
+    overflow: 'clip',
   },
   picture: {
     minHeight: '0px',

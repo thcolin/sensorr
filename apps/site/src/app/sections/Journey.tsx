@@ -533,7 +533,7 @@ Journey.styles = {
     position: 'absolute',
     width: '1px',
     height: '1px',
-    overflow: 'hidden',
+    overflow: 'clip',
     clip: 'rect(0 0 0 0)',
     whiteSpace: 'nowrap',
   },
@@ -542,7 +542,7 @@ Journey.styles = {
     display: 'flex',
     alignItems: 'flex-end',
     minHeight: ['85svh', '100svh'],
-    overflow: 'hidden',
+    overflow: 'clip',
     isolation: 'isolate',
   },
   // Its last rows masked out on its own layer: the scaled backdrop never shows a line under the veil
@@ -740,7 +740,7 @@ Journey.styles = {
     position: 'sticky',
     top: '0px',
     height: '100svh',
-    overflow: 'hidden',
+    overflow: 'clip',
   },
   ambientImage: {
     position: 'absolute',
@@ -837,7 +837,7 @@ Journey.styles = {
   },
   picture: {
     borderRadius: '0.25em',
-    overflow: 'hidden',
+    overflow: 'clip',
   },
   // A badge pinned inside its poster's top-right corner, as the app's Poster pins its own
   corner: {
@@ -943,7 +943,7 @@ Journey.styles = {
     margin: '0px',
     padding: '0px',
     listStyle: 'none',
-    overflow: 'hidden',
+    overflow: 'clip',
   },
   row: {
     display: 'grid',
@@ -1026,14 +1026,14 @@ Journey.styles = {
     gap: [6, 2],
     padding: [6, 2],
     paddingTop: [6, '6em'],
-    overflow: 'hidden',
+    overflow: 'clip',
     isolation: 'isolate',
   },
   library: {
     position: 'absolute',
     inset: '0px',
     zIndex: -1,
-    overflow: 'hidden',
+    overflow: 'clip',
   },
   libraryBackdrop: {
     position: 'absolute',
@@ -1121,7 +1121,7 @@ Journey.styles = {
     position: 'relative',
     gridTemplateColumns: ['minmax(0px, 1fr)', '11em minmax(0px, 1fr)'],
     alignItems: 'center',
-    overflow: 'hidden',
+    overflow: 'clip',
     isolation: 'isolate',
     gap: [6, 2],
     paddingX: [6, 4],
@@ -1234,7 +1234,7 @@ Journey.styles = {
     height: '0.75em',
     borderRadius: '1em',
     backgroundColor: 'color-mix(in srgb, var(--theme-ui-colors-primary) 30%, transparent)',
-    overflow: 'hidden',
+    overflow: 'clip',
   },
   gaugeFill: {
     position: 'absolute',

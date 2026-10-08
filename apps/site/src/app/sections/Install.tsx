@@ -158,7 +158,7 @@ const rise = (delay: number) => ({
 Install.styles = {
   element: {
     position: 'relative',
-    overflow: 'hidden',
+    overflow: 'clip',
     isolation: 'isolate',
     // One screen, filled on purpose, as the hero fills the first
     display: 'flex',
@@ -305,7 +305,7 @@ Install.styles = {
     position: 'absolute',
     width: '1px',
     height: '1px',
-    overflow: 'hidden',
+    overflow: 'clip',
     clipPath: 'inset(50%)',
     whiteSpace: 'nowrap',
   },

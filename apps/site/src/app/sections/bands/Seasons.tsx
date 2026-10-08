@@ -211,7 +211,7 @@ Seasons.styles = {
     height: '0.375em',
     borderRadius: '1em',
     backgroundColor: 'gray',
-    overflow: 'hidden',
+    overflow: 'clip',
   },
   fill: {
     display: 'block',

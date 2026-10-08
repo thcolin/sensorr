@@ -54,7 +54,8 @@ Band.styles = {
     isolation: 'isolate',
     marginTop: '-1px',
     paddingY: ['3em', '4em'],
-    overflow: 'hidden',
+    // Clipped without being a scroll container: a find in the page or a scrollIntoView never scrolls the band inside
+    overflow: 'clip',
   },
   tint: {
     position: 'absolute',

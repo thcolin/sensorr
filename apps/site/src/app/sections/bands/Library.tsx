@@ -132,7 +132,7 @@ Library.styles = {
     fontWeight: 'strong',
     fontSize: [5, 4],
     color: 'textLightest',
-    overflow: 'hidden',
+    overflow: 'clip',
     whiteSpace: 'nowrap',
     textOverflow: 'ellipsis',
   },

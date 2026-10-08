@@ -517,7 +517,7 @@ BuiltOn.styles = {
     width: '1px',
     height: '1px',
     margin: '-1px',
-    overflow: 'hidden',
+    overflow: 'clip',
     clip: 'rect(0 0 0 0)',
     whiteSpace: 'nowrap',
   },
@@ -544,7 +544,7 @@ BuiltOn.styles = {
       color: 'whitePure',
       fontFamily: 'monospace',
       lineHeight: 'body',
-      overflow: 'hidden',
+      overflow: 'clip',
     },
     // The film behind its own release, faded into the band at both ends
     backdrop: {
@@ -563,7 +563,7 @@ BuiltOn.styles = {
     },
     edge: {
       position: 'relative',
-      overflow: 'hidden',
+      overflow: 'clip',
       whiteSpace: 'nowrap',
       fontSize: 4,
       lineHeight: 1,
@@ -781,7 +781,7 @@ BuiltOn.styles = {
       width: '100%',
       height: '100%',
       boxSizing: 'border-box',
-      overflow: 'hidden',
+      overflow: 'clip',
       resize: 'none',
       border: 'none',
       outline: 'none',
@@ -801,7 +801,7 @@ BuiltOn.styles = {
       border: '1px solid',
       borderColor: 'gray-800',
       borderRadius: '0.25em',
-      overflow: 'hidden',
+      overflow: 'clip',
     },
     field: {
       display: 'flex',
