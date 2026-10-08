@@ -6,6 +6,7 @@ import { useTitle } from '@sensorr/utils'
 import i18n from '@sensorr/i18n'
 import { useAPI } from '../../store/api'
 import { LoadingBar } from '../../layout/LoadingBar'
+import { LookFont, WrappedTicket, WrappedTitle, WrappedWall, lookOf, useShare } from './Wrapped'
 
 // Persist the PIN so a page reload (e.g. a mobile tab discarded while the user is on plex.tv/link)
 // reuses the SAME code instead of minting a new one and orphaning the code already entered.
@@ -83,14 +84,15 @@ Emblem.styles = {
   },
 }
 
-export const Splash = ({ emblem, step = 0 }) => {
+export const Splash = ({ emblem, step = 0, backdrop = null, ink = undefined }) => {
   const { t } = useTranslation()
 
   return (
-    <div sx={Splash.styles.element} style={{ '--step': step } as any}>
+    <div sx={Splash.styles.element} style={{ '--step': step, color: ink } as any}>
+      {backdrop}
       {emblem}
       <div sx={{ width: '100%' }}>
-        <a href="https://github.com/thcolin/sensorr" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.reset' }}><h1>Sensorr</h1></a>
+        <a href="https://github.com/thcolin/sensorr" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.reset' }}><h1 sx={{ color: 'inherit' }}>Sensorr</h1></a>
         <p>{t('keepInTouch.tagline')}</p>
       </div>
     </div>
@@ -138,82 +140,8 @@ Splash.styles = {
         transition: 'none',
       },
       opacity: 0.25,
-      zIndex: -1,
+      zIndex: -2,
     },
-  },
-}
-
-// The opening story of their wrapped, drawn by the API as the image a friend shares
-const Wrapped = ({ token, look }) => {
-  const { t } = useTranslation()
-  const [card, setCard] = useState('loading')
-  const href = `/wrapped/${token}`
-
-  return (
-    <div sx={Wrapped.styles.element}>
-      {card !== 'failed' && (
-        <a href={href} target='_blank' rel='noopener noreferrer' sx={Wrapped.styles.card} tabIndex={-1} aria-hidden={true}>
-          {card === 'loading' && <Bar width='100%' height='100%' sx={Wrapped.styles.skeleton} />}
-          <img
-            src={`/api/wrapped/share/${token}/cards/${look}/opening?lang=${i18n.language}`}
-            alt=''
-            onLoad={() => setCard('loaded')}
-            onError={() => setCard('failed')}
-            sx={{ ...Wrapped.styles.image, opacity: card === 'loaded' ? 1 : 0 }}
-          />
-        </a>
-      )}
-      <a href={href} target='_blank' rel='noopener noreferrer' sx={{ ...KeepInTouch.styles.action, marginBottom: '0px' }}>
-        {t('keepInTouch.done.wrapped.open')}
-      </a>
-      <p sx={Wrapped.styles.keep}>
-        {t('keepInTouch.done.wrapped.keep')}
-      </p>
-    </div>
-  )
-}
-
-Wrapped.styles = {
-  element: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 2,
-  },
-  card: {
-    position: 'relative',
-    display: 'block',
-    height: '15em',
-    aspectRatio: '9 / 16',
-    marginBottom: 4,
-    transform: 'rotate(-3deg)',
-    transition: 'transform 400ms cubic-bezier(0.16, 1, 0.3, 1)',
-    '@media (hover: hover)': {
-      ':hover': {
-        transform: 'rotate(0deg) scale(1.03)',
-      },
-    },
-    '@media (prefers-reduced-motion: reduce)': {
-      transition: 'none',
-    },
-  },
-  skeleton: {
-    position: 'absolute',
-    inset: '0px',
-  },
-  image: {
-    display: 'block',
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-    transition: 'opacity 400ms ease-out',
-  },
-  keep: {
-    margin: '0px',
-    fontSize: 6,
-    maxWidth: '24em',
-    lineHeight: 'body',
   },
 }
 
@@ -222,6 +150,8 @@ const KeepInTouch = () => {
   useTitle(t('keepInTouch.title'))
   const api = useAPI()
   const [pin, setPin] = useState(null) as any
+  const share = useShare(pin?.wrapped?.token)
+  const look = share && lookOf(share.look.theme)
 
   useEffect(() => {
     let stopped = false
@@ -356,12 +286,12 @@ const KeepInTouch = () => {
                     </div>
                   ) : pin?.done ? (
                     <div>
-                      <Icon value='check' height='1em' width='1em' sx={{ fontSize: '4em', color: 'black' }} />
+                      {!share && <Icon value='check' height='1em' width='1em' sx={{ fontSize: '4em', color: 'black' }} />}
                       <p sx={{ marginTop: 2 }}>
                         {t('keepInTouch.done.title')}
                       </p>
-                      {pin.wrapped && (
-                        <Wrapped token={pin.wrapped.token} look={pin.wrapped.look} />
+                      {share && (
+                        <WrappedTicket token={pin.wrapped.token} share={share} look={look} />
                       )}
                       <br/>
                       <p sx={{ fontSize: 6, color: 'grayDark' }}>
@@ -398,7 +328,16 @@ const KeepInTouch = () => {
             />
           </div>
         </div>
-        <Splash emblem={<Emblem icon={<Icon value='plex' sx={{ height: '4em' }} />} label='Plex' />} />
+        {share ? (
+          <Splash
+            backdrop={<WrappedWall token={pin.wrapped.token} share={share} look={look} />}
+            emblem={<WrappedTitle token={pin.wrapped.token} share={share} look={look} />}
+            ink={look.ink}
+          />
+        ) : (
+          <Splash emblem={<Emblem icon={<Icon value='plex' sx={{ height: '4em' }} />} label='Plex' />} />
+        )}
+        {look && <LookFont look={look} />}
       </div>
     </div>
   )

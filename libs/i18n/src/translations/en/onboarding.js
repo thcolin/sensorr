@@ -105,7 +105,11 @@ export default {
       watchlist: 'Administrator is now allowed to follow movies from your <0>Plex "Watchlist"</0> and consider adding them to his library.',
       wrapped: {
         open: 'Open my wrapped',
-        keep: 'This link exists only for you: keep it to come back to your wrapped. You will also find it in your emails, or here by linking your Plex account again.',
+        explore: 'Explore my year',
+        copy: 'Copy the link',
+        copied: 'Link to your wrapped copied to the clipboard',
+        uncopied: 'The link could not be copied, open your wrapped and keep its address',
+        keep: 'This link exists only for you: keep it to come back to your wrapped. You will also find it here, by linking your Plex account again.',
       },
     },
     link: {
