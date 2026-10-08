@@ -9,7 +9,7 @@ type Of<K extends SheetModel['kind']> = Extract<SheetModel, { kind: K }>
 
 // Tape and case colours, picked from the key so a show keeps its colour from one shelf to the next
 const TAPES = ['#c3242b', '#1c4fb8', '#1e8a4a', '#d99a12', '#6c2bb3', '#d9531e']
-const tapeOf = (key: string) => TAPES[[...key].reduce((sum, char) => (sum * 31 + char.charCodeAt(0)) >>> 0, 7) % TAPES.length]
+export const tapeOf = (key: string) => TAPES[[...key].reduce((sum, char) => (sum * 31 + char.charCodeAt(0)) >>> 0, 7) % TAPES.length]
 const tilts = (count: number) => Array.from({ length: count }, (_, index) => count > 1 ? (index / (count - 1) - 0.5) * 24 : 0)
 
 // A quantity is priced with its unit: not a date, nor the digits of a name or of a title in quotes
@@ -77,14 +77,14 @@ export const Neon = ({ lines, as: Tag = 'h2', tone = 'pink', className }: { line
 )
 
 // A VHS case facing out: the sleeve under the plastic lip, a sticker, a handwritten label
-export const Box = ({ poster, art, width = 640, tilt = 0, sticker, label, className }: { poster: WrappedPoster, art: Art, width?: 320 | 640 | 1280, tilt?: number, sticker?: string, label?: string, className?: string }) => {
+export const Box = ({ poster, art, width = 640, tilt = 0, sticker, label, className, eager }: { poster: WrappedPoster, art: Art, width?: 320 | 640 | 1280, tilt?: number, sticker?: string, label?: string, className?: string, eager?: boolean }) => {
   const src = art(poster, 'thumb', width)
 
   return (
     <figure className={`videoclub-box ${className || ''}`} style={{ '--ry': `${tilt}deg`, '--case': tapeOf(poster.key) } as React.CSSProperties}>
       <span className="videoclub-box-case">
         <span className="videoclub-box-sleeve">
-          {src ? <img src={src} alt={poster.title} loading="lazy" /> : <span className="videoclub-box-blank">{poster.title}</span>}
+          {src ? <img src={src} alt={poster.title} loading={eager ? 'eager' : 'lazy'} /> : <span className="videoclub-box-blank">{poster.title}</span>}
         </span>
         {sticker && <span className="videoclub-sticker">{sticker}</span>}
       </span>
@@ -113,15 +113,14 @@ const Shelf = ({ posters, art, titled = true, className }: { posters: WrappedPos
   </ul>
 )
 
-export const Opening = ({ sheet, art, first }: { sheet: Of<'opening'>, art: Art, first?: string }) => {
+// The shop's name over its door: the head on the lightbox, the name in tube, the year on its plate
+export const Sign = ({ sheet }: { sheet: Of<'opening'> }) => {
   const [lit, setLit] = useState(false)
   const at = sheet.title.indexOf(sheet.name)
   const [head, tail] = at < 0 ? [sheet.title, ''] : [sheet.title.slice(0, at).trim(), sheet.title.slice(at + sheet.name.length).trim()]
   const letters = at < 0 ? [] : [...sheet.name]
   // One tube has gone out, as on any sign that has been up a few winters
   const dead = letters.length > 3 ? Math.floor(letters.length / 2) : -1
-  // The hero case stands in the middle, the others fan out from it
-  const order = [3, 1, 0, 2, 4].map((index) => sheet.posters[index]).filter(Boolean)
 
   useEffect(() => {
     // The tubes strike once the face is in, or the flicker plays on a fallback font
@@ -132,27 +131,36 @@ export const Opening = ({ sheet, art, first }: { sheet: Of<'opening'>, art: Art,
   }, [])
 
   return (
-    <section className="videoclub-sheet videoclub-opening" aria-label={sheet.label}>
-      <h1 className={`videoclub-sign ${lit ? 'videoclub-sign-on' : ''}`}>
-        <span className="visually-hidden">{sheet.title}</span>
-        <span className="videoclub-fascia" aria-hidden="true">
-          <span className="videoclub-fascia-face">{head}</span>
+    <h1 className={`videoclub-sign ${lit ? 'videoclub-sign-on' : ''}`}>
+      <span className="visually-hidden">{sheet.title}</span>
+      <span className="videoclub-fascia" aria-hidden="true">
+        <span className="videoclub-fascia-face">{head}</span>
+      </span>
+      {!!letters.length && (
+        <span className="videoclub-tube" aria-hidden="true">
+          {letters.map((letter, index) => (
+            <span
+              key={index}
+              className={index === dead ? 'videoclub-tube-dead' : undefined}
+              style={{ '--delay': `${0.5 + ((index * 7) % 5) * 0.12}s` } as React.CSSProperties}
+            >
+              {letter === ' ' ? '\u00a0' : letter}
+            </span>
+          ))}
         </span>
-        {!!letters.length && (
-          <span className="videoclub-tube" aria-hidden="true">
-            {letters.map((letter, index) => (
-              <span
-                key={index}
-                className={index === dead ? 'videoclub-tube-dead' : undefined}
-                style={{ '--delay': `${0.5 + ((index * 7) % 5) * 0.12}s` } as React.CSSProperties}
-              >
-                {letter === ' ' ? '\u00a0' : letter}
-              </span>
-            ))}
-          </span>
-        )}
-        {tail && <span className="videoclub-plate" aria-hidden="true">{tail}</span>}
-      </h1>
+      )}
+      {tail && <span className="videoclub-plate" aria-hidden="true">{tail}</span>}
+    </h1>
+  )
+}
+
+export const Opening = ({ sheet, art, first }: { sheet: Of<'opening'>, art: Art, first?: string }) => {
+  // The hero case stands in the middle, the others fan out from it
+  const order = [3, 1, 0, 2, 4].map((index) => sheet.posters[index]).filter(Boolean)
+
+  return (
+    <section className="videoclub-sheet videoclub-opening" aria-label={sheet.label}>
+      <Sign sheet={sheet} />
       {!!order.length && (
         <div className="videoclub-front">
           {order.map((poster, index) => (

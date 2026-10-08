@@ -41,6 +41,10 @@ export const THEMES = Object.fromEntries(Object.entries(LOADERS).map(([id, loade
 // A look's opening on its own, the size of the frame it is shown in: `?cover`, opened by Keep in touch
 export const COVERS: Partial<Record<WrappedTheme, React.LazyExoticComponent<React.ComponentType<ThemeProps>>>> = {
   tele: lazy(() => import('./tele/Cover')),
+  labo: lazy(() => import('./labo/Cover')),
+  videoclub: lazy(() => import('./videoclub/Cover')),
+  scenario: lazy(() => import('./scenario/Cover')),
+  affiche: lazy(() => import('./affiche/Cover')),
 }
 
 // The colour the browser paints around each look, on phones the status bar

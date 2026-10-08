@@ -259,6 +259,8 @@ export default {
       zeroCopy: 'Answer print',
       dominant: 'Dominant',
       approved: 'Approved for print',
+      contents: 'On the reel',
+      develop: 'Develop my reel',
     },
     scenario: {
       pages: 'Pages',
@@ -294,6 +296,10 @@ export default {
       chorus: '(in unison)',
       nothing: 'Nothing.',
       premiere: 'First screening',
+      cover: {
+        contents: 'Step outline',
+        read: 'Read the script',
+      },
     },
     videoclub: {
       receipt: 'Video Store · No. {year}',
@@ -306,8 +312,14 @@ export default {
       sameWeek: 'Same week',
       rarities: 'Hard to find',
       loanCard: 'Loan card',
+      cover: {
+        releases: 'New releases',
+        rewind: 'Rewind my year',
+      },
     },
     affiche: {
+      bill: 'Now showing',
+      paste: 'Paste up my year',
       first: 'The 1st',
       h: 'h',
     },

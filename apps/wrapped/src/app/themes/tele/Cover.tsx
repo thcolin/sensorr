@@ -1,27 +1,14 @@
 import { Trans } from 'react-i18next'
-import type { WrappedPoster } from '@sensorr/sensorr'
 import { t, type SheetModel } from '../../sheets'
 import type { ThemeProps } from '../types'
 import { Barcode, Photo, figures, rubric } from './Tele'
 import './tele.css'
+import { postersOf } from '../posters'
 
 const COLUMNS = 4
 // Enough posters in a column to fill the frame twice over, however few the year has
 const ROLL = 8
 const CONTENTS = 5
-
-// Every title of the year with a poster, once
-const postersOf = (value: unknown, found = new Map<string, WrappedPoster>()) => {
-  if (Array.isArray(value)) {
-    value.forEach((item) => postersOf(item, found))
-  } else if (value && typeof value === 'object') {
-    const poster = value as WrappedPoster
-    typeof poster.key === 'string' && poster.thumb && !found.has(poster.key) && found.set(poster.key, poster)
-    Object.values(value).forEach((item) => postersOf(item, found))
-  }
-
-  return [...found.values()]
-}
 
 // The issue on the newsstand, the size of the frame Keep in touch opens it in: the year's posters roll behind its front
 const Cover = ({ share, sheets, art, link }: ThemeProps) => {

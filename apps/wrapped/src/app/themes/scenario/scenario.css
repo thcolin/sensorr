@@ -136,15 +136,15 @@ html[data-theme='scenario'] {
   scroll-margin-top: 24px;
 }
 
-.scenario-page[data-revision='blue'] { --paper: #dbe7f7; }
-.scenario-page[data-revision='pink'] { --paper: #f7dbe3; }
-.scenario-page[data-revision='yellow'] { --paper: #f8f0b8; --marker: #ffb0cf; }
-.scenario-page[data-revision='green'] { --paper: #d9edd0; }
-.scenario-page[data-revision='gold'] { --paper: #efd89e; --marker: #ffb0cf; }
-.scenario-page[data-revision='buff'] { --paper: #f1e3c7; --marker: #ffb0cf; }
-.scenario-page[data-revision='salmon'] { --paper: #f6d2c1; }
-.scenario-page[data-revision='cherry'] { --paper: #f2c6cc; }
-.scenario-page[data-revision='tan'] { --paper: #ddcbad; --marker: #ffb0cf; }
+[data-revision='blue'] { --paper: #dbe7f7; }
+[data-revision='pink'] { --paper: #f7dbe3; }
+[data-revision='yellow'] { --paper: #f8f0b8; --marker: #ffb0cf; }
+[data-revision='green'] { --paper: #d9edd0; }
+[data-revision='gold'] { --paper: #efd89e; --marker: #ffb0cf; }
+[data-revision='buff'] { --paper: #f1e3c7; --marker: #ffb0cf; }
+[data-revision='salmon'] { --paper: #f6d2c1; }
+[data-revision='cherry'] { --paper: #f2c6cc; }
+[data-revision='tan'] { --paper: #ddcbad; --marker: #ffb0cf; }
 
 .scenario-holes {
   position: absolute;
@@ -1915,6 +1915,310 @@ html[data-theme='scenario'] {
   .scenario-story .scenario-slate,
   .scenario-story .scenario-end,
   .scenario-story-colophon {
+    animation: none;
+  }
+}
+
+/* The title page on the desk, opened by Keep in touch in a frame of its own: `?cover` */
+.scenario-front {
+  position: relative;
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  height: 100svh;
+  overflow: hidden;
+  background: var(--scenario-desk);
+  color: var(--switch-fg);
+}
+
+.scenario-front-pile {
+  position: absolute;
+  inset: 0 -14px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.scenario-front-column {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: scenario-slide 90s linear infinite;
+}
+
+.scenario-front-column:nth-child(even) {
+  animation-direction: reverse;
+  animation-duration: 110s;
+}
+
+@keyframes scenario-slide {
+  from { transform: translateY(0); }
+  to { transform: translateY(calc(-50% - 7px)); }
+}
+
+/* A revised page of the script, its poster clipped to it */
+.scenario-front-sheet {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  aspect-ratio: 8.5 / 11;
+  padding: 18px 10px 10px 22px;
+  overflow: hidden;
+  background: var(--paper, #fbfaf5);
+  color: var(--scenario-ink);
+  font-size: 9px;
+  line-height: 1.2;
+  text-align: center;
+  transform: rotate(var(--tilt));
+  box-shadow: 0 10px 24px -8px rgb(0 0 0 / 0.6);
+}
+
+.scenario-front-sheet .scenario-holes {
+  left: 4px;
+  width: 8px;
+}
+
+.scenario-front-sheet .scenario-holes i {
+  width: 8px;
+  height: 8px;
+}
+
+.scenario-front-number {
+  position: absolute;
+  top: 5px;
+  right: 8px;
+  color: var(--scenario-quiet);
+}
+
+.scenario-front-insert {
+  position: relative;
+  width: 62%;
+  margin: 0;
+  transform: rotate(var(--tilt));
+}
+
+.scenario-front-insert img,
+.scenario-front-insert > span {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  background: #d8d2c4;
+  box-shadow: 0 6px 10px -4px rgb(0 0 0 / 0.4);
+}
+
+.scenario-front-insert .scenario-clip {
+  top: -10px;
+  left: 18%;
+  width: 12px;
+  height: 32px;
+}
+
+/* The desk lamp on the title page, the dark of the desk under the outline */
+.scenario-front::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 45% at 50% 10%, rgb(255 214 160 / 0.14), transparent 70%),
+    linear-gradient(180deg, rgb(43 38 34 / 0.55), rgb(43 38 34 / 0.35) 45%, rgb(43 38 34 / 0.88) 62%, rgb(43 38 34 / 0.97) 82%);
+}
+
+.scenario-front > :not(.scenario-front-pile) {
+  position: relative;
+  z-index: 2;
+}
+
+.scenario-front-title {
+  --marker: var(--scenario-marker);
+  container-type: inline-size;
+  align-self: center;
+  width: calc(100% - 32px);
+  max-width: 560px;
+  margin-top: 20px;
+  padding: 24px 18px 18px 40px;
+  background: #fbfaf5;
+  color: var(--scenario-ink);
+  font-size: 14px;
+  transform: rotate(-0.8deg);
+  box-shadow: 0 1px 1px rgb(0 0 0 / 0.3), 0 18px 36px -10px rgb(0 0 0 / 0.7);
+}
+
+.scenario-front-title .scenario-holes {
+  left: 12px;
+}
+
+.scenario-front-title :is(.scenario-title, .scenario-byline, .scenario-author) {
+  text-align: center;
+}
+
+.scenario-front-title .scenario-title {
+  font-size: clamp(1.6rem, 8.5cqw, 2.9rem);
+}
+
+.scenario-front-title .scenario-byline {
+  margin-top: 1em;
+}
+
+.scenario-front-title .scenario-author {
+  margin-top: 0.2em;
+}
+
+.scenario-front-draft {
+  display: grid;
+  gap: 6px;
+  margin-top: 16px;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.scenario-front-draft li + li {
+  margin-top: 2px;
+}
+
+.scenario-front-lines {
+  display: grid;
+  gap: 16px;
+  margin-top: auto;
+  padding: 0 24px 24px;
+}
+
+.scenario-front-contents {
+  display: grid;
+  gap: 8px;
+}
+
+.scenario-front-contents h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.scenario-front-contents ol {
+  display: grid;
+  gap: 2px;
+  font-size: clamp(15px, 2.6cqi, 18px);
+  font-weight: 700;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.scenario-front-contents a {
+  display: inline-flex;
+  align-items: baseline;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* The scene number in the margin, as on the page */
+.scenario-front-contents a > span:first-child {
+  flex: none;
+  width: 3.5ch;
+  font-size: 0.75em;
+  font-weight: 400;
+  color: rgb(239 233 220 / 0.6);
+}
+
+.scenario-front-contents a > span:last-child {
+  padding: 0 0.18em;
+  margin: 0 -0.18em;
+  background: linear-gradient(97deg, transparent 0 2px, var(--scenario-marker) 3px calc(100% - 4px), transparent calc(100% - 2px)) 0 55% / 0% 1.05em no-repeat;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* A slip of paper typed in capitals, the way into the script */
+.scenario-front-read {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  min-height: 48px;
+  padding: 14px 24px 14px 34px;
+  background: #fbfaf5;
+  color: var(--scenario-ink);
+  font-size: clamp(17px, 3.2cqi, 21px);
+  font-weight: 700;
+  text-transform: uppercase;
+  text-decoration: none;
+  transform: rotate(-1deg);
+  box-shadow: 0 10px 24px -8px rgb(0 0 0 / 0.7);
+}
+
+.scenario-front-read > span {
+  position: relative;
+}
+
+.scenario-front-read > span::after {
+  content: '';
+  position: absolute;
+  inset: -0.45em -0.6em;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 40' preserveAspectRatio='none'%3E%3Cpath d='M70 4 C 30 1, 3 9, 4 21 C 5 34, 42 38, 74 36 C 104 34, 118 26, 116 16 C 114 6, 92 2, 52 5' fill='none' stroke='%23a3201a' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
+  clip-path: inset(0 100% 0 0);
+  pointer-events: none;
+}
+
+.scenario-front-read::after {
+  content: '→' / '';
+  display: inline-block;
+}
+
+.scenario-front-contents a:focus-visible,
+.scenario-front-read:focus-visible {
+  outline: 2px solid var(--scenario-marker);
+  outline-offset: 4px;
+}
+
+.scenario-front-contents a,
+.scenario-front-contents a > span,
+.scenario-front-read::after {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), background-size 0.3s cubic-bezier(0.5, 0, 0.2, 1), color 0.2s;
+}
+
+.scenario-front-read > span::after {
+  transition: clip-path 0.5s cubic-bezier(0.5, 0, 0.2, 1);
+}
+
+@media (hover: hover) {
+  /* A scene of the outline swiped with the highlighter, as an actor marks the lines they are about to read */
+  .scenario-front-contents a:hover > span:last-child {
+    background-size: 100% 1.05em;
+    color: var(--scenario-ink);
+  }
+
+  .scenario-front-contents a:hover > span:first-child {
+    color: var(--scenario-marker);
+  }
+
+  /* The red pencil rings the title to read, as a take is circled on the continuity sheet */
+  .scenario-front-read:hover > span::after {
+    clip-path: inset(0 0 0 0);
+  }
+
+  .scenario-front-read:hover::after {
+    transform: translateX(6px);
+  }
+}
+
+@container (max-width: 520px) {
+  .scenario-front-pile {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .scenario-front-column:nth-child(4) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scenario-front-column {
     animation: none;
   }
 }

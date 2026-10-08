@@ -2737,3 +2737,342 @@ html[data-theme='videoclub'] {
     animation: none;
   }
 }
+
+/* The shop at night, opened by Keep in touch in a frame of its own: `?cover` */
+.videoclub-presentation {
+  position: relative;
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  height: 100svh;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--vc-night);
+  color: var(--vc-text);
+}
+
+/* The aisle behind the sign: one shelf over the other, each running past the other way */
+.videoclub-presentation-aisle {
+  position: absolute;
+  inset: 0 0 -4%;
+  z-index: -2;
+  display: grid;
+  grid-template-rows: repeat(6, minmax(0, 1fr));
+  background: var(--vc-wall);
+}
+
+.videoclub-presentation-shelf {
+  position: relative;
+  min-height: 0;
+  padding-top: 10px;
+}
+
+.videoclub-presentation-shelf::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 14px;
+  background: repeating-linear-gradient(90deg, rgb(0 0 0 / 0.1) 0 2px, transparent 2px 41px), var(--vc-wood);
+  box-shadow: 0 10px 16px rgb(0 0 0 / 0.5);
+}
+
+.videoclub-presentation-run {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  width: max-content;
+  height: 100%;
+  padding-bottom: 14px;
+  animation: videoclub-aisle 90s linear infinite;
+}
+
+.videoclub-presentation-shelf:nth-child(even) .videoclub-presentation-run {
+  animation-direction: reverse;
+  animation-duration: 110s;
+}
+
+.videoclub-presentation-run .videoclub-box {
+  flex: none;
+  height: 100%;
+  aspect-ratio: 2 / 3.2;
+}
+
+.videoclub-presentation-run .videoclub-box-case {
+  box-shadow: 0 6px 10px rgb(0 0 0 / 0.6);
+}
+
+.videoclub-presentation-run .videoclub-spines {
+  flex-wrap: nowrap;
+  height: 92%;
+}
+
+.videoclub-presentation-run .videoclub-spine {
+  width: 16px;
+  height: 100%;
+}
+
+.videoclub-presentation-run .videoclub-spine span {
+  font-size: 8px;
+}
+
+@keyframes videoclub-aisle {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-50% - 4px)); }
+}
+
+/* The lights are off in the aisle: the sign and the counter read over it */
+.videoclub-presentation::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 30% at 50% 18%, rgb(62 242 255 / 0.1), transparent 70%),
+    linear-gradient(180deg, rgb(12 10 26 / 0.82), rgb(12 10 26 / 0.5) 30%, rgb(12 10 26 / 0.88) 46%, rgb(12 10 26 / 0.97) 72%);
+}
+
+.videoclub-presentation .videoclub-sign {
+  gap: 10px;
+  padding: 40px 20px 0;
+}
+
+.videoclub-presentation .videoclub-sign::before {
+  content: none;
+}
+
+.videoclub-presentation .videoclub-fascia {
+  width: min(100%, 560px);
+}
+
+.videoclub-presentation .videoclub-fascia::before,
+.videoclub-presentation .videoclub-fascia::after {
+  height: 40px;
+}
+
+.videoclub-presentation .videoclub-fascia-face {
+  padding: 8px 14px 7px;
+  font-size: clamp(22px, 6cqi, 40px);
+}
+
+.videoclub-presentation .videoclub-tube {
+  font-size: min(17cqi, calc(88cqi / var(--letters, 8)));
+}
+
+.videoclub-presentation .videoclub-plate {
+  padding: 5px 14px 4px;
+  border-width: 4px;
+  font-size: clamp(20px, 4.4cqi, 30px);
+}
+
+.videoclub-presentation-counter {
+  display: grid;
+  gap: 16px;
+  margin-top: auto;
+  padding: 0 20px 24px;
+}
+
+.videoclub-presentation .videoclub-lede {
+  max-width: 40ch;
+  margin: 0 auto;
+  font-size: clamp(14px, 2.6cqi, 17px);
+}
+
+.videoclub-presentation-pair {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+}
+
+.videoclub-presentation .videoclub-ticket {
+  padding: 10px 14px 14px;
+}
+
+.videoclub-presentation .videoclub-ticket-head {
+  padding: 2px 0 6px;
+  font-size: 11px;
+}
+
+.videoclub-presentation .videoclub-ticket-receipt li {
+  padding: 3px 0;
+  font-size: clamp(13px, 2.4cqi, 15px);
+}
+
+/* The next stories: a pile of tapes lying on the counter, spine out, the shop's number on each */
+.videoclub-presentation-releases {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+
+.videoclub-presentation-releases .videoclub-aisle-tag {
+  margin: 0;
+  padding: 4px 12px;
+  font-size: 0.75rem;
+}
+
+.videoclub-presentation-releases ol {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.videoclub-presentation-releases a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 6px;
+  background: var(--tape);
+  color: var(--vc-ink);
+  text-decoration: none;
+  box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.3), inset 0 2px 0 rgb(255 255 255 / 0.14), 0 3px 6px rgb(0 0 0 / 0.5);
+}
+
+.videoclub-presentation-releases li:nth-child(even) a {
+  margin-left: 10px;
+}
+
+.videoclub-presentation-releases b {
+  color: #fff;
+  font: 900 0.8125rem/1 var(--vc-type);
+  font-stretch: 78%;
+  font-variant-numeric: tabular-nums;
+}
+
+.videoclub-presentation-releases a span {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px 3px;
+  background: var(--vc-label);
+  font: 800 clamp(13px, 2.4cqi, 15px)/1.15 var(--vc-type);
+  font-stretch: 85%;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.videoclub-presentation-rewind {
+  display: inline-flex;
+  align-items: center;
+  justify-self: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 14px 24px 12px;
+  font-size: clamp(16px, 3cqi, 20px);
+  text-decoration: none;
+}
+
+/* The rewind key of the deck, two triangles pointing back */
+.videoclub-presentation-rewind::before {
+  content: '';
+  width: 1.1em;
+  height: 0.75em;
+  background: currentColor;
+  clip-path: polygon(0 50%, 50% 0, 50% 50%, 100% 0, 100% 100%, 50% 50%, 50% 100%);
+}
+
+.videoclub-presentation-releases a:focus-visible,
+.videoclub-presentation-rewind:focus-visible {
+  outline: 3px solid var(--vc-cyan);
+  outline-offset: 3px;
+}
+
+.videoclub-presentation-releases a,
+.videoclub-presentation-releases a span {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s, color 0.15s;
+}
+
+@media (hover: hover) {
+  /* The tape is slid out of the pile, its label caught in the pink of the sign */
+  .videoclub-presentation-releases a:hover {
+    transform: translateX(14px) rotate(-0.6deg);
+  }
+
+  .videoclub-presentation-releases a:hover span {
+    background: var(--vc-pink);
+    color: #fff;
+  }
+
+  .videoclub-presentation-rewind:hover {
+    transform: rotate(-1.5deg);
+  }
+
+  /* The key held down: the tape spins back */
+  .videoclub-presentation-rewind:hover::before {
+    animation: videoclub-rewind 0.5s steps(3, end) infinite;
+  }
+}
+
+@keyframes videoclub-rewind {
+  to { transform: translateX(-6px); }
+}
+
+@container (min-width: 560px) {
+  .videoclub-presentation-pair {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: 24px;
+  }
+
+  .videoclub-presentation-counter {
+    gap: 22px;
+    padding: 0 32px 36px;
+  }
+
+  .videoclub-presentation-releases {
+    padding-top: 4px;
+  }
+}
+
+/* A phone frame of Keep in touch is shorter than the phone */
+@media (max-height: 800px) {
+  .videoclub-presentation .videoclub-sign {
+    gap: 6px;
+    padding-top: 30px;
+  }
+
+  .videoclub-presentation .videoclub-fascia::before,
+  .videoclub-presentation .videoclub-fascia::after {
+    height: 30px;
+  }
+
+  .videoclub-presentation-counter {
+    gap: 12px;
+    padding-bottom: 16px;
+  }
+
+  .videoclub-presentation-pair {
+    gap: 12px;
+  }
+
+  .videoclub-presentation .videoclub-ticket-receipt li {
+    padding: 1px 0;
+  }
+
+  .videoclub-presentation-releases {
+    gap: 6px;
+  }
+
+  .videoclub-presentation-releases ol {
+    gap: 2px;
+  }
+
+  .videoclub-presentation-releases a span {
+    padding-block: 2px 1px;
+  }
+
+  .videoclub-presentation-rewind {
+    min-height: 48px;
+    padding-block: 12px 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .videoclub-presentation-run,
+  .videoclub-presentation-rewind:hover::before {
+    animation: none;
+  }
+}

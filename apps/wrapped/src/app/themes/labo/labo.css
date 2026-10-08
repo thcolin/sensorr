@@ -2197,3 +2197,207 @@ html[data-theme='labo'] {
     transition: none !important;
   }
 }
+
+/* The reel on the light table, opened by Keep in touch in a frame of its own: `?cover` */
+.labo-cover {
+  position: relative;
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  height: 100svh;
+  overflow: hidden;
+  background: var(--labo-base);
+}
+
+.labo-cover-table {
+  position: absolute;
+  inset: 0 -10px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.labo-cover-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 18px;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='30'%3E%3Crect x='5' y='8' width='10' height='14' rx='2.5' fill='%23f6ecd8' fill-opacity='0.55'/%3E%3C/svg%3E") left top / 18px auto repeat-y,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='30'%3E%3Crect x='5' y='8' width='10' height='14' rx='2.5' fill='%23f6ecd8' fill-opacity='0.55'/%3E%3C/svg%3E") right top / 18px auto repeat-y,
+    var(--labo-black);
+  animation: labo-run 80s linear infinite;
+}
+
+.labo-cover-strip:nth-child(even) {
+  animation-direction: reverse;
+  animation-duration: 100s;
+}
+
+@keyframes labo-run {
+  from { transform: translateY(0); }
+  to { transform: translateY(calc(-50% - 3px)); }
+}
+
+@container (max-width: 520px) {
+  .labo-cover-table {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .labo-cover-strip:nth-child(4) {
+    display: none;
+  }
+}
+
+/* The safelight over the leader, the dark of the bench under the lines */
+.labo-cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 0%, rgb(255 75 31 / 0.28), transparent 70%),
+    linear-gradient(180deg, rgb(18 12 8 / 0.45), rgb(18 12 8 / 0.2) 30%, rgb(18 12 8 / 0.85) 46%, rgb(18 12 8 / 0.97) 70%);
+}
+
+.labo-cover > :not(.labo-cover-table) {
+  position: relative;
+  z-index: 2;
+}
+
+.labo-cover .labo-story-leader {
+  margin: 24px 24px 0;
+}
+
+.labo-cover .labo-leader {
+  aspect-ratio: auto;
+  height: clamp(140px, 24svh, 250px);
+  box-shadow: 0 0 60px rgb(255 75 31 / 0.35);
+}
+
+.labo-cover .labo-leader-count {
+  font-size: clamp(110px, 22svh, 200px);
+}
+
+.labo-cover-lines {
+  display: grid;
+  gap: 12px;
+  margin-top: auto;
+  padding: 0 24px 24px;
+}
+
+.labo-cover .labo-lede {
+  max-width: 52ch;
+  font-size: clamp(0.85rem, 2.4cqi, 1.05rem);
+  color: var(--labo-wax);
+}
+
+.labo-cover .labo-slate {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  column-gap: 20px;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.labo-cover .labo-slate > li {
+  padding: 5px 0;
+}
+
+.labo-cover-contents {
+  display: grid;
+  gap: 6px;
+  padding-top: 12px;
+  border-top: 1px solid rgb(255 178 56 / 0.5);
+}
+
+.labo-cover-contents ol {
+  display: grid;
+  gap: 2px;
+  font: 900 clamp(1.15rem, 3.6cqi, 1.6rem)/1.1 var(--labo-display);
+  text-transform: uppercase;
+}
+
+.labo-cover-contents a {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5em;
+  color: var(--labo-wax);
+  text-decoration: none;
+}
+
+/* The key number the sheet starts at on the film's edge */
+.labo-cover-contents a span {
+  flex: none;
+  padding: 2px 4px 1px;
+  font: 500 10px/1 var(--labo-mono);
+  letter-spacing: 0.15em;
+  color: var(--labo-edge);
+}
+
+.labo-cover-contents a span::before {
+  content: '▸ ' / '';
+}
+
+.labo-cover-develop {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  margin-top: 4px;
+  padding: 6px 20px 4px;
+  background: var(--labo-safelight);
+  color: var(--labo-base);
+  font: 900 clamp(1.4rem, 4cqi, 1.9rem)/1 var(--labo-display);
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.labo-cover-develop::after {
+  content: '→' / '';
+  display: inline-block;
+  margin-left: 0.3em;
+}
+
+.labo-cover-contents a:focus-visible,
+.labo-cover-develop:focus-visible {
+  outline: 2px solid var(--labo-edge);
+  outline-offset: 4px;
+}
+
+.labo-cover-contents a,
+.labo-cover-contents a span,
+.labo-cover-develop,
+.labo-cover-develop::after {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s, color 0.2s, box-shadow 0.35s;
+}
+
+@media (hover: hover) {
+  /* A line is pulled to the gate: its key number lit by the safelight */
+  .labo-cover-contents a:hover {
+    color: var(--labo-safelight);
+    transform: translateX(8px);
+  }
+
+  .labo-cover-contents a:hover span {
+    background: var(--labo-safelight);
+    color: var(--labo-base);
+  }
+
+  /* The safelight flares as the print goes in the bath */
+  .labo-cover-develop:hover {
+    background: var(--labo-grease-light);
+    box-shadow: 0 0 0 4px rgb(255 75 31 / 0.25), 0 0 56px 10px rgb(255 75 31 / 0.55);
+  }
+
+  .labo-cover-develop:hover::after {
+    transform: translateX(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .labo-cover-strip {
+    animation: none;
+  }
+}

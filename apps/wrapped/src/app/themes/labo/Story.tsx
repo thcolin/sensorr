@@ -42,7 +42,7 @@ const Sheet = ({ story, index, reel, children }: { story: StoryModel, index: num
 )
 
 // The Academy leader counts 3, 2, 1, then the name is printed through the safelight
-const Leader = ({ sheet, stamp }: { sheet: Of<'opening'>, stamp?: ReactNode }) => {
+export const Leader = ({ sheet, stamp }: { sheet: Of<'opening'>, stamp?: ReactNode }) => {
   const reduced = useReducedMotion()
   const [count, setCount] = useState(reduced ? 0 : 3)
   const at = sheet.title.indexOf(sheet.name)
