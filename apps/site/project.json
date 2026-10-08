@@ -1,0 +1,56 @@
+{
+  "name": "site",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/site/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/site",
+        "index": "apps/site/src/index.html",
+        "baseHref": "/",
+        "deployUrl": "/",
+        "main": "apps/site/src/main.tsx",
+        "tsConfig": "apps/site/tsconfig.app.json",
+        "assets": [
+          "apps/site/src/assets",
+          { "input": "apps/site/src/data", "glob": "films.json", "output": "data" },
+          { "input": "docs/assets/readme", "glob": "logo-dark.webp", "output": "assets" }
+        ],
+        "styles": [],
+        "scripts": [],
+        "webpackConfig": "apps/site/webpack.config.js"
+      },
+      "configurations": {
+        "production": {
+          "outputPath": "dist/apps/pages",
+          "baseHref": "/sensorr/",
+          "deployUrl": "/sensorr/",
+          "optimization": true,
+          "outputHashing": "all",
+          "sourceMap": false,
+          "extractCss": true,
+          "namedChunks": false,
+          "extractLicenses": true,
+          "vendorChunk": false
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/webpack:dev-server",
+      "options": {
+        "buildTarget": "site:build",
+        "port": 4240
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "options": {
+        "lintFilePatterns": ["apps/site/**/*.{ts,tsx,js,jsx}"]
+      }
+    }
+  }
+}
