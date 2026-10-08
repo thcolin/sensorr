@@ -1,8 +1,8 @@
-import { Fragment, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Badge, Bar, Icon, Picture, Shadow, TransitionPill, pictureSrc } from '@sensorr/ui'
 import { usePalette, type Palette as Colors } from '@sensorr/palette'
 import { type Film, type Films, type Release as File, type Row } from '../data'
-import { EASE, enter, useCountUp, useScrollProgress, useSeen, useSteps } from './journey/motion'
+import { EASE, enter, useCenter, useCountUp, useScrollProgress, useSeen, useSteps } from './journey/motion'
 import { Name, Statistics, Tags, gb, language, rangeOf } from './journey/release'
 
 type Palette = Colors | null
@@ -354,85 +354,82 @@ const Report = ({ film, seen }: Visual) => (
 // A copy as the rail names it: its language, then its resolution
 const short = (file: File) => `${language(file.meta.language)} ${file.meta.resolution}`
 
-// The copy in Plex across the scenes, as the jobs hand it on: Refine while it falls short of your rules, Shrink once it
-// meets them (docs/jobs.md, refine and shrink), and a report that strikes whatever copy you hold
-const Rail = ({ film, active }: { film: Film | null, active: number }) => {
+// The README's pipeline, 🍿 Wished → 📹 Record → 📼 Archived → ✨ Refine → 💎 Refined → ✂️ Shrink → 💍 Shrinked: the states
+// of the copy, and between them the scheduled jobs that move it on. Refine runs while the copy falls short of your rules,
+// Shrink once it meets them (docs/jobs.md, refine and shrink)
+const Rail = ({ film, active }: { film: Film | null, active: string }) => {
   const steps = [
-    { emoji: '📼', label: 'Archived', file: film?.owned },
-    { emoji: '💎', label: 'Refined', file: film?.winner },
-    { emoji: '💍', label: 'Shrinked', file: film?.shrink },
-  ]
-  // The scenes after Record, Archived first, map onto the steps; Report stays on the last one
-  const current = Math.min(Math.max(active - 1, 0), steps.length - 1)
-  const reported = active === SCENES.length - 1
+    { kind: 'state', emoji: '🍿', label: 'Wished', at: ['wished'] },
+    { kind: 'job', emoji: '📹', label: 'Record', at: ['record'] },
+    { kind: 'state', emoji: '📼', label: 'Archived', file: film?.owned, at: ['archived'] },
+    { kind: 'job', emoji: '✨', label: 'Refine', at: ['refine'] },
+    { kind: 'state', emoji: '💎', label: 'Refined', file: film?.winner, at: ['refine'] },
+    { kind: 'threshold', label: 'Your rules met', at: [] },
+    { kind: 'job', emoji: '✂️', label: 'Shrink', at: ['shrink'] },
+    { kind: 'state', emoji: '💍', label: 'Shrinked', file: film?.shrink, at: ['shrink', 'report'] },
+  ] as { kind: 'state' | 'job' | 'threshold', emoji?: string, label: string, file?: File, at: string[] }[]
+  const first = steps.findIndex(({ at }) => at.includes(active))
+  const reported = active === 'report'
 
   return (
-    <ol aria-label='Your copy in Plex' sx={Journey.styles.rail}>
-      {steps.map(({ emoji, label, file }, index) => (
-        <Fragment key={label}>
-          {index === steps.length - 1 && <li sx={Journey.styles.threshold}><span>Your rules met</span></li>}
-          <li
-            aria-current={index === current ? 'step' : undefined}
-            sx={{ ...Journey.styles.node, ...(index === current ? Journey.styles.nodeNow : index < current ? Journey.styles.nodeDone : Journey.styles.nodeNext) }}
-          >
-            <span sx={Journey.styles.nodeDot} aria-hidden='true'>{emoji}</span>
-            <span sx={Journey.styles.nodeBody}>
-              <strong>{label}</strong>
-              {file ? (
-                <span sx={index === current && reported ? Journey.styles.nodeBanned : {}}>
-                  {short(file)}<span sx={Journey.styles.nodeSize}> · {gb(file.size)}</span>
-                </span>
-              ) : <Bar width='6em' height='0.8em' />}
-              {index === current && reported && film && (
-                <span>{short(film.replacement)}<span sx={Journey.styles.nodeSize}> · {gb(film.replacement.size)}</span></span>
-              )}
-            </span>
-          </li>
-        </Fragment>
-      ))}
-    </ol>
+    <div sx={Journey.styles.railTrack} aria-hidden='true'>
+      <ol sx={Journey.styles.rail}>
+        {steps.map(({ kind, emoji, label, file, at }, index) => {
+          const now = at.includes(active)
+
+          if (kind === 'threshold') {
+            return <li key={label} sx={Journey.styles.threshold}><span>{label}</span></li>
+          }
+
+          return (
+            <li key={label} sx={{ ...(kind === 'state' ? Journey.styles.railState : Journey.styles.railJob), ...(now ? Journey.styles.stepNow : index < first ? Journey.styles.stepDone : Journey.styles.stepNext), ...(now && kind === 'state' && Journey.styles.stateNow) }}>
+              <span>{emoji}</span>
+              <span sx={Journey.styles.stepBody}>
+                <strong>{label}</strong>
+                {file && (
+                  <span sx={now && reported ? Journey.styles.stepBanned : {}}>
+                    {short(file)}<span sx={Journey.styles.stepSize}>{gb(file.size)}</span>
+                  </span>
+                )}
+                {now && reported && film && (
+                  <span>{short(film.replacement)}<span sx={Journey.styles.stepSize}>{gb(film.replacement.size)}</span></span>
+                )}
+              </span>
+            </li>
+          )
+        })}
+      </ol>
+    </div>
   )
 }
 
 const SCENES = [
-  { emoji: '📹', label: 'Record', title: 'Your rules, not a quality profile.', line: 'Your indexers answer, your policy ranks every release.', Visual: Record },
+  { emoji: '📹', label: 'Record', title: 'Your rules, not a quality profile.', line: 'A scheduled job, like every step after it: on each run Record asks your indexers for the movies you wished, and your policy ranks every release.', Visual: Record },
   { emoji: '📼', label: 'Archived', title: 'Recorded. In your library, in Plex.', line: 'The .torrent goes to the blackhole, your download client does the rest.', Visual: Archived },
   { emoji: '✨', label: 'Refine', title: 'Not your rules yet. Refine keeps looking.', line: 'Until your copy meets your policy, a release that wins on it replaces the one in Plex: here your language, for a little more space.', Visual: Refine },
   { emoji: '✂️', label: 'Shrink', title: 'Your rules are met. Shrink takes over.', line: 'Now a lighter release that loses nothing: a better resolution, the same language, the space back on your disk.', Visual: Shrink },
   { emoji: '🚨', label: 'Report', title: 'A friend reports, Sensorr swaps.', line: 'At any step. The copy they watched is banned, another one takes its place.', Visual: Report },
 ]
 
-const Scene = ({ index, film, palette, policy, onCenter, flush = false }: {
+const Scene = ({ index, film, palette, policy, onCenter }: {
   index: number
   film: Film | null
   palette: Palette
   policy?: Films['policy']
-  onCenter?: (index: number) => void
-  flush?: boolean
+  onCenter?: (key: string) => void
 }) => {
   const [ref, seen] = useSeen<HTMLElement>(0.25)
   const { emoji, label, title, line, Visual } = SCENES[index]
-
-  // Tells the rail which scene crosses the middle of the viewport
-  useEffect(() => {
-    const element = ref.current
-    if (!element || !onCenter) {
-      return
-    }
-
-    const observer = new IntersectionObserver(([entry]) => entry.isIntersecting && onCenter(index), { rootMargin: '-50% 0px -50% 0px' })
-    observer.observe(element)
-    return () => observer.disconnect()
-  }, [ref, index, onCenter])
+  useCenter(ref, label.toLowerCase(), onCenter)
 
   return (
     <article ref={ref} aria-labelledby={`journey-${label.toLowerCase()}`} sx={Journey.styles.scene}>
-      <header sx={{ ...Journey.styles.text, ...(flush && Journey.styles.flush) }}>
+      <header sx={Journey.styles.text}>
         <p sx={Journey.styles.label}><span aria-hidden='true'>{emoji}</span> {label}</p>
         <h3 id={`journey-${label.toLowerCase()}`} sx={{ ...Journey.styles.title, ...enter(seen, 'translateY(0.4em)', 0, 700) }}>{title}</h3>
         <p sx={Journey.styles.line}>{line}</p>
       </header>
-      <div sx={{ ...column, ...(flush && Journey.styles.flush) }}>
+      <div sx={column}>
         <div sx={Journey.styles.visual}>
           <Visual film={film} seen={seen} palette={palette} policy={policy} />
         </div>
@@ -442,8 +439,9 @@ const Scene = ({ index, film, palette, policy, onCenter, flush = false }: {
 }
 
 // The movie over its backdrop, and how it becomes 🍿 Wished
-const Opening = ({ film, palette }: { film: Film | null, palette: Palette }) => {
+const Opening = ({ film, palette, onCenter }: { film: Film | null, palette: Palette, onCenter?: (key: string) => void }) => {
   const ref = useScrollProgress<HTMLDivElement>('--opening')
+  useCenter(ref, 'wished', onCenter)
   const [logo, setLogo] = useState(false)
 
   return (
@@ -496,12 +494,13 @@ const Opening = ({ film, palette }: { film: Film | null, palette: Palette }) => 
 export const Journey = ({ film, policy }: { film: Film | null, policy?: Films['policy'] }) => {
   const { palette } = usePalette(film && pictureSrc(film.poster, 'w92'), null, film?.poster)
   const stage = useScrollProgress<HTMLDivElement>('--stage')
-  const [active, setActive] = useState(1)
+  const [active, setActive] = useState('wished')
 
   return (
     <section aria-labelledby='journey' sx={Journey.styles.element}>
       <span id='journey' sx={Journey.styles.hidden}>One movie, from a wish to your library</span>
-      <Opening film={film} palette={palette} />
+      <Rail film={film} active={active} />
+      <Opening film={film} palette={palette} onCenter={setActive} />
       <div ref={stage} sx={Journey.styles.stage}>
         <div sx={Journey.styles.track} aria-hidden='true'>
           <div sx={Journey.styles.ambient}>
@@ -510,13 +509,7 @@ export const Journey = ({ film, policy }: { film: Film | null, policy?: Films['p
             <div sx={Journey.styles.ambientVeil} />
           </div>
         </div>
-        <Scene index={0} film={film} palette={palette} policy={policy} />
-        <div sx={Journey.styles.chain}>
-          <Rail film={film} active={active} />
-          <div sx={Journey.styles.chainScenes}>
-            {SCENES.slice(1).map((_, index) => <Scene key={index} index={index + 1} film={film} palette={palette} onCenter={setActive} flush={true} />)}
-          </div>
-        </div>
+        {SCENES.map((_, index) => <Scene key={index} index={index} film={film} palette={palette} policy={policy} onCenter={setActive} />)}
       </div>
     </section>
   )
@@ -829,130 +822,185 @@ Journey.styles = {
   visual: {
     fontSize: [4, 3],
   },
-  // From 📼 Archived to 🚨 Report the scenes share a column with the rail of the copy, sticky beside them, above on a phone
-  chain: {
-    ...column,
-    display: 'grid',
-    gridTemplateColumns: ['minmax(0px, 1fr)', '15em minmax(0px, 1fr)'],
-    columnGap: 2,
-    alignItems: 'start',
-  },
-  chainScenes: {
-    minWidth: '0px',
-  },
-  flush: {
-    paddingX: '0px',
-    maxWidth: 'none',
+  // The rail runs the whole journey, outside the flow: in the left margin beside the column once the margin holds it,
+  // a bar across the top before that
+  railTrack: {
+    position: 'absolute',
+    inset: '0px',
+    zIndex: 2,
+    pointerEvents: 'none',
+    '@media (min-width: 90rem)': {
+      // From the viewport's edge to the column's text, 16px off each
+      paddingLeft: 'max(1rem, calc(50% - 36rem - 9rem + 1.5rem - 1rem))',
+    },
   },
   rail: {
     position: 'sticky',
-    top: ['0px', '50svh'],
-    zIndex: 2,
+    top: '0px',
     display: 'flex',
-    flexDirection: ['row', 'column'],
-    alignItems: ['flex-start', 'stretch'],
-    justifyContent: ['space-between', 'flex-start'],
-    gap: [8, '0px'],
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 10,
     margin: '0px',
-    // Edge to edge on a phone: out by the chain's own gutter, the 16px of its column
-    marginX: ['-16px', '0px'],
-    paddingX: ['16px', '0px'],
-    paddingY: [6, '0px'],
+    padding: '0.75rem 1rem',
     listStyle: 'none',
     fontFamily: 'monospace',
-    fontSize: [7, 4],
-    transform: ['none', 'translateY(-50%)'],
-    // On a phone it rides over the scenes, so it gets the page's ground behind it
-    backgroundColor: ['color-mix(in srgb, var(--theme-ui-colors-white) 88%, transparent)', 'transparent'],
-    backdropFilter: ['blur(12px)', 'none'],
-    borderBottom: ['1px solid', 'none'],
+    fontSize: ['0.625rem', '0.75rem'],
+    backgroundColor: 'color-mix(in srgb, var(--theme-ui-colors-white) 88%, transparent)',
+    backdropFilter: 'blur(12px)',
+    borderBottom: '1px solid',
     borderColor: 'grayDark',
+    '@media (min-width: 90rem)': {
+      top: '50svh',
+      flexDirection: 'column',
+      alignItems: 'stretch',
+      justifyContent: 'flex-start',
+      gap: '0px',
+      width: '9rem',
+      padding: '0px',
+      fontSize: '0.75rem',
+      transform: 'translateY(-50%)',
+      backgroundColor: 'transparent',
+      backdropFilter: 'none',
+      borderBottom: 'none',
+    },
   },
-  node: {
+  railState: {
     position: 'relative',
     display: 'flex',
-    flexDirection: ['column', 'row'],
-    alignItems: ['center', 'flex-start'],
-    gap: [10, 8],
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 10,
     minWidth: '0px',
-    paddingBottom: ['0px', '1.5em'],
-    textAlign: ['center', 'left'],
+    textAlign: 'center',
     transition: `opacity 400ms ${EASE}`,
-    // The thread from one step down to the next
-    '::before': {
-      content: '""',
-      display: ['none', 'block'],
-      position: 'absolute',
-      left: '0.85em',
-      top: '1.9em',
-      bottom: '0.2em',
-      width: '1px',
-      backgroundColor: 'grayDark',
+    '> span:first-of-type': {
+      display: 'grid',
+      placeItems: 'center',
+      flexShrink: 0,
+      width: '1.9em',
+      height: '1.9em',
+      border: '1px solid',
+      borderColor: 'grayDark',
+      borderRadius: '50%',
+      backgroundColor: 'white',
+      transition: `border-color 400ms ${EASE}, box-shadow 400ms ${EASE}`,
     },
-    ':last-of-type::before': {
+    '@media (min-width: 90rem)': {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 8,
+      textAlign: 'left',
+    },
+  },
+  // A job sits on the thread between two states, as the README draws its arrows
+  railJob: {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    alignSelf: 'center',
+    gap: 11,
+    color: 'textLight',
+    transition: `opacity 400ms ${EASE}`,
+    strong: {
       display: 'none',
     },
-  },
-  nodeNow: {
-    opacity: 1,
-    '> span:first-of-type': {
-      borderColor: 'textLightest',
-      boxShadow: '0 0 0 3px color-mix(in srgb, var(--theme-ui-colors-textLightest) 20%, transparent)',
+    '@media (min-width: 90rem)': {
+      alignSelf: 'auto',
+      gap: 8,
+      paddingY: 8,
+      paddingLeft: '0.45em',
+      // The thread from the state above down to the state below, the job's emoji riding on it
+      '::before': {
+        content: '""',
+        position: 'absolute',
+        left: '0.95em',
+        top: '0px',
+        bottom: '0px',
+        width: '1px',
+        backgroundColor: 'grayDark',
+      },
+      '> span:first-of-type': {
+        position: 'relative',
+        display: 'grid',
+        placeItems: 'center',
+        width: '1em',
+        backgroundColor: 'white',
+        fontSize: '0.875em',
+      },
+      strong: {
+        display: 'inline',
+        fontWeight: 600,
+      },
     },
   },
-  nodeDone: {
-    opacity: 0.6,
-  },
-  nodeNext: {
-    opacity: 0.35,
-  },
-  nodeDot: {
-    display: 'grid',
-    placeItems: 'center',
-    flexShrink: 0,
-    width: '1.75em',
-    height: '1.75em',
-    border: '1px solid',
-    borderColor: 'grayDark',
-    borderRadius: '50%',
-    backgroundColor: 'white',
-    transition: `border-color 400ms ${EASE}, box-shadow 400ms ${EASE}`,
-  },
-  nodeBody: {
+  stepBody: {
     display: 'flex',
     flexDirection: 'column',
     gap: 11,
     minWidth: '0px',
-    paddingTop: ['0px', '0.2em'],
     color: 'text',
+    whiteSpace: 'nowrap',
     strong: {
       fontFamily: 'heading',
       fontWeight: 800,
       color: 'textLightest',
     },
+    '@media (min-width: 90rem)': {
+      paddingTop: '0.25em',
+    },
   },
-  nodeSize: {
-    display: ['none', 'inline'],
+  stepNow: {
+    opacity: 1,
+    // The job in progress keeps its name on the bar too
+    '& > span:last-of-type strong': {
+      display: 'inline',
+      color: 'textLightest',
+    },
   },
-  nodeBanned: {
+  // A different key from the state's own circle, so the ring adds to it instead of replacing it
+  stateNow: {
+    '& > span:first-of-type': {
+      borderColor: 'textLightest',
+      boxShadow: '0 0 0 3px color-mix(in srgb, var(--theme-ui-colors-textLightest) 20%, transparent)',
+    },
+  },
+  stepDone: {
+    opacity: 0.6,
+  },
+  stepNext: {
+    opacity: 0.35,
+  },
+  stepSize: {
+    display: 'none',
+    '@media (min-width: 90rem)': {
+      display: 'block',
+    },
+  },
+  stepBanned: {
     color: 'error',
     textDecoration: 'line-through',
   },
   // Where Refine hands the copy on to Shrink
   threshold: {
-    alignSelf: ['stretch', 'auto'],
-    display: 'flex',
-    alignItems: 'center',
-    margin: ['0px', '-0.75em 0px 0.75em'],
-    paddingTop: ['0px', '0.35em'],
-    borderTop: ['none', '1px dashed'],
-    borderLeft: ['1px dashed', 'none'],
+    alignSelf: 'stretch',
+    borderLeft: '1px dashed',
     borderColor: 'primary',
     color: 'primary',
-    fontSize: [7, 6],
+    fontSize: '0.875em',
     letterSpacing: '0.04em',
     span: {
-      display: ['none', 'inline'],
+      display: 'none',
+    },
+    '@media (min-width: 90rem)': {
+      marginY: 9,
+      paddingTop: 10,
+      borderLeft: 'none',
+      borderTop: '1px dashed',
+      borderColor: 'primary',
+      span: {
+        display: 'inline',
+      },
     },
   },
   picture: {
