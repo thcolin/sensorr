@@ -15,7 +15,7 @@ import { proposalDiff } from '../../apps/web/src/pages/Proposals/queue'
 import { tmdb, all, pages, POLICIES, keyed } from '../demo/tmdb'
 
 const OUTPUT = path.join(__dirname, '../../apps/site/src/data/films.json')
-const DISCOVER = { sort_by: 'vote_count.desc', 'primary_release_date.gte': '2014-01-01', 'vote_average.gte': 7.4, 'vote_count.gte': 3000 }
+const DISCOVER = { sort_by: 'vote_count.desc', 'primary_release_date.gte': '2014-01-01', 'vote_average.gte': 7.2, 'vote_count.gte': 1500 }
 const WALL = 120
 const SHOWS = 12
 const UPCOMING = 12
@@ -23,6 +23,18 @@ const UPCOMING = 12
 const CANDIDATES = 5
 
 const policy = new Policy(POLICIES[0] as any)
+const GB = 1024 ** 3
+const AXES = ['resolution', 'language']
+
+// Its place in the policy's `prefer`, from the best: a value the policy does not prefer comes after them all
+const rank = (axis: string, value?: string) => {
+  const index = (POLICIES[0].prefer[axis] || []).findIndex((preferred: string) => value?.toLowerCase().startsWith(preferred.toLowerCase()))
+  return index === -1 ? Infinity : index
+}
+
+const better = (from, to) => AXES.some((axis) => rank(axis, to.meta?.[axis]) < rank(axis, from.meta?.[axis]))
+  && AXES.every((axis) => rank(axis, to.meta?.[axis]) <= rank(axis, from.meta?.[axis]))
+const kept = (from, to) => AXES.every((axis) => to.meta?.[axis] === from.meta?.[axis])
 
 const discover = async () => {
   const first = await tmdb.fetch('discover/movie', { ...DISCOVER, page: 1 })
@@ -60,14 +72,17 @@ const storyOf = (details) => {
     { terms: [details.title], titles: [details.title, details.original_title], years: [year], banned_releases: [] },
   )
   const valid = releases.filter(({ valid }) => valid)
-  // Record grabbed the worst of them, before the others came out
   const [winner] = valid
-  const owned = valid.length > 2 ? valid[valid.length - 1] : null
-  const shrink = valid.filter((release) => release !== owned && release !== winner && release.size < winner.size).sort((a, b) => a.size - b.size)[0]
-  // The friend reports the lighter one: another release takes its place, the best one left
-  const replacement = valid.find((release) => release !== shrink && release !== owned)
+  // Record grabbed a worse one, before the others came out: Refine has to win on the resolution or the language
+  const owned = [...valid].reverse().find((release) => release !== winner && release.score < winner.score && better(release, winner))
+  // Shrink keeps what Refine won, and frees a gigabyte at least
+  const shrink = valid
+    .filter((release) => release !== owned && release !== winner && kept(winner, release) && release.size <= winner.size - GB)
+    .sort((a, b) => a.size - b.size)[0]
+  // The friend reports the lighter one: another release that keeps the same takes its place
+  const replacement = valid.find((release) => release !== shrink && release !== owned && kept(shrink || winner, release))
 
-  if (!winner || !owned || !shrink || !replacement || winner.score <= owned.score) {
+  if (!winner || !owned || !shrink || !replacement) {
     return null
   }
 

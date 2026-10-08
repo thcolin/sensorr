@@ -14,6 +14,11 @@ module.exports = composePlugins(
   withReact(),
   (config) => ({
     ...config,
+    // The palette worker of `@sensorr/palette` is a classic script, as in `apps/web`
+    output: {
+      ...config.output,
+      scriptType: 'text/javascript',
+    },
     module: {
       ...config.module,
       rules: [
