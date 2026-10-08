@@ -103,6 +103,10 @@ export default {
     done: {
       title: 'Merci, votre compte Plex est lié au serveur Sensorr !',
       watchlist: 'L’administrateur peut maintenant suivre les films de votre <0>« Watchlist » Plex</0> et envisager de les ajouter à sa bibliothèque.',
+      wrapped: {
+        open: 'Ouvrir mon wrapped',
+        keep: 'Ce lien n’existe que pour vous : gardez-le pour revenir sur votre wrapped. Vous le retrouverez aussi dans vos mails, ou ici en liant à nouveau votre compte Plex.',
+      },
     },
     link: {
       go: 'Aller sur <0>plex.tv/link</0>',

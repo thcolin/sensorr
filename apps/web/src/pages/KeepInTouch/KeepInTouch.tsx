@@ -143,6 +143,76 @@ Splash.styles = {
   },
 }
 
+// The opening story of their wrapped, drawn by the API as the image a friend shares
+const Wrapped = ({ token, look }) => {
+  const { t } = useTranslation()
+  const [card, setCard] = useState('loading')
+  const href = `/wrapped/${token}`
+
+  return (
+    <div sx={Wrapped.styles.element}>
+      {card !== 'failed' && (
+        <a href={href} target='_blank' rel='noopener noreferrer' sx={Wrapped.styles.card} tabIndex={-1} aria-hidden={true}>
+          {card === 'loading' && <Bar width='100%' height='100%' sx={Wrapped.styles.skeleton} />}
+          <img
+            src={`/api/wrapped/share/${token}/cards/${look}/opening?lang=${i18n.language}`}
+            alt=''
+            onLoad={() => setCard('loaded')}
+            onError={() => setCard('failed')}
+            sx={{ ...Wrapped.styles.image, opacity: card === 'loaded' ? 1 : 0 }}
+          />
+        </a>
+      )}
+      <a href={href} target='_blank' rel='noopener noreferrer' sx={{ ...KeepInTouch.styles.action, marginBottom: 0 }}>
+        {t('keepInTouch.done.wrapped.open')}
+      </a>
+      <p sx={Wrapped.styles.keep}>
+        {t('keepInTouch.done.wrapped.keep')}
+      </p>
+    </div>
+  )
+}
+
+Wrapped.styles = {
+  element: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 4,
+  },
+  card: {
+    position: 'relative',
+    display: 'block',
+    height: '18em',
+    aspectRatio: '9 / 16',
+    marginBottom: 8,
+    transform: 'rotate(-3deg)',
+    transition: 'transform 400ms cubic-bezier(0.16, 1, 0.3, 1)',
+    ':hover': {
+      transform: 'rotate(0deg) scale(1.03)',
+    },
+    '@media (prefers-reduced-motion: reduce)': {
+      transition: 'none',
+    },
+  },
+  skeleton: {
+    position: 'absolute',
+    inset: '0px',
+  },
+  image: {
+    display: 'block',
+    width: '100%',
+    height: '100%',
+    transition: 'opacity 400ms ease-out',
+  },
+  keep: {
+    fontSize: 6,
+    maxWidth: '24em',
+    lineHeight: 'body',
+  },
+}
+
 const KeepInTouch = () => {
   const { t } = useTranslation()
   useTitle(t('keepInTouch.title'))
@@ -152,7 +222,7 @@ const KeepInTouch = () => {
   useEffect(() => {
     let stopped = false
     let interval = null
-    let currentId = null
+    let currentPin = null
     let done = false
 
     const register = async () => {
@@ -168,13 +238,13 @@ const KeepInTouch = () => {
 
     // Client-driven polling: a fresh request always succeeds when the tab returns to the
     // foreground, unlike the previous SSE whose server-side polling died on mobile backgrounding.
-    const check = async (id) => {
-      if (stopped || done || id !== currentId) {
+    const check = async ({ id, code }) => {
+      if (stopped || done || id !== currentPin?.id) {
         return
       }
 
       try {
-        const { uri, params, init } = api.query.guests.status({ id })
+        const { uri, params, init } = api.query.guests.status({ id, code })
         const raw = await api.fetch(uri, params, init)
 
         if (raw.done) {
@@ -183,7 +253,7 @@ const KeepInTouch = () => {
           if (interval) {
             clearInterval(interval)
           }
-          setPin(prev => ({ ...prev, done: true }))
+          setPin(prev => ({ ...prev, done: true, wrapped: raw.wrapped }))
           return
         }
 
@@ -222,7 +292,7 @@ const KeepInTouch = () => {
           return
         }
 
-        currentId = current.id
+        currentPin = current
         setPin(current)
 
         if (current.done) {
@@ -230,8 +300,8 @@ const KeepInTouch = () => {
           return
         }
 
-        check(current.id)
-        interval = setInterval(() => check(current.id), POLL_INTERVAL)
+        check(current)
+        interval = setInterval(() => check(current), POLL_INTERVAL)
       } catch (err) {
         console.warn(err)
         toast.error(i18n.t('keepInTouch.pin'))
@@ -239,8 +309,8 @@ const KeepInTouch = () => {
     }
 
     const onVisible = () => {
-      if (document.visibilityState === 'visible' && currentId && !done) {
-        check(currentId)
+      if (document.visibilityState === 'visible' && currentPin && !done) {
+        check(currentPin)
       }
     }
 
@@ -286,6 +356,9 @@ const KeepInTouch = () => {
                       <p sx={{ marginTop: 2 }}>
                         {t('keepInTouch.done.title')}
                       </p>
+                      {pin.wrapped && (
+                        <Wrapped token={pin.wrapped.token} look={pin.wrapped.look} />
+                      )}
                       <br/>
                       <p sx={{ fontSize: 6 }}>
                         <Trans t={t} i18nKey='keepInTouch.done.watchlist' components={[<a href="https://support.plex.tv/articles/universal-watchlist/" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }} />]} />
@@ -299,27 +372,7 @@ const KeepInTouch = () => {
                         href='https://plex.tv/link'
                         rel='noopener noreferrer'
                         target='_blank'
-                        sx={{
-                          variant: 'button.default',
-                          display: 'block',
-                          textDecoration: 'none',
-                          borderColor: 'primary',
-                          backgroundColor: 'primary',
-                          color: 'hsl(0, 0%, 100%)',
-                          marginBottom: 4,
-                          ':hover': {
-                            borderColor: 'primaryDark',
-                            backgroundColor: 'primaryDark',
-                          },
-                          ':active': {
-                            borderColor: 'primaryDarker',
-                            backgroundColor: 'primaryDarker',
-                          },
-                          ':disabled': {
-                            borderColor: 'primaryDarkest',
-                            backgroundColor: 'primaryDarkest',
-                          },
-                        }}
+                        sx={KeepInTouch.styles.action}
                       >
                         <Trans t={t} i18nKey='keepInTouch.link.go' components={[<span sx={{ textDecoration: 'underline' }} />]} />
                       </a>
@@ -348,6 +401,27 @@ const KeepInTouch = () => {
 }
 
 KeepInTouch.styles = {
+  action: {
+    variant: 'button.default',
+    display: 'block',
+    textDecoration: 'none',
+    borderColor: 'primary',
+    backgroundColor: 'primary',
+    color: 'hsl(0, 0%, 100%)',
+    marginBottom: 4,
+    ':hover': {
+      borderColor: 'primaryDark',
+      backgroundColor: 'primaryDark',
+    },
+    ':active': {
+      borderColor: 'primaryDarker',
+      backgroundColor: 'primaryDarker',
+    },
+    ':disabled': {
+      borderColor: 'primaryDarkest',
+      backgroundColor: 'primaryDarkest',
+    },
+  },
   // The register comes first, so a phone opens on it, at the top of the page, as Onboarding does
   wrapper: {
     ...Splash.styles.wrapper,

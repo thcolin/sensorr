@@ -702,10 +702,10 @@ export class API {
         }
       }),
       status: (
-        { id, init = {} }: { id: string, init?: any }
+        { id, code, init = {} }: { id: string, code: string, init?: any }
       ): { uri: string, params: {}, init: {} } => ({
         uri: `guests/${id}/status`,
-        params: {},
+        params: { code },
         init: {
           ...init,
           method: 'GET',

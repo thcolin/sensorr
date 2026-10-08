@@ -103,6 +103,10 @@ export default {
     done: {
       title: 'Thanks, you\'ve linked your Plex account with Sensorr server !',
       watchlist: 'Administrator is now allowed to follow movies from your <0>Plex "Watchlist"</0> and consider adding them to his library.',
+      wrapped: {
+        open: 'Open my wrapped',
+        keep: 'This link exists only for you: keep it to come back to your wrapped. You will also find it in your emails, or here by linking your Plex account again.',
+      },
     },
     link: {
       go: 'Go to <0>plex.tv/link</0>',
