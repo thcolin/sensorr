@@ -37,7 +37,7 @@
               "with": "apps/wrapped/src/demo/index.demo.ts"
             }
           ],
-          "outputPath": "dist/apps/web-demo/wrapped",
+          "outputPath": "dist/apps/pages/demo/wrapped",
           "assets": [
             "apps/wrapped/src/assets",
             {
@@ -46,8 +46,8 @@
               "output": "demo"
             }
           ],
-          "baseHref": "/sensorr/wrapped/",
-          "deployUrl": "/sensorr/wrapped/",
+          "baseHref": "/sensorr/demo/wrapped/",
+          "deployUrl": "/sensorr/demo/wrapped/",
           "optimization": true,
           "outputHashing": "all",
           "sourceMap": false,

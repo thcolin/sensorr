@@ -53,15 +53,15 @@
               "with": "apps/web/src/demo/index.demo.ts"
             }
           ],
-          "outputPath": "dist/apps/web-demo",
+          "outputPath": "dist/apps/pages/demo",
           "assets": [
             "apps/web/src/assets/favicon.png",
             "apps/web/src/assets",
             "apps/web/src/manifest.json",
             { "input": "apps/web/src/demo/seed", "glob": "seed.json", "output": "demo" }
           ],
-          "baseHref": "/sensorr/",
-          "deployUrl": "/sensorr/",
+          "baseHref": "/sensorr/demo/",
+          "deployUrl": "/sensorr/demo/",
           "optimization": true,
           "outputHashing": "all",
           "sourceMap": false,

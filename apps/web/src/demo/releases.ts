@@ -42,7 +42,7 @@ const random = (seed: number) => () => {
 
 const pick = <T>(next: () => number, values: T[]): T => values[Math.floor(next() * values.length)]
 
-const dotted = (title: string) => title
+export const dotted = (title: string) => title
   .normalize('NFD').replace(/[̀-ͯ]/g, '')
   .replace(/['’:,!?()]/g, '')
   .replace(/&/g, 'and')
@@ -61,20 +61,24 @@ export const searchOf = (search: Search, now = Date.now()): IndexerItem[] => {
   const minutes = search.episode !== undefined ? 50 : search.season !== undefined ? 50 * 8 : (search.runtime || 110)
 
   return Array.from({ length: count }, (_, index) => {
-    const resolution = pick(next, RESOLUTIONS)
+    const drawn = pick(next, RESOLUTIONS)
     const source = pick(next, SOURCES)
-    const encoding = pick(next, ENCODINGS[resolution])
+    const encoded = pick(next, ENCODINGS[drawn])
+    // A remux is the disc untouched: no 720p, no encoder, the disc's own codec
+    const remux = source === 'REMUX'
+    const resolution = remux && drawn === '720p' ? '1080p' : drawn
+    const encoding = remux ? (resolution === '2160p' ? 'HEVC' : 'AVC') : encoded
     const name = [
       dotted(search.title),
       search.season === undefined ? search.year : `${numbered(search.season, search.episode)}${search.episode === undefined ? '.COMPLETE' : ''}`,
       pick(next, LANGUAGES),
       resolution,
-      source,
+      remux ? 'BluRay.REMUX' : source,
       encoding,
       pick(next, AUDIOS),
     ].filter(Boolean).join('.')
     const title = `${name}-${pick(next, GROUPS)}`
-    const factor = (source === 'REMUX' ? 3 : source === 'HDLight' ? 0.4 : 1) * (['x265', 'HEVC'].includes(encoding) ? 0.6 : 1)
+    const factor = remux ? 3 : (source === 'HDLight' ? 0.4 : 1) * (['x265', 'HEVC'].includes(encoding) ? 0.6 : 1)
     const id = `${hash(`${key}#${index}`).toString(16)}${index}`
     const seeders = Math.floor(next() * 400)
 

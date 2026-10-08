@@ -77,9 +77,9 @@ No story throws on render: the 40 pages were opened one by one on 2026-09-18 and
 
 ### The demo build
 
-`nx run web:build:demo` builds the web app for **https://thcolin.github.io/sensorr/**, the public demo, with no server behind it. The controllers and services of `apps/api` run in the page: `apps/web/src/demo/server/app.ts` imports them, and the `demo` configuration of `apps/web/webpack.config.js` aliases what they import from Nest, mongoose and Node to `apps/web/src/demo/server/shims`. A model on [mingo](https://github.com/kofrasa/mingo) stands for mongoose, `apps/web/src/demo/server/model.ts`, and each visitor's data lives in their browser's `localStorage`. `fetch` and `EventSource` on `/api/` are answered there, `/api/proxy` by a made-up indexer (`apps/web/src/demo/releases.ts`), and what needs a server of its own, jobs, Plex, mails, Tautulli, updates, answers 503. The other builds replace nothing and carry none of it: `apps/web/src/demo/index.ts` is a stub that the `demo` configuration swaps for `index.demo.ts`.
+`nx run web:build:demo` builds the web app for **https://thcolin.github.io/sensorr/demo/**, the public demo, with no server behind it. The controllers and services of `apps/api` run in the page: `apps/web/src/demo/server/app.ts` imports them, and the `demo` configuration of `apps/web/webpack.config.js` aliases what they import from Nest, mongoose and Node to `apps/web/src/demo/server/shims`. A model on [mingo](https://github.com/kofrasa/mingo) stands for mongoose, `apps/web/src/demo/server/model.ts`, and each visitor's data lives in their browser's `localStorage`. `fetch` and `EventSource` on `/api/` are answered there, `/api/proxy` by a made-up indexer (`apps/web/src/demo/releases.ts`), and what needs a server of its own, jobs, Plex, mails, Tautulli, updates, answers 503. The other builds replace nothing and carry none of it: `apps/web/src/demo/index.ts` is a stub that the `demo` configuration swaps for `index.demo.ts`.
 
-`nx run wrapped:build:demo` builds the wrapped next to it, in `dist/apps/web-demo/wrapped`, with one wrapped: Alex's, at `/sensorr/wrapped/demo`, the link Settings › Friends copies. `tools/demo/seed.ts` makes up the plays of Alex and five other viewers over the last closed edition, and computes Alex's wrapped with `wrappedOf` into `apps/wrapped/src/demo/share.json`, which `apps/wrapped/src/demo/index.demo.ts` answers `/api/wrapped/share/demo` with. Posters come from TMDB, and the image of a story to share, which the API draws in Chromium, is left out.
+`nx run wrapped:build:demo` builds the wrapped next to it, in `dist/apps/pages/demo/wrapped`, with one wrapped: Alex's, at `/sensorr/demo/wrapped/demo`, the link Settings › Friends copies. `tools/demo/seed.ts` makes up the plays of Alex and five other viewers over the last closed edition, and computes Alex's wrapped with `wrappedOf` into `apps/wrapped/src/demo/share.json`, which `apps/wrapped/src/demo/index.demo.ts` answers `/api/wrapped/share/demo` with. Posters come from TMDB, and the image of a story to share, which the API draws in Chromium, is left out.
 
 The data comes from TMDB at build time, never from the repository: TMDB data may not be kept more than 6 months.
 
@@ -90,7 +90,19 @@ npx nx run web:build:demo
 npx nx run wrapped:build:demo
 ```
 
-The key ends up in the page, which is why it is the demo's own. `.github/workflows/demo.yml` runs the same on every push to `main` and on the first of each month, with the key as the `SENSORR_DEMO_TMDB_KEY` secret, and publishes `dist/apps/web-demo` to GitHub Pages. To look at it locally, serve `dist/apps/web-demo` under `/sensorr/` with `index.html` copied to `404.html`, as GitHub Pages answers a path it does not know, and `wrapped/index.html` copied to `wrapped/demo/index.html`.
+The key ends up in the page, which is why it is the demo's own. `.github/workflows/demo.yml` runs the same on every push to `main` and on the first of each month, with the key as the `SENSORR_DEMO_TMDB_KEY` secret, and publishes `dist/apps/pages` to GitHub Pages. To look at it locally, serve `dist/apps/pages` under `/sensorr/` with `demo/index.html` copied to `404.html`, as GitHub Pages answers a path it does not know with the `404.html` at its root, and `demo/wrapped/index.html` copied to `demo/wrapped/demo/index.html`.
+
+### The landing page
+
+`apps/site` is the page at **https://thcolin.github.io/sensorr/**, in front of the demo. It follows one movie drawn at random through Sensorr, from a friend's watchlist to their wrapped, with the components of `libs/ui`. `tools/site/films.ts` writes what it plays into `apps/site/src/data/films.json`: the recent and acclaimed movies of TMDB, each with the same story of releases ranked by the demo's `Default` policy, which the story makes require `MULTi` too, so that the copy Record grabs falls short of it and Refine takes the movie: Record grabs a VO 1080p, Refine a MULTi 1080p a little heavier, Shrink a MULTi 2160p lighter than both, and a friend's report swaps that one. Like the demo data, the file is not committed.
+
+```sh
+export SENSORR_DEMO_TMDB_KEY=<the demo's own key>
+npx ts-node -r tsconfig-paths/register -P tools/tsconfig.tools.json --transpile-only -O '{"target":"es2022","esModuleInterop":true}' tools/site/films.ts
+npx nx run site:serve
+```
+
+`nx run site:serve` serves it on http://localhost:4240. `nx run site:build:production` writes it into `dist/apps/pages`, under `/sensorr/`, next to the demo.
 
 ## Verify
 
@@ -158,7 +170,7 @@ Measured on 2026-10-02. Each stays below its latest major until the reason goes 
 
 ## Project layout
 
-`apps/` holds `api`, `web`, `wrapped`, `cli`, `db` and `updater`. What each one owns is in [architecture.md](architecture.md#containers).
+`apps/` holds `api`, `web`, `wrapped`, `cli`, `db` and `updater`. What each one owns is in [architecture.md](architecture.md#containers). `site` is the landing page published with the demo, see [The landing page](#the-landing-page).
 
 `libs/` holds `config` (the schema of `config.json`), `tmdb` and `plex` (the two external clients), `sensorr` (release parsing and policy scoring), `services`, `ui` (the shared components), `theme` and `palette`, `i18n` (English and French) and `utils`.
 

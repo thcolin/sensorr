@@ -1,0 +1,13 @@
+{
+  "presets": ["@nx/react/babel"],
+  "plugins": [
+    [
+      "@babel/plugin-transform-react-jsx",
+      {
+        "throwIfNamespace": false,
+        "runtime": "automatic",
+        "importSource": "theme-ui"
+      }
+    ]
+  ]
+}

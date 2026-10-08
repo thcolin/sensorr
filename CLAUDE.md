@@ -38,7 +38,10 @@ Both exit 0, and a change keeps them there. The rules the lint config relaxes ar
 What `/thcolin:craft` and `/thcolin:design` read before touching a screen: how to run the app on real
 data, what to open, how to capture.
 
-- Frontend paths: `apps/web/**`, `apps/wrapped/**`, `libs/ui/**`, `libs/theme/**`.
+- Frontend paths: `apps/web/**`, `apps/wrapped/**`, `apps/site/**`, `libs/ui/**`, `libs/theme/**`.
+- `apps/site`, the landing page in front of the demo, runs on its own data: `tools/site/films.ts`, then
+  `nx run site:serve` on `http://localhost:4240`. Capture at 1440×900 and 390 px like the app
+  ([`docs/development.md`](docs/development.md#the-landing-page)).
 - `apps/wrapped`, the guests' yearly wrapped, runs on a local stack and never on Cortex: local Mongo, local
   API, a Tautulli import, then `nx run wrapped:serve` on `http://localhost:4230/wrapped/<token>`. Steps and the
   three guests to check in [`docs/development.md`](docs/development.md#nx-run-wrappedserve). Its look is the

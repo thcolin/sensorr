@@ -119,6 +119,11 @@
         ],
         "createdAt": "2026-10-04T12:55:20.099Z",
         "reason": "Claude: pill width transition moved unchanged from Settings/Update.tsx (a5debe54), the capsule slides between labels of different widths"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "heading-no-emoji",
+        "createdAt": "2026-10-08T15:18:39.188Z"
       }
     ]
   }
