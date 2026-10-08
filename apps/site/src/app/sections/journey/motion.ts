@@ -133,16 +133,3 @@ export const useScrollProgress = <T extends HTMLElement>(name: string) => {
   return ref
 }
 
-// Calls `onCenter(key)` each time the element crosses the middle of the viewport
-export const useCenter = <T extends Element>(ref: React.RefObject<T>, key: string, onCenter?: (key: string) => void) => {
-  useEffect(() => {
-    const element = ref.current
-    if (!element || !onCenter) {
-      return
-    }
-
-    const observer = new IntersectionObserver(([entry]) => entry.isIntersecting && onCenter(key), { rootMargin: '-50% 0px -50% 0px' })
-    observer.observe(element)
-    return () => observer.disconnect()
-  }, [ref, key, onCenter])
-}

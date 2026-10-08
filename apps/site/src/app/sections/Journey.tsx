@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Badge, Bar, Icon, Picture, Shadow, TransitionPill, pictureSrc } from '@sensorr/ui'
 import { usePalette, type Palette as Colors } from '@sensorr/palette'
 import { type Film, type Films, type Release as File, type Row } from '../data'
-import { EASE, enter, useCenter, useCountUp, useScrollProgress, useSeen, useSteps } from './journey/motion'
+import { EASE, enter, useCountUp, useScrollProgress, useSeen, useSteps } from './journey/motion'
 import { Name, Statistics, Tags, gb, language, rangeOf } from './journey/release'
 
 type Palette = Colors | null
@@ -351,55 +351,34 @@ const Report = ({ film, seen }: Visual) => (
   </div>
 )
 
-// A copy as the rail names it: its language, then its resolution
-const short = (file: File) => `${language(file.meta.language)} ${file.meta.resolution}`
+// The README's pipeline, the states of a movie and the scheduled jobs that move it on, as each scene's eyebrow: the
+// scene's own step bright, the ones before it dimmed, the ones after it fainter
+const PIPELINE = [
+  { emoji: '🍿', label: 'Wished' },
+  { emoji: '📹', label: 'Record' },
+  { emoji: '📼', label: 'Archived' },
+  { emoji: '✨', label: 'Refine' },
+  { emoji: '💎', label: 'Refined' },
+  { emoji: '✂️', label: 'Shrink' },
+  { emoji: '💍', label: 'Shrinked' },
+]
 
-// The README's pipeline, 🍿 Wished → 📹 Record → 📼 Archived → ✨ Refine → 💎 Refined → ✂️ Shrink → 💍 Shrinked: the states
-// of the copy, and between them the scheduled jobs that move it on. Refine runs while the copy falls short of your rules,
-// Shrink once it meets them (docs/jobs.md, refine and shrink)
-const Rail = ({ film, active }: { film: Film | null, active: string }) => {
-  const steps = [
-    { kind: 'state', emoji: '🍿', label: 'Wished', at: ['wished'] },
-    { kind: 'job', emoji: '📹', label: 'Record', at: ['record'] },
-    { kind: 'state', emoji: '📼', label: 'Archived', file: film?.owned, at: ['archived'] },
-    { kind: 'job', emoji: '✨', label: 'Refine', at: ['refine'] },
-    { kind: 'state', emoji: '💎', label: 'Refined', file: film?.winner, at: ['refine'] },
-    { kind: 'threshold', label: 'Your rules met', at: [] },
-    { kind: 'job', emoji: '✂️', label: 'Shrink', at: ['shrink'] },
-    { kind: 'state', emoji: '💍', label: 'Shrinked', file: film?.shrink, at: ['shrink', 'report'] },
-  ] as { kind: 'state' | 'job' | 'threshold', emoji?: string, label: string, file?: File, at: string[] }[]
-  const first = steps.findIndex(({ at }) => at.includes(active))
-  const reported = active === 'report'
+const Pipeline = ({ at }: { at: string }) => {
+  const current = PIPELINE.findIndex(({ label }) => label === at)
 
   return (
-    <div sx={Journey.styles.railTrack} aria-hidden='true'>
-      <ol sx={Journey.styles.rail}>
-        {steps.map(({ kind, emoji, label, file, at }, index) => {
-          const now = at.includes(active)
-
-          if (kind === 'threshold') {
-            return <li key={label} sx={Journey.styles.threshold}><span>{label}</span></li>
-          }
-
-          return (
-            <li key={label} sx={{ ...(kind === 'state' ? Journey.styles.railState : Journey.styles.railJob), ...(now ? Journey.styles.stepNow : index < first ? Journey.styles.stepDone : Journey.styles.stepNext), ...(now && kind === 'state' && Journey.styles.stateNow) }}>
-              <span>{emoji}</span>
-              <span sx={Journey.styles.stepBody}>
-                <strong>{label}</strong>
-                {file && (
-                  <span sx={now && reported ? Journey.styles.stepBanned : {}}>
-                    {short(file)}<span sx={Journey.styles.stepSize}>{gb(file.size)}</span>
-                  </span>
-                )}
-                {now && reported && film && (
-                  <span>{short(film.replacement)}<span sx={Journey.styles.stepSize}>{gb(film.replacement.size)}</span></span>
-                )}
-              </span>
-            </li>
-          )
-        })}
-      </ol>
-    </div>
+    <p sx={Journey.styles.pipeline}>
+      {PIPELINE.map(({ emoji, label }, index) => (
+        <span
+          key={label}
+          aria-current={index === current ? 'step' : undefined}
+          sx={{ ...Journey.styles.step, ...(index === current ? Journey.styles.stepNow : index < current ? Journey.styles.stepDone : {}) }}
+        >
+          <span aria-hidden='true'>{emoji}</span>
+          <span sx={index === current ? {} : Journey.styles.stepName}>{label}</span>
+        </span>
+      ))}
+    </p>
   )
 }
 
@@ -411,21 +390,16 @@ const SCENES = [
   { emoji: '🚨', label: 'Report', title: 'A friend reports, Sensorr swaps.', line: 'At any step. The copy they watched is banned, another one takes its place.', Visual: Report },
 ]
 
-const Scene = ({ index, film, palette, policy, onCenter }: {
-  index: number
-  film: Film | null
-  palette: Palette
-  policy?: Films['policy']
-  onCenter?: (key: string) => void
-}) => {
+const Scene = ({ index, film, palette, policy }: { index: number, film: Film | null, palette: Palette, policy?: Films['policy'] }) => {
   const [ref, seen] = useSeen<HTMLElement>(0.25)
   const { emoji, label, title, line, Visual } = SCENES[index]
-  useCenter(ref, label.toLowerCase(), onCenter)
 
   return (
     <article ref={ref} aria-labelledby={`journey-${label.toLowerCase()}`} sx={Journey.styles.scene}>
       <header sx={Journey.styles.text}>
-        <p sx={Journey.styles.label}><span aria-hidden='true'>{emoji}</span> {label}</p>
+        {PIPELINE.some((step) => step.label === label)
+          ? <Pipeline at={label} />
+          : <p sx={Journey.styles.label}><span aria-hidden='true'>{emoji}</span> {label}</p>}
         <h3 id={`journey-${label.toLowerCase()}`} sx={{ ...Journey.styles.title, ...enter(seen, 'translateY(0.4em)', 0, 700) }}>{title}</h3>
         <p sx={Journey.styles.line}>{line}</p>
       </header>
@@ -439,9 +413,8 @@ const Scene = ({ index, film, palette, policy, onCenter }: {
 }
 
 // The movie over its backdrop, and how it becomes 🍿 Wished
-const Opening = ({ film, palette, onCenter }: { film: Film | null, palette: Palette, onCenter?: (key: string) => void }) => {
+const Opening = ({ film, palette }: { film: Film | null, palette: Palette }) => {
   const ref = useScrollProgress<HTMLDivElement>('--opening')
-  useCenter(ref, 'wished', onCenter)
   const [logo, setLogo] = useState(false)
 
   return (
@@ -480,7 +453,7 @@ const Opening = ({ film, palette, onCenter }: { film: Film | null, palette: Pale
               : <Bar inline={true} width='16em' height='1em' />}
           </p>
           <div sx={Journey.styles.openingScene}>
-            <p sx={Journey.styles.label}><span aria-hidden='true'>🍿</span> Wished</p>
+            <Pipeline at='Wished' />
             <h3 id='journey-wished' sx={Journey.styles.openingTitle}>Wish it, or let it come to you.</h3>
             <p sx={Journey.styles.line}>A friend's request, a star you follow, or your own search: each way ends wished.</p>
           </div>
@@ -494,13 +467,11 @@ const Opening = ({ film, palette, onCenter }: { film: Film | null, palette: Pale
 export const Journey = ({ film, policy }: { film: Film | null, policy?: Films['policy'] }) => {
   const { palette } = usePalette(film && pictureSrc(film.poster, 'w92'), null, film?.poster)
   const stage = useScrollProgress<HTMLDivElement>('--stage')
-  const [active, setActive] = useState('wished')
 
   return (
     <section aria-labelledby='journey' sx={Journey.styles.element}>
       <span id='journey' sx={Journey.styles.hidden}>One movie, from a wish to your library</span>
-      <Rail film={film} active={active} />
-      <Opening film={film} palette={palette} onCenter={setActive} />
+      <Opening film={film} palette={palette} />
       <div ref={stage} sx={Journey.styles.stage}>
         <div sx={Journey.styles.track} aria-hidden='true'>
           <div sx={Journey.styles.ambient}>
@@ -509,7 +480,7 @@ export const Journey = ({ film, policy }: { film: Film | null, policy?: Films['p
             <div sx={Journey.styles.ambientVeil} />
           </div>
         </div>
-        {SCENES.map((_, index) => <Scene key={index} index={index} film={film} palette={palette} policy={policy} onCenter={setActive} />)}
+        {SCENES.map((_, index) => <Scene key={index} index={index} film={film} palette={palette} policy={policy} />)}
       </div>
     </section>
   )
@@ -822,186 +793,42 @@ Journey.styles = {
   visual: {
     fontSize: [4, 3],
   },
-  // The rail runs the whole journey, outside the flow: in the left margin beside the column once the margin holds it,
-  // a bar across the top before that
-  railTrack: {
-    position: 'absolute',
-    inset: '0px',
-    zIndex: 2,
-    pointerEvents: 'none',
-    '@media (min-width: 90rem)': {
-      // From the viewport's edge to the column's text, 16px off each
-      paddingLeft: 'max(1rem, calc(50% - 36rem - 9rem + 1.5rem - 1rem))',
-    },
-  },
-  rail: {
-    position: 'sticky',
-    top: '0px',
+  // The eyebrow's line, on one line: on a phone and a tablet the other steps keep their emoji alone
+  pipeline: {
     display: 'flex',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: 10,
+    alignItems: 'center',
+    gap: ['0.6em', '0.9em'],
     margin: '0px',
-    padding: '0.75rem 1rem',
-    listStyle: 'none',
-    fontFamily: 'monospace',
-    fontSize: ['0.625rem', '0.75rem'],
-    backgroundColor: 'color-mix(in srgb, var(--theme-ui-colors-white) 88%, transparent)',
-    backdropFilter: 'blur(12px)',
-    borderBottom: '1px solid',
-    borderColor: 'grayDark',
-    '@media (min-width: 90rem)': {
-      top: '50svh',
-      flexDirection: 'column',
-      alignItems: 'stretch',
-      justifyContent: 'flex-start',
-      gap: '0px',
-      width: '9rem',
-      padding: '0px',
-      fontSize: '0.75rem',
-      transform: 'translateY(-50%)',
-      backgroundColor: 'transparent',
-      backdropFilter: 'none',
-      borderBottom: 'none',
-    },
-  },
-  railState: {
-    position: 'relative',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 10,
-    minWidth: '0px',
-    textAlign: 'center',
-    transition: `opacity 400ms ${EASE}`,
-    '> span:first-of-type': {
-      display: 'grid',
-      placeItems: 'center',
-      flexShrink: 0,
-      width: '1.9em',
-      height: '1.9em',
-      border: '1px solid',
-      borderColor: 'grayDark',
-      borderRadius: '50%',
-      backgroundColor: 'white',
-      transition: `border-color 400ms ${EASE}, box-shadow 400ms ${EASE}`,
-    },
-    '@media (min-width: 90rem)': {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      gap: 8,
-      textAlign: 'left',
-    },
-  },
-  // A job sits on the thread between two states, as the README draws its arrows
-  railJob: {
-    position: 'relative',
-    display: 'flex',
-    alignItems: 'center',
-    alignSelf: 'center',
-    gap: 11,
-    color: 'textLight',
-    transition: `opacity 400ms ${EASE}`,
-    strong: {
-      display: 'none',
-    },
-    '@media (min-width: 90rem)': {
-      alignSelf: 'auto',
-      gap: 8,
-      paddingY: 8,
-      paddingLeft: '0.45em',
-      // The thread from the state above down to the state below, the job's emoji riding on it
-      '::before': {
-        content: '""',
-        position: 'absolute',
-        left: '0.95em',
-        top: '0px',
-        bottom: '0px',
-        width: '1px',
-        backgroundColor: 'grayDark',
-      },
-      '> span:first-of-type': {
-        position: 'relative',
-        display: 'grid',
-        placeItems: 'center',
-        width: '1em',
-        backgroundColor: 'white',
-        fontSize: '0.875em',
-      },
-      strong: {
-        display: 'inline',
-        fontWeight: 600,
-      },
-    },
-  },
-  stepBody: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 11,
-    minWidth: '0px',
-    color: 'text',
+    fontFamily: 'heading',
+    fontWeight: 800,
+    fontSize: [6, 5],
+    letterSpacing: '0.14em',
+    textTransform: 'uppercase',
     whiteSpace: 'nowrap',
-    strong: {
-      fontFamily: 'heading',
-      fontWeight: 800,
-      color: 'textLightest',
-    },
-    '@media (min-width: 90rem)': {
-      paddingTop: '0.25em',
-    },
   },
-  stepNow: {
-    opacity: 1,
-    // The job in progress keeps its name on the bar too
-    '& > span:last-of-type strong': {
-      display: 'inline',
-      color: 'textLightest',
-    },
-  },
-  // A different key from the state's own circle, so the ring adds to it instead of replacing it
-  stateNow: {
-    '& > span:first-of-type': {
-      borderColor: 'textLightest',
-      boxShadow: '0 0 0 3px color-mix(in srgb, var(--theme-ui-colors-textLightest) 20%, transparent)',
+  step: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.4em',
+    color: 'textLight',
+    opacity: 0.35,
+    // The README's arrow before every step but the first
+    ':not(:first-of-type)::before': {
+      content: '"→"',
+      marginRight: ['0.6em', '0.9em'],
+      letterSpacing: '0px',
+      opacity: 0.6,
     },
   },
   stepDone: {
-    opacity: 0.6,
+    opacity: 0.65,
   },
-  stepNext: {
-    opacity: 0.35,
+  stepNow: {
+    opacity: 1,
+    color: 'textLightest',
   },
-  stepSize: {
-    display: 'none',
-    '@media (min-width: 90rem)': {
-      display: 'block',
-    },
-  },
-  stepBanned: {
-    color: 'error',
-    textDecoration: 'line-through',
-  },
-  // Where Refine hands the copy on to Shrink
-  threshold: {
-    alignSelf: 'stretch',
-    borderLeft: '1px dashed',
-    borderColor: 'primary',
-    color: 'primary',
-    fontSize: '0.875em',
-    letterSpacing: '0.04em',
-    span: {
-      display: 'none',
-    },
-    '@media (min-width: 90rem)': {
-      marginY: 9,
-      paddingTop: 10,
-      borderLeft: 'none',
-      borderTop: '1px dashed',
-      borderColor: 'primary',
-      span: {
-        display: 'inline',
-      },
-    },
+  stepName: {
+    display: ['none', 'none', 'inline'],
   },
   picture: {
     borderRadius: '0.25em',
