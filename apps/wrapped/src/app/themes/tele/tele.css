@@ -2240,14 +2240,6 @@ html[data-theme='tele'] {
 .tele-presentation > :not(.tele-presentation-wall) {
   position: relative;
   z-index: 2;
-  /* The posters under the lines stay in reach of the pointer, only what reacts takes it */
-  pointer-events: none;
-}
-
-.tele-presentation a,
-.tele-presentation .tele-logo,
-.tele-presentation .tele-sticker {
-  pointer-events: auto;
 }
 
 .tele-presentation .tele-sticker {
@@ -2322,9 +2314,6 @@ html[data-theme='tele'] {
   outline-offset: 3px;
 }
 
-.tele-presentation-column .tele-photo,
-.tele-presentation .tele-logo,
-.tele-presentation .tele-sticker,
 .tele-presentation-contents a,
 .tele-presentation-contents a span,
 .tele-presentation-read,
@@ -2333,26 +2322,6 @@ html[data-theme='tele'] {
 }
 
 @media (hover: hover) {
-  /* The column under the pointer stops, the poster comes off the wall and straightens */
-  .tele-presentation-column:hover {
-    animation-play-state: paused;
-  }
-
-  .tele-presentation-column .tele-photo:hover {
-    position: relative;
-    z-index: 1;
-    transform: rotate(6deg) scale(1.12);
-    box-shadow: 0 18px 40px -12px rgb(0 0 0 / 0.7);
-  }
-
-  .tele-presentation .tele-logo:hover {
-    transform: rotate(-2deg) scale(1.03);
-  }
-
-  .tele-presentation .tele-sticker:hover {
-    transform: rotate(-12deg) scale(1.08);
-  }
-
   /* A line of the contents is marked like a programme circled in the TV guide */
   .tele-presentation-contents a:hover {
     transform: translateX(8px);
