@@ -6,6 +6,8 @@ const MONTH = new Intl.DateTimeFormat('en', { month: 'long', timeZone: 'UTC' })
 const DAY = new Intl.DateTimeFormat('en', { month: '2-digit', day: '2-digit', timeZone: 'UTC' })
 const LONG = new Intl.DateTimeFormat('en', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' })
 const dateOf = (date: string) => new Date(`${date}T00:00:00Z`)
+// On a phone, three stars in the row, for every name to hold on one line under its avatar
+const PHONE_PEOPLE = 3
 
 // Directors of the films, each once
 const People = ({ data, shown }: { data: Films | null, shown: boolean }) => {
@@ -20,7 +22,7 @@ const People = ({ data, shown }: { data: Films | null, shown: boolean }) => {
       {people.map((person, index) => (
         <li
           key={person?.name ?? index}
-          sx={Following.styles.person}
+          sx={{ ...Following.styles.person, display: index < PHONE_PEOPLE ? 'flex' : ['none', 'flex'] }}
           style={{ opacity: shown ? 1 : 0, transform: shown ? 'none' : 'scale(0.8)', transitionDelay: `${index * 90}ms` }}
         >
           <span sx={Following.styles.avatar} aria-hidden='true'>
@@ -118,7 +120,7 @@ Following.styles = {
   },
   people: {
     display: 'grid',
-    gridTemplateColumns: ['repeat(4, minmax(0, 1fr))', 'repeat(4, 9em)'],
+    gridTemplateColumns: [`repeat(${PHONE_PEOPLE}, minmax(0, 1fr))`, 'repeat(4, 9em)'],
     gap: [6, 2],
     margin: '0px',
     padding: '0px',
@@ -162,7 +164,9 @@ Following.styles = {
     fontSize: [6, 4],
     color: 'textLightest',
     textAlign: 'center',
-    textWrap: 'balance',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    textOverflow: 'ellipsis',
   },
   // Runs past the right edge of the viewport, its last poster fading out there, for the months to go on
   calendar: {

@@ -66,12 +66,14 @@ export const Hero = ({ wall }: { wall?: string[] }) => (
         and hands it to your download client.
       </p>
       <div sx={Hero.styles.actions}>
-        <a href={DEMO} sx={{ ...buttonStyles.contain({ color: 'primary' }), ...Hero.styles.action }}>Try the demo</a>
-        <a href='#install' sx={{ ...buttonStyles.outline({ color: 'white' }), ...Hero.styles.action }}>Install</a>
+        <div sx={Hero.styles.demo}>
+          <a href={DEMO} sx={{ ...buttonStyles.contain({ color: 'primary' }), ...Hero.styles.action }}>Try the demo</a>
+          <p sx={Hero.styles.login}>login <code>demo</code> / <code>demo</code></p>
+        </div>
+        <a href='#install' sx={{ ...buttonStyles.outline({ color: 'gray' }), ...Hero.styles.action, ...Hero.styles.install }}>
+          Install <span aria-hidden='true'>→</span>
+        </a>
       </div>
-      <p sx={Hero.styles.login}>
-        Login <code>demo</code> / <code>demo</code>, it runs in your browser on a made-up library.
-      </p>
     </div>
   </header>
 )
@@ -105,7 +107,6 @@ Hero.styles = {
     position: 'relative',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
     minHeight: ['92svh', '100svh'],
     overflow: 'hidden',
     isolation: 'isolate',
@@ -119,7 +120,7 @@ Hero.styles = {
     flexDirection: 'column',
     gap: 6,
     transform: 'translate(-50%, -50%) rotate(-12deg)',
-    opacity: 0.35,
+    opacity: [0.3, 0.45],
     zIndex: -2,
   },
   row: {
@@ -157,22 +158,33 @@ Hero.styles = {
     position: 'absolute',
     inset: '0px',
     zIndex: -1,
-    background: 'radial-gradient(ellipse 60% 55% at 50% 50%, var(--theme-ui-colors-white) 20%, transparent 100%), linear-gradient(to bottom, transparent 70%, var(--theme-ui-colors-white) 100%)',
+    // Dark under the text on the left, the wall left bare on the right; a phone darkens it whole
+    background: [
+      'linear-gradient(to bottom, color-mix(in srgb, var(--theme-ui-colors-white) 60%, transparent) 0%, color-mix(in srgb, var(--theme-ui-colors-white) 80%, transparent) 60%, var(--theme-ui-colors-white) 100%)',
+      'linear-gradient(to right, var(--theme-ui-colors-white) 15%, color-mix(in srgb, var(--theme-ui-colors-white) 70%, transparent) 45%, transparent 75%), linear-gradient(to bottom, transparent 70%, var(--theme-ui-colors-white) 100%)',
+    ],
   },
   content: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    maxWidth: '48em',
+    // A block on the column's left edge, as wide as its widest line, its lines centered in it
+    display: 'grid',
+    gridTemplateColumns: 'minmax(0px, max-content)',
+    justifyContent: ['center', 'start'],
+    justifyItems: 'center',
+    textAlign: 'center',
+    width: '100%',
+    maxWidth: '72em',
+    marginX: 'auto',
     paddingX: [4, 2],
     paddingY: 0,
-    textAlign: 'center',
   },
   title: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
+    gap: '0.08em',
     margin: '0px',
+    fontSize: ['clamp(3.25rem, 16vw, 4.5rem)', 'clamp(4rem, 7vw, 6rem)'],
+    lineHeight: 1,
   },
   hidden: {
     position: 'absolute',
@@ -183,77 +195,87 @@ Hero.styles = {
     whiteSpace: 'nowrap',
   },
   emoji: {
-    fontSize: 'clamp(4rem, 9vw, 7rem)',
-    lineHeight: 1,
+    // An app icon above its name, as the app's login draws it
+    fontSize: '0.75em',
+    letterSpacing: '0.02em',
     ...rise(0),
   },
   wordmark: {
     fontFamily: 'heading-no-emoji',
     fontWeight: 800,
-    // A phone sizes the word from its own width, so it outweighs the tagline
-    fontSize: ['clamp(5.5rem, 26vw, 10rem)', 'clamp(4rem, 13vw, 10rem)'],
-    lineHeight: 0.9,
-    letterSpacing: '-0.03em',
+    letterSpacing: '-0.035em',
     textTransform: 'lowercase',
     color: 'textLightest',
-    // Raleway's descender-free word sits high in its line box: pull it under the emoji
-    marginTop: '-0.08em',
-    ...rise(80),
+    ...rise(60),
   },
   tagline: {
     margin: '0px',
-    // Margins count in the element's own em: 24px on a phone, 28px wide, the same step as before the actions
-    marginTop: [2, 4],
+    marginTop: 4,
     fontFamily: 'heading',
-    fontWeight: 'heading',
-    fontSize: [4, 1],
+    fontWeight: 'strong',
+    fontSize: ['1.125rem', '1.375rem'],
     lineHeight: 'heading',
     color: 'textLightest',
-    textWrap: 'balance',
-    ...rise(180),
+    ...rise(140),
   },
   pitch: {
-    // The tagline already says it on a phone
-    display: ['none', 'block'],
-    maxWidth: '36em',
+    maxWidth: '40ch',
     margin: '0px',
-    marginTop: 4,
-    fontSize: [4, 3],
+    marginX: 'auto',
+    marginTop: [6, 5],
+    fontSize: ['0.9375rem', '1.0625rem'],
     lineHeight: 'body',
     color: 'textLight',
     textWrap: 'pretty',
-    ...rise(260),
+    ...rise(220),
   },
   actions: {
-    display: 'flex',
-    flexDirection: ['column', 'row'],
-    alignItems: 'stretch',
+    // Two equal halves on a phone, side by side at their own width beyond
+    display: ['grid', 'flex'],
+    gridTemplateColumns: '1fr 1fr',
+    alignItems: 'flex-start',
+    gap: 6,
     justifyContent: 'center',
     width: ['100%', 'auto'],
-    maxWidth: ['20em', 'none'],
-    gap: 6,
-    marginTop: [2, 1],
-    ...rise(340),
+    marginTop: [2, 0],
+    ...rise(300),
+  },
+  demo: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 8,
   },
   action: {
-    display: 'inline-block',
-    textAlign: 'center',
-    fontSize: 3,
-    fontWeight: 'bold',
-    paddingX: 1,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    boxSizing: 'border-box',
+    width: ['100%', 'auto'],
+    minWidth: [0, '9.5em'],
+    fontSize: 4,
     paddingY: 6,
+    paddingX: 3,
+    lineHeight: 'reset',
     textDecoration: 'none',
     ...focus,
   },
+  install: {
+    minWidth: [0, 'auto'],
+    ':hover': {
+      borderColor: 'textLight',
+      color: 'textLightest',
+    },
+  },
   login: {
     margin: '0px',
-    marginTop: 4,
-    fontSize: 5,
+    fontFamily: 'monospace',
+    fontSize: 6,
     color: 'textLight',
-    textWrap: 'balance',
-    ...rise(400),
     code: {
-      fontFamily: 'monospace',
+      fontFamily: 'inherit',
+      color: 'textLightest',
     },
   },
 }

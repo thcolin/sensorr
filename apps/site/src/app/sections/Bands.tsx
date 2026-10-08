@@ -41,9 +41,11 @@ const Band = ({ emoji, label, title, body, visual, scenery, tint, side = false }
   )
 }
 
-// Under the text the scenery darkens to 60% black, under the visual it stays almost open, and only the last 8% of each
-// end fades to the page's black, for the bands to run into each other
-const edges = `linear-gradient(to bottom, ${PAGE} 0%, transparent 8%, transparent 92%, ${PAGE} 100%)`
+// Under the text the scenery darkens to 60% black, under the visual it stays almost open, and each end fades to the
+// page's black over a fixed length, eased through steps, for a band to rise slowly out of the black of the one above
+// instead of starting at a line
+const black = (amount: number) => `color-mix(in srgb, ${PAGE} ${amount}%, transparent)`
+const edges = `linear-gradient(to bottom, ${PAGE} 0px, ${black(80)} 5em, ${black(45)} 11em, ${black(15)} 17em, transparent 22em, transparent calc(100% - 10em), ${black(55)} calc(100% - 4em), ${PAGE} 100%)`
 const shade = (direction: string) => `linear-gradient(${direction}, color-mix(in srgb, ${PAGE} 60%, transparent) 0%, color-mix(in srgb, ${PAGE} 35%, transparent) 35%, color-mix(in srgb, ${PAGE} 12%, transparent) 70%)`
 
 Band.styles = {

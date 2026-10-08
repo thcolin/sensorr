@@ -1,40 +1,41 @@
 import { useEffect, useRef, useState } from 'react'
-import { buttonStyles } from '@sensorr/ui'
 import { WRAPPED } from '../data'
 
 const EASE = 'cubic-bezier(0.16, 1, 0.3, 1)'
+const DEAL = 700
+const STAGGER = 80
 // The demo's only wrapped is Alex's, `/wrapped/demo`, and apps/wrapped/src/app/look.ts keeps the friend's look under this key
 const LOOK_KEY = 'wrapped-look:demo'
 
 type Crop = { x: number, y: number, w: number, h: number }
 
-// The five looks of apps/wrapped, the middle one on top. x and y in % of the fan's width, r in degrees at full spread,
-// w the cover's width, d when it starts to deal (center first, outer last). Crops cut each 1200×692 capture down to
+// The five looks of apps/wrapped, the middle one on top and dealt first. x and y in % of the fan's width, r in degrees,
+// w the cover's width. Crops cut each 1200×692 capture down to
 // the object itself, in capture pixels: [phone, fan]. The phone row keeps a portrait detail, the fan the whole object.
 // glow: two colors picked in each capture, laid behind the fan while that look is lifted
 const LOOKS = [
   {
-    id: 'tele', name: 'TV Guide', x: 0, y: -2, r: -1.5, rm: -1.5, z: 5, w: 38, d: 0,
+    id: 'tele', name: 'TV Guide', x: 0, y: -2, r: -1.5, z: 5, w: 38,
     crop: [{ x: 66, y: 28, w: 534, h: 664 }, { x: 66, y: 28, w: 1068, h: 664 }],
     glow: ['hsl(2, 78%, 52%)', 'hsl(46, 95%, 58%)'],
   },
   {
-    id: 'labo', name: '35mm Lab', x: -22, y: 1, r: -5, rm: 2, z: 4, w: 22, d: 0.12,
+    id: 'labo', name: '35mm Lab', x: -22, y: 1, r: -5, z: 4, w: 22,
     crop: [{ x: 300, y: 0, w: 600, h: 692 }, { x: 300, y: 0, w: 600, h: 692 }],
     glow: ['hsl(14, 82%, 56%)', 'hsl(36, 60%, 78%)'],
   },
   {
-    id: 'videoclub', name: 'Video Store', x: 22, y: 2, r: 4.5, rm: -2, z: 4, w: 27, d: 0.12,
+    id: 'videoclub', name: 'Video Store', x: 22, y: 2, r: 4.5, z: 4, w: 27,
     crop: [{ x: 330, y: 20, w: 540, h: 672 }, { x: 190, y: 0, w: 820, h: 692 }],
     glow: ['hsl(268, 70%, 48%)', 'hsl(186, 90%, 62%)'],
   },
   {
-    id: 'scenario', name: 'Screenplay', x: -37, y: 5, r: -7, rm: 1.5, z: 3, w: 22, d: 0.24,
+    id: 'scenario', name: 'Screenplay', x: -37, y: 5, r: -7, z: 3, w: 22,
     crop: [{ x: 285, y: 20, w: 680, h: 672 }, { x: 285, y: 20, w: 680, h: 672 }],
     glow: ['hsl(40, 35%, 82%)', 'hsl(54, 92%, 58%)'],
   },
   {
-    id: 'affiche', name: 'Polish Poster', x: 37, y: 6, r: 6, rm: -1.5, z: 3, w: 22, d: 0.24,
+    id: 'affiche', name: 'Polish Poster', x: 37, y: 6, r: 6, z: 3, w: 22,
     crop: [{ x: 305, y: 160, w: 518, h: 532 }, { x: 305, y: 200, w: 518, h: 492 }],
     glow: ['hsl(4, 72%, 50%)', 'hsl(38, 45%, 52%)'],
   },
@@ -48,8 +49,8 @@ const cropOf = ({ x, y, w, h }: Crop) => ({
   img: { width: `${(1200 / w) * 100}%`, left: `${(-x / w) * 100}%`, top: `${(-y / h) * 100}%` },
 })
 
-// 0 when the fan's top meets the bottom of the viewport, 1 once it stands at 35% of its height
-const useSpread = () => {
+// The fan stays stacked until the section shows, then deals once and rests
+const useDeal = () => {
   const ref = useRef<HTMLUListElement>(null)
 
   useEffect(() => {
@@ -60,28 +61,26 @@ const useSpread = () => {
     }
 
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      element.style.setProperty('--spread', '1')
+      element.dataset.phase = 'rest'
       return
     }
 
-    let frame = 0
-    const measure = () => {
-      frame = 0
-      const { top } = element.getBoundingClientRect()
-      const progress = (window.innerHeight - top) / (window.innerHeight * 0.65)
-      element.style.setProperty('--spread', Math.min(1, Math.max(0, progress)).toFixed(3))
-    }
-    const schedule = () => {
-      frame ||= requestAnimationFrame(measure)
-    }
+    let timeout = 0
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) {
+        return
+      }
 
-    measure()
-    window.addEventListener('scroll', schedule, { passive: true })
-    window.addEventListener('resize', schedule, { passive: true })
+      observer.disconnect()
+      element.dataset.phase = 'deal'
+      // Last cover's delay plus its travel: from now on a cover answers the pointer without the deal's stagger
+      timeout = window.setTimeout(() => (element.dataset.phase = 'rest'), DEAL + STAGGER * (LOOKS.length - 1))
+    }, { threshold: 0.35 })
+
+    observer.observe(element)
     return () => {
-      window.removeEventListener('scroll', schedule)
-      window.removeEventListener('resize', schedule)
-      cancelAnimationFrame(frame)
+      observer.disconnect()
+      clearTimeout(timeout)
     }
   }, [])
 
@@ -125,7 +124,7 @@ const choose = (id: Look | null) => {
 }
 
 export const Wrapped = () => {
-  const ref = useSpread()
+  const ref = useDeal()
   const snapped = useSnapped(ref)
   const [lifted, setLifted] = useState<Look | null>(null)
   const active = lifted ?? snapped ?? 'tele'
@@ -157,7 +156,7 @@ export const Wrapped = () => {
         </p>
       </div>
       <ul ref={ref} sx={Wrapped.styles.fan} onMouseLeave={() => setLifted(null)}>
-        {LOOKS.map(({ id, name, x, y, r, rm, z, w, d, crop: [phone, fan] }) => {
+        {LOOKS.map(({ id, name, x, y, r, z, w, crop: [phone, fan] }, index) => {
           const [small, large] = [cropOf(phone), cropOf(fan)]
 
           return (
@@ -166,7 +165,7 @@ export const Wrapped = () => {
               data-look={id}
               sx={Wrapped.styles.item}
               data-lifted={lifted === id || undefined}
-              style={{ '--x': `${x}cqw`, '--y': `${y}cqw`, '--r': `${r}deg`, '--rm': `${rm}deg`, '--z': z, '--w': `${w}cqw`, '--d': d } as React.CSSProperties}
+              style={{ '--x': `${x}cqw`, '--y': `${y}cqw`, '--r': `${r}deg`, '--z': z, '--w': `${w}cqw`, '--i': index } as React.CSSProperties}
             >
               <a
                 href={WRAPPED}
@@ -192,7 +191,6 @@ export const Wrapped = () => {
                     }}
                   />
                 </span>
-                <span sx={Wrapped.styles.name} aria-hidden='true'>{name}</span>
               </a>
             </li>
           )
@@ -204,8 +202,9 @@ export const Wrapped = () => {
         ))}
       </div>
       <div sx={Wrapped.styles.actions}>
-        <a href={WRAPPED} onClick={() => choose(null)} sx={{ ...buttonStyles.contain({ color: 'white' }), ...Wrapped.styles.action }}>
-          Read Alex's wrapped
+        <a href={WRAPPED} onClick={() => choose(null)} sx={Wrapped.styles.action}>
+          <span sx={Wrapped.styles.underline}>Read Alex's wrapped</span>
+          <span aria-hidden='true' sx={Wrapped.styles.arrow}>→</span>
         </a>
       </div>
     </section>
@@ -226,9 +225,6 @@ const decorative = {
   },
 }
 
-// How far a cover has been dealt, 0 to 1, from the fan's --spread and the cover's own --d
-const dealt = 'clamp(0, calc((var(--spread) - var(--d)) / 0.76), 1)'
-
 Wrapped.styles = {
   element: {
     position: 'relative',
@@ -238,7 +234,7 @@ Wrapped.styles = {
     alignItems: ['stretch', 'center'],
     gap: [2, 0],
     paddingTop: [3, 1],
-    paddingBottom: 4,
+    paddingBottom: ['3em', '6em'],
     overflow: 'hidden',
     // Its own floor, so nothing from the section above shows under the glow
     backgroundColor: 'white',
@@ -315,7 +311,6 @@ Wrapped.styles = {
     textWrap: 'balance',
   },
   fan: {
-    '--spread': 0,
     position: 'relative',
     // 3em of air on each side, so a tilted outer cover and its focus ring stay inside the viewport
     width: ['100%', 'calc(100% - 6em)'],
@@ -337,7 +332,6 @@ Wrapped.styles = {
     aspectRatio: ['auto', '100 / 40'],
   },
   item: {
-    '--s': dealt,
     flexShrink: 0,
     width: ['72vw', 'var(--w)'],
     position: ['relative', 'absolute'],
@@ -345,18 +339,21 @@ Wrapped.styles = {
     left: [null, '50%'],
     zIndex: 'var(--z)',
     scrollSnapAlign: 'center',
-    // Dealt like cards: from a pile in the middle, each to its place on the table
-    transform: [
-      'rotate(var(--rm))',
-      'translate(-50%, -50%) translate(calc(var(--x) * (0.12 + 0.88 * var(--s))), calc(var(--y) * var(--s) + 6cqw * (1 - var(--s)))) rotate(calc(var(--r) * var(--s)))',
-    ],
-    transition: `transform 600ms ${EASE}`,
-    '&[data-lifted]': {
+    // Stacked in the middle until the fan shows, then dealt each to its place on the table, once
+    transform: ['none', 'translate(-50%, -50%) translateY(4cqw)'],
+    transition: [null, `transform ${DEAL}ms ${EASE}`],
+    transitionDelay: [null, `calc(var(--i) * ${STAGGER}ms)`],
+    '[data-phase] > &': {
+      transform: ['none', 'translate(-50%, -50%) translate(var(--x), var(--y)) rotate(var(--r))'],
+    },
+    '[data-phase="rest"] > &': {
+      transition: [null, `transform 250ms ${EASE}`],
+      transitionDelay: '0ms',
+      ...decorative,
+    },
+    '[data-phase="rest"] > &[data-lifted]': {
       zIndex: 10,
-      transform: [
-        'rotate(0deg)',
-        'translate(-50%, -50%) translate(calc(var(--x) * 0.85 * (0.12 + 0.88 * var(--s))), calc(var(--y) * var(--s) - 1.5cqw)) rotate(0deg) scale(1.04)',
-      ],
+      transform: ['none', 'translate(-50%, -50%) translate(var(--x), var(--y)) translateY(-2%) rotate(calc(var(--r) * 0.25))'],
     },
     ...decorative,
   },
@@ -379,26 +376,6 @@ Wrapped.styles = {
     maxWidth: 'none',
     height: 'auto',
   },
-  name: {
-    display: 'block',
-    width: 'fit-content',
-    marginTop: 8,
-    marginX: 'auto',
-    paddingX: 8,
-    borderRadius: '1em',
-    backgroundColor: 'blackShadow',
-    fontFamily: 'monospace',
-    fontSize: [5, 4],
-    whiteSpace: 'nowrap',
-    color: 'text',
-    textAlign: 'center',
-    transition: `background-color 400ms ${EASE}, color 400ms ${EASE}`,
-    '[data-lifted] &': {
-      backgroundColor: 'text',
-      color: 'white',
-    },
-    ...decorative,
-  },
   dots: {
     display: ['flex', 'none'],
     justifyContent: 'center',
@@ -420,16 +397,39 @@ Wrapped.styles = {
   actions: {
     display: 'flex',
     justifyContent: ['flex-start', 'center'],
-    marginTop: '0px',
+    // Tucked into the air the fan leaves under its top cover
+    marginTop: ['0px', '-2em'],
     paddingX: [4, 2],
   },
   action: {
-    display: 'inline-block',
-    fontSize: [4, 3],
-    paddingX: 0,
-    paddingY: 6,
-    color: 'blackPure',
+    display: 'inline-flex',
+    alignItems: 'baseline',
+    gap: 7,
+    fontFamily: 'heading',
+    fontWeight: 800,
+    fontSize: [3, 2],
+    color: 'text',
     textDecoration: 'none',
+    borderRadius: '0.25em',
     ...ring,
+  },
+  underline: {
+    textDecoration: 'underline',
+    textDecorationThickness: '2px',
+    textUnderlineOffset: '0.3em',
+    textDecorationColor: 'textLight',
+    transition: `text-decoration-color 250ms ${EASE}`,
+    'a:hover > &': {
+      textDecorationColor: 'text',
+    },
+    ...decorative,
+  },
+  arrow: {
+    display: 'inline-block',
+    transition: `transform 250ms ${EASE}`,
+    'a:hover > &, a:focus-visible > &': {
+      transform: 'translateX(0.25em)',
+    },
+    ...decorative,
   },
 }

@@ -3,34 +3,43 @@ import { Films } from '../../data'
 import { Cover, EASE, STILL, useReveal } from './shared'
 
 const COLUMNS = 7
-const ROWS = 3
+const ROWS = 2
+// On a phone, only the first two columns show, the wall no longer bleeding past the screen
+const PHONE_COLUMNS = 2
 
-type Entry = { id: string, kind: string, title: string, year: number, poster?: string, badge?: { emoji: string, label: string } }
+type Badge = { emoji: string, label: string }
+type Entry = { id: string, kind: string, title: string, year: number, poster?: string, badge: Badge }
 
-// Two movies for a show, a wished one among the archived, as a library mixes them
+// The states of libs/i18n common.js, as the app's grid badges them
+const ARCHIVED = { emoji: '📼', label: 'Archived' }
+const WISHED = { emoji: '🍿', label: 'Wished' }
+const REQUESTED = { emoji: '🍻', label: 'Requested' }
+const FOLLOWED = { emoji: '📺', label: 'Followed' }
+
+// Which tile is a show and what state each movie is in, read row by row: archived movies mostly, a wished one and a
+// friend's request among them, a show every few tiles, so each row and the phone's two columns mix all four states
+const LAYOUT: (Badge | 'show')[] = [
+  ARCHIVED, WISHED, 'show', ARCHIVED, ARCHIVED, 'show', ARCHIVED,
+  REQUESTED, 'show', ARCHIVED, ARCHIVED, 'show', WISHED, ARCHIVED,
+]
+
 const entriesOf = (data: Films | null): (Entry | null)[] => {
   if (!data) {
     return Array.from({ length: COLUMNS * ROWS }, () => null)
   }
 
-  const films = data.films.slice(0, (COLUMNS * ROWS * 2) / 3)
-  const shows = data.shows.slice(0, (COLUMNS * ROWS) / 3)
+  let film = 0
+  let show = 0
 
-  return films.flatMap((film, index) => {
-    const movie: Entry = {
-      id: `movie-${film.id}`,
-      kind: 'Movie',
-      title: film.title,
-      year: film.year,
-      poster: film.poster,
-      badge: index % 5 === 3 ? { emoji: '🍿', label: 'Wished' } : { emoji: '📼', label: 'Archived' },
+  return LAYOUT.map((slot) => {
+    if (slot === 'show') {
+      const { id, title, year, poster } = data.shows[show++ % data.shows.length]
+      return { id: `show-${id}`, kind: 'Show', title, year, poster, badge: FOLLOWED }
     }
-    const show = index % 2 ? shows[(index - 1) / 2] : null
 
-    return show
-      ? [movie, { id: `show-${show.id}`, kind: 'Show', title: show.title, year: show.year, poster: show.poster, badge: { emoji: '📺', label: 'Followed' } }]
-      : [movie]
-  }).slice(0, COLUMNS * ROWS)
+    const { id, title, year, poster } = data.films[film++ % data.films.length]
+    return { id: `movie-${id}`, kind: 'Movie', title, year, poster, badge: slot }
+  })
 }
 
 // The library as columns of posters running from the page's column past the right edge of the viewport, every other
@@ -44,7 +53,11 @@ export const Library = ({ data }: { data: Films | null }) => {
       {Array.from({ length: COLUMNS }, (_, column) => (
         <li
           key={column}
-          sx={{ ...Library.styles.column, paddingTop: column % 2 ? ['3em', '5em'] : '0px' }}
+          sx={{
+            ...Library.styles.column,
+            display: column < PHONE_COLUMNS ? 'block' : ['none', 'block'],
+            paddingTop: column % 2 ? ['3em', '5em'] : '0px',
+          }}
           style={{ opacity: shown ? 1 : 0, transform: shown ? 'none' : 'translateY(5em)', transitionDelay: `${column * 80}ms` }}
         >
           <ul sx={Library.styles.entries}>
@@ -74,14 +87,16 @@ export const Library = ({ data }: { data: Films | null }) => {
 Library.styles = {
   element: {
     display: 'grid',
-    gridTemplateColumns: [`repeat(${COLUMNS}, 9.5em)`, `repeat(${COLUMNS}, 11em)`],
-    columnGap: [6, 2],
-    width: 'max-content',
-    // The wall goes on below the band: its last row fades out
-    maxHeight: ['36em', '46em'],
-    overflow: 'hidden',
-    maskImage: 'linear-gradient(to bottom, black 75%, transparent)',
-    margin: '0px',
+    gridTemplateColumns: [`repeat(${PHONE_COLUMNS}, minmax(0, 1fr))`, `repeat(${COLUMNS}, 11em)`],
+    columnGap: [4, 2],
+    // Runs to the viewport's right edge and fades out there, as the calendar does, for the last column's cut to read
+    // as a bleed rather than an accident
+    overflowX: ['visible', 'clip'],
+    marginTop: '0px',
+    marginBottom: '0px',
+    marginLeft: '0px',
+    marginRight: ['0px', 'calc((100% - 100vw) / 2)'],
+    maskImage: ['none', 'linear-gradient(to left, transparent 1em, black 14em)'],
     padding: '0px',
     listStyle: 'none',
   },
