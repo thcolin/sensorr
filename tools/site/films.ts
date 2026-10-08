@@ -79,6 +79,8 @@ const storyOf = (details) => {
     year,
     poster: details.poster_path,
     backdrop: details.backdrop_path,
+    // The title as the film's own lettering, in English
+    logo: details.images?.logos?.find(({ iso_639_1 }) => iso_639_1 === 'en')?.file_path || null,
     runtime: details.runtime,
     genres: details.genres.map(({ name }) => name),
     director: director ? { name: director.name, profile: director.profile_path } : null,
@@ -97,7 +99,7 @@ const main = async () => {
   keyed()
 
   const discovered = await discover()
-  const details = await all(discovered.map(({ id }) => id), (id) => tmdb.fetch(`movie/${id}`, { append_to_response: 'credits' }))
+  const details = await all(discovered.map(({ id }) => id), (id) => tmdb.fetch(`movie/${id}`, { append_to_response: 'credits,images', include_image_language: 'en,null' }))
   const films = details.map(storyOf).filter(Boolean)
   const shows = (await pages('tv/top_rated', 2))
     .filter(({ origin_country, poster_path }) => poster_path && !origin_country?.includes('JP'))

@@ -11,6 +11,7 @@ export type Film = {
   year: number
   poster: string
   backdrop: string | null
+  logo: string | null
   runtime: number
   genres: string[]
   director: { name: string, profile: string | null } | null
