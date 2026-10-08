@@ -2,39 +2,47 @@
 //
 //   SENSORR_DEMO_TMDB_KEY=... npx ts-node -r tsconfig-paths/register -P tools/tsconfig.tools.json --transpile-only -O '{"target":"es2022","esModuleInterop":true}' tools/site/films.ts
 //
-// The films are TMDB's recent and acclaimed ones, their releases the demo indexer's, ranked by the demo's Default
-// policy as the jobs rank them. A film is kept when its releases tell the whole story: one Record grabbed, a better one
-// for Refine, a lighter one for Shrink, and another to replace the one a friend reports. TMDB data may not be kept more
-// than 6 months, so the file is not committed: the Demo workflow builds it.
+// The films are TMDB's recent and acclaimed ones. Their releases tell the same story for each, ranked by the demo's
+// Default policy as the jobs rank them: Record grabs a VO 1080p, Refine a MULTi 1080p a little heavier, Shrink a MULTi
+// 2160p lighter than both, and a friend's report swaps that one. TMDB data may not be kept more than 6 months, so the
+// file is not committed: the Demo workflow builds it.
 
 import fs from 'fs'
 import path from 'path'
 import { Policy } from '../../libs/sensorr/src/lib/policy'
-import { searchOf, INDEXER } from '../../apps/web/src/demo/releases'
+import { dotted, INDEXER } from '../../apps/web/src/demo/releases'
 import { proposalDiff } from '../../apps/web/src/pages/Proposals/queue'
 import { tmdb, all, pages, POLICIES, keyed } from '../demo/tmdb'
 
 const OUTPUT = path.join(__dirname, '../../apps/site/src/data/films.json')
 const DISCOVER = { sort_by: 'vote_count.desc', 'primary_release_date.gte': '2014-01-01', 'vote_average.gte': 7.2, 'vote_count.gte': 1500 }
 const WALL = 120
+const FILMS = 100
 const SHOWS = 12
 const UPCOMING = 12
 // What Record shows of the candidates, the winner first
 const CANDIDATES = 5
 
 const policy = new Policy(POLICIES[0] as any)
-const GB = 1024 ** 3
-const AXES = ['resolution', 'language']
+// Bytes a minute of a 1080p encode weighs, as the demo indexer counts it
+const MINUTE = 70e6
 
-// Its place in the policy's `prefer`, from the best: a value the policy does not prefer comes after them all
-const rank = (axis: string, value?: string) => {
-  const index = (POLICIES[0].prefer[axis] || []).findIndex((preferred: string) => value?.toLowerCase().startsWith(preferred.toLowerCase()))
-  return index === -1 ? Infinity : index
+// The releases of a film's story, made up as the demo indexer makes them: Record grabs a VO 1080p, Refine finds the
+// same in MULTi for a little more, Shrink a MULTi 2160p in x265 lighter than both, and a friend's report swaps that one
+const storyReleases = (title: string, year: number, runtime: number) => {
+  const name = (rest: string) => `${dotted(title)}.${year}.${rest}`
+  const weigh = (factor: number) => Math.round((runtime || 110) * MINUTE * factor)
+  const item = (rest: string, factor: number, seeders: number) => ({ guid: rest, title: name(rest), size: weigh(factor), seeders, znab: INDEXER.name, publishDate: new Date().toISOString() })
+
+  return {
+    owned: item('1080p.WEB-DL.x264.AC3-TAPE', 1, 212),
+    winner: item('MULTi.1080p.BluRay.x264.AC3-VCR', 1.12, 148),
+    shrink: item('MULTi.2160p.WEB-DL.x265.EAC3-REWiND', 0.62, 96),
+    replacement: item('MULTi.2160p.BluRay.x265.EAC3-KINESCOPE', 0.7, 71),
+    // What Record saw beside the one it grabbed, before the others came out
+    others: [item('720p.HDTV.x264.AAC-DEMO', 0.45, 39), item('TRUEFRENCH.1080p.TC.x264.AC3-SPRNG', 0.9, 54)],
+  }
 }
-
-const better = (from, to) => AXES.some((axis) => rank(axis, to.meta?.[axis]) < rank(axis, from.meta?.[axis]))
-  && AXES.every((axis) => rank(axis, to.meta?.[axis]) <= rank(axis, from.meta?.[axis]))
-const kept = (from, to) => AXES.every((axis) => to.meta?.[axis] === from.meta?.[axis])
 
 const discover = async () => {
   const first = await tmdb.fetch('discover/movie', { ...DISCOVER, page: 1 })
@@ -57,6 +65,7 @@ const lighten = (release) => ({
     dub: release.meta.dub,
     language: release.meta.language,
     group: release.meta.group,
+    flags: release.meta.flags,
   },
 })
 
@@ -67,22 +76,13 @@ const diff = (from, to) => {
 
 const storyOf = (details) => {
   const year = Number((details.release_date || '').slice(0, 4))
-  const releases = policy.apply(
-    searchOf({ title: details.title, year, runtime: details.runtime }).map((item) => ({ ...item, znab: INDEXER.name })),
-    { terms: [details.title], titles: [details.title, details.original_title], years: [year], banned_releases: [] },
-  )
-  const valid = releases.filter(({ valid }) => valid)
-  const [winner] = valid
-  // Record grabbed a worse one, before the others came out: Refine has to win on the resolution or the language
-  const owned = [...valid].reverse().find((release) => release !== winner && release.score < winner.score && better(release, winner))
-  // Shrink keeps what Refine won, and frees a gigabyte at least
-  const shrink = valid
-    .filter((release) => release !== owned && release !== winner && kept(winner, release) && release.size <= winner.size - GB)
-    .sort((a, b) => a.size - b.size)[0]
-  // The friend reports the lighter one: another release that keeps the same takes its place
-  const replacement = valid.find((release) => release !== shrink && release !== owned && kept(shrink || winner, release))
+  const story = storyReleases(details.title, year, details.runtime)
+  const query = { terms: [details.title], titles: [details.title, details.original_title], years: [year], banned_releases: [] }
+  const ranked = policy.apply([story.owned, story.winner, story.shrink, story.replacement], query)
+  const [owned, winner, shrink, replacement] = [story.owned, story.winner, story.shrink, story.replacement].map(({ guid }) => ranked.find((release) => release.guid === guid))
+  const candidates = policy.apply([story.owned, ...story.others], query)
 
-  if (!winner || !owned || !shrink || !replacement) {
+  if (![owned, winner, shrink, replacement].every(({ valid }) => valid) || candidates[0].guid !== owned.guid) {
     return null
   }
 
@@ -99,7 +99,7 @@ const storyOf = (details) => {
     runtime: details.runtime,
     genres: details.genres.map(({ name }) => name),
     director: director ? { name: director.name, profile: director.profile_path } : null,
-    candidates: releases.slice(0, CANDIDATES).map(lighten),
+    candidates: candidates.map(lighten),
     owned: lighten(owned),
     winner: lighten(winner),
     shrink: lighten(shrink),
@@ -115,7 +115,7 @@ const main = async () => {
 
   const discovered = await discover()
   const details = await all(discovered.map(({ id }) => id), (id) => tmdb.fetch(`movie/${id}`, { append_to_response: 'credits,images', include_image_language: 'en,null' }))
-  const films = details.map(storyOf).filter(Boolean)
+  const films = details.filter(({ backdrop_path, images }) => backdrop_path && images?.logos?.length).map(storyOf).filter(Boolean).slice(0, FILMS)
   const shows = (await pages('tv/top_rated', 2))
     .filter(({ origin_country, poster_path }) => poster_path && !origin_country?.includes('JP'))
     .slice(0, SHOWS)

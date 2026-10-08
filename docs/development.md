@@ -94,7 +94,7 @@ The key ends up in the page, which is why it is the demo's own. `.github/workflo
 
 ### The landing page
 
-`apps/site` is the page at **https://thcolin.github.io/sensorr/**, in front of the demo. It follows one movie drawn at random through Sensorr, from a friend's watchlist to their wrapped, with the components of `libs/ui`. `tools/site/films.ts` writes what it plays into `apps/site/src/data/films.json`: the recent and acclaimed movies of TMDB, with the releases of the demo indexer ranked by the demo's `Default` policy, kept when they give a Record, a Refine, a Shrink and a replacement for a report. Like the demo data, the file is not committed.
+`apps/site` is the page at **https://thcolin.github.io/sensorr/**, in front of the demo. It follows one movie drawn at random through Sensorr, from a friend's watchlist to their wrapped, with the components of `libs/ui`. `tools/site/films.ts` writes what it plays into `apps/site/src/data/films.json`: the recent and acclaimed movies of TMDB, each with the same story of releases ranked by the demo's `Default` policy: Record grabs a VO 1080p, Refine a MULTi 1080p a little heavier, Shrink a MULTi 2160p lighter than both, and a friend's report swaps that one. Like the demo data, the file is not committed.
 
 ```sh
 export SENSORR_DEMO_TMDB_KEY=<the demo's own key>

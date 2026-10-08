@@ -42,7 +42,7 @@ const random = (seed: number) => () => {
 
 const pick = <T>(next: () => number, values: T[]): T => values[Math.floor(next() * values.length)]
 
-const dotted = (title: string) => title
+export const dotted = (title: string) => title
   .normalize('NFD').replace(/[̀-ͯ]/g, '')
   .replace(/['’:,!?()]/g, '')
   .replace(/&/g, 'and')
