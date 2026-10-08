@@ -12,7 +12,7 @@ const App = () => {
   return (
     <main sx={App.styles.element}>
       <Hero wall={data?.wall} />
-      <Journey film={film} />
+      <Journey film={film} policy={data?.policy} />
       <Bands data={data} />
       <BuiltOn film={film} />
       <Install />

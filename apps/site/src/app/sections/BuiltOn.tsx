@@ -208,9 +208,9 @@ const focus = {
 
 BuiltOn.styles = {
   element: {
-    maxWidth: '80em',
+    maxWidth: '72em',
     marginX: 'auto',
-    paddingX: 4,
+    paddingX: [4, 2],
     paddingY: 0,
   },
   header: {
@@ -323,7 +323,7 @@ BuiltOn.styles = {
       fontFamily: 'monospace',
       fontSize: 5,
       '::placeholder': {
-        color: 'gray-600',
+        color: 'gray-550',
       },
     },
     fields: {
@@ -375,6 +375,7 @@ BuiltOn.styles = {
       fontFamily: 'monospace',
       fontWeight: 'semibold',
       fontSize: 4,
+      color: 'gray-900',
       overflowWrap: 'anywhere',
     },
     text: {

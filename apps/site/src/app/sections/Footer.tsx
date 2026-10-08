@@ -38,7 +38,6 @@ Footer.styles = {
     borderTop: '1px solid',
     borderColor: 'grayDark',
     color: 'textLight',
-    fontSize: 6,
     lineHeight: 'body',
   },
   content: {
@@ -50,7 +49,7 @@ Footer.styles = {
     gap: 6,
     maxWidth: '72em',
     marginX: 'auto',
-    paddingX: 4,
+    paddingX: [4, 2],
     paddingY: 2,
   },
   brand: {
@@ -67,7 +66,7 @@ Footer.styles = {
   tagline: {
     fontFamily: 'body',
     fontWeight: 'normal',
-    fontSize: 6,
+    fontSize: 5,
   },
   links: {
     display: 'flex',
@@ -76,6 +75,7 @@ Footer.styles = {
     rowGap: 9,
     margin: '0px',
     padding: '0px',
+    fontSize: 6,
     listStyle: 'none',
   },
   link: {
@@ -96,6 +96,7 @@ Footer.styles = {
   attribution: {
     flexBasis: '100%',
     margin: '0px',
+    fontSize: 6,
     textWrap: 'pretty',
   },
 }

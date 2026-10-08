@@ -138,16 +138,18 @@ Hero.styles = {
     alignItems: 'center',
     gap: 6,
     maxWidth: '40em',
-    paddingX: 4,
+    paddingX: [4, 2],
     paddingY: 0,
     textAlign: 'center',
   },
   title: {
     margin: '0px',
+    fontSize: 4,
     lineHeight: 0,
   },
   logo: {
     width: ['12em', '16em'],
+    maxWidth: '100%',
     height: 'auto',
   },
   tagline: {
@@ -179,6 +181,11 @@ Hero.styles = {
     paddingX: 2,
     paddingY: 8,
     textDecoration: 'none',
+    ':focus-visible': {
+      outline: '2px solid',
+      outlineColor: 'primary',
+      outlineOffset: '2px',
+    },
   },
   login: {
     margin: '0px',

@@ -5,6 +5,7 @@ import { Films, GITHUB } from '../data'
 
 const MONTH = new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric', timeZone: 'UTC' })
 const DAY = new Intl.DateTimeFormat('en', { weekday: 'short', day: 'numeric', timeZone: 'UTC' })
+const TODAY = new Intl.DateTimeFormat('en', { weekday: 'long', month: 'long', day: 'numeric' })
 const dateOf = (date: string) => new Date(`${date}T00:00:00Z`)
 
 // Shown once scrolled into view, at once under reduced motion through the band's own styles
@@ -159,10 +160,10 @@ const Library = ({ data }: { data: Films | null }) => {
   const shows = data?.shows.slice(0, 3) || []
   const entries = data
     ? films.flatMap((film, index) => [
-      { id: `movie-${film.id}`, title: film.title, year: film.year, poster: film.poster, badge: index === 1 ? { emoji: '🍿', label: 'Wished' } : { emoji: '📼', label: 'Archived' } },
-      ...(shows[index] ? [{ id: `show-${shows[index].id}`, title: shows[index].title, year: shows[index].year, poster: shows[index].poster, badge: { emoji: '📺', label: 'Followed' } }] : []),
+      { id: `movie-${film.id}`, kind: 'Movie', title: film.title, year: film.year, poster: film.poster, badge: index === 1 ? { emoji: '🍿', label: 'Wished' } : { emoji: '📼', label: 'Archived' } },
+      ...(shows[index] ? [{ id: `show-${shows[index].id}`, kind: 'Show', title: shows[index].title, year: shows[index].year, poster: shows[index].poster, badge: { emoji: '📺', label: 'Followed' } }] : []),
     ])
-    : Array.from({ length: 6 }, (_, index) => ({ id: String(index), title: '', year: 0, poster: undefined, badge: undefined }))
+    : Array.from({ length: 6 }, (_, index) => ({ id: String(index), kind: '', title: '', year: 0, poster: undefined, badge: undefined }))
 
   return (
     <ul sx={Library.styles.element}>
@@ -172,7 +173,7 @@ const Library = ({ data }: { data: Films | null }) => {
           {entry.title ? (
             <span sx={Library.styles.caption}>
               <strong sx={Library.styles.title} title={entry.title}>{entry.title}</strong>
-              <span sx={Library.styles.year}>{entry.year || ''}</span>
+              <span sx={Library.styles.year}>{entry.year} · {entry.kind}</span>
             </span>
           ) : (
             <span sx={Library.styles.caption}>
@@ -231,7 +232,7 @@ Library.styles = {
 // `ProgressPill` itself: its label goes through `@sensorr/i18n`, which follows the browser to French and sets the
 // page's `lang`, on a page that is English only
 const Episodes = ({ owned, aired }: { owned: number, aired: number }) => {
-  const caught = owned >= aired
+  const caught = aired > 0 && owned >= aired
   const label = `${owned} of ${aired} aired episodes owned`
 
   return (
@@ -353,6 +354,82 @@ Seasons.styles = {
   },
 }
 
+// Directors of the films, each once
+const People = ({ data }: { data: Films | null }) => {
+  const people = data
+    ? [...new Map(data.films.flatMap(({ director }) => director?.profile ? [[director.name, director] as const] : [])).values()].slice(0, 4)
+    : Array.from({ length: 4 }, () => null)
+
+  return (
+    <ul sx={People.styles.element} aria-label='Followed directors'>
+      {people.map((person, index) => (
+        <li key={person?.name ?? index} sx={People.styles.person}>
+          <span sx={People.styles.avatar} aria-hidden='true'>
+            {person?.profile ? <Picture path={person.profile} size='w185' sx={People.styles.picture} /> : <Bar height='100%' radius='50%' />}
+          </span>
+          {person ? <span sx={People.styles.name} title={person.name}>{person.name}</span> : <Bar width='70%' height='0.625em' />}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+People.styles = {
+  element: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+    gap: 6,
+    margin: '0px',
+    padding: '0px',
+    listStyle: 'none',
+  },
+  person: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 8,
+    minWidth: 0,
+  },
+  avatar: {
+    display: 'block',
+    width: ['3.5em', '4.5em'],
+    maxWidth: '100%',
+    aspectRatio: '1 / 1',
+    borderRadius: '50%',
+    overflow: 'hidden',
+  },
+  picture: {
+    minHeight: '0px',
+  },
+  name: {
+    maxWidth: '100%',
+    fontFamily: 'heading',
+    fontWeight: 'semibold',
+    fontSize: [6, 5],
+    color: 'text',
+    textAlign: 'center',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    textOverflow: 'ellipsis',
+  },
+}
+
+const Following = ({ data }: { data: Films | null }) => (
+  <div sx={Following.styles.element}>
+    <People data={data} />
+    <Calendar data={data} />
+  </div>
+)
+
+Following.styles = {
+  element: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 4,
+    minWidth: 0,
+  },
+}
+
 const Calendar = ({ data }: { data: Films | null }) => {
   const months = data
     ? Object.entries([...data.upcoming].sort((a, b) => a.date.localeCompare(b.date)).reduce((months, film) => {
@@ -459,7 +536,10 @@ const Phone = ({ data }: { data: Films | null }) => {
   return (
     <div sx={Phone.styles.element}>
       <div sx={Phone.styles.screen} style={{ backgroundColor: palette?.backgroundColor }}>
-        <span sx={Phone.styles.clock} style={{ color: palette?.color }} aria-hidden='true'>9:41</span>
+        <span sx={Phone.styles.lock} style={{ color: palette?.color }} aria-hidden='true'>
+          <span sx={Phone.styles.date}>{TODAY.format(new Date())}</span>
+          <span sx={Phone.styles.clock}>9:41</span>
+        </span>
         <div sx={Phone.styles.notification}>
           <div sx={Phone.styles.app}>
             <img src='assets/favicon.png' alt='' width={24} height={24} sx={Phone.styles.icon} />
@@ -486,11 +566,17 @@ const Phone = ({ data }: { data: Films | null }) => {
             <span sx={{ ...buttonStyles.outline({ color: 'gray' }), ...Phone.styles.action }}>Refuse</span>
           </span>
         </div>
+        <span sx={Phone.styles.dock} style={{ color: palette?.color }} aria-hidden='true'>
+          <span sx={Phone.styles.button}>🔦</span>
+          <span sx={Phone.styles.button}>📷</span>
+        </span>
+        <span sx={Phone.styles.indicator} style={{ color: palette?.color }} aria-hidden='true' />
       </div>
     </div>
   )
 }
 
+// A drawing of the hardware and of the iOS lock screen: their own radii, not the system's 0.25em
 Phone.styles = {
   element: {
     width: ['16em', '18em'],
@@ -506,30 +592,73 @@ Phone.styles = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: 3,
+    gap: 6,
     aspectRatio: '9 / 17',
     paddingX: 8,
-    paddingY: 2,
+    paddingTop: 2,
+    paddingBottom: 8,
     borderRadius: '1.75em',
     backgroundColor: 'white',
     transition: 'background-color 800ms ease-in-out',
+    '@media (prefers-reduced-motion: reduce)': {
+      transition: 'none',
+    },
   },
-  clock: {
+  lock: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 11,
     fontFamily: 'heading',
+    fontSize: 0,
+    color: 'textLightest',
+    transition: 'color 800ms ease-in-out',
+    '@media (prefers-reduced-motion: reduce)': {
+      transition: 'none',
+    },
+  },
+  // Sized in the lock's 2em, so the time reaches 4em as a lock screen draws it
+  clock: {
     fontWeight: 'heading',
     fontSize: 0,
-    lineHeight: 'heading',
-    color: 'textLightest',
+    lineHeight: 'reset',
     fontVariantNumeric: 'tabular-nums',
-    transition: 'color 800ms ease-in-out',
+  },
+  date: {
+    fontWeight: 'semibold',
+    fontSize: 8,
+  },
+  dock: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingX: 6,
+  },
+  button: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '2.25em',
+    height: '2.25em',
+    borderRadius: '50%',
+    backgroundColor: 'grayShadow',
+    fontSize: 5,
+  },
+  indicator: {
+    width: '40%',
+    height: '0.25em',
+    borderRadius: '0.25em',
+    backgroundColor: 'currentColor',
+    opacity: 0.6,
   },
   notification: {
     display: 'flex',
     flexDirection: 'column',
     gap: 8,
     width: '100%',
+    marginTop: 'auto',
     padding: 7,
-    borderRadius: '1em',
+    borderRadius: '0.5em',
     border: '1px solid',
     borderColor: 'grayDark',
     backgroundColor: 'grayLightest',
@@ -575,6 +704,7 @@ Phone.styles = {
     minWidth: 0,
   },
   actions: {
+    pointerEvents: 'none',
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
     gap: 8,
@@ -594,8 +724,8 @@ const ALSO = [
   },
   {
     emoji: '💾',
-    title: <><a href={`${GITHUB}#backup-and-restore`}>Backups</a> and <a href={`${GITHUB}#update-from-the-app`}>updates</a></>,
-    body: <>from <em>Settings</em>, with a weekly dump once turned on.</>,
+    title: 'Backups and updates',
+    body: <>from <em>Settings</em>, with a weekly dump once turned on. See <a href={`${GITHUB}#backup-and-restore`}>backup and restore</a> and <a href={`${GITHUB}#update-from-the-app`}>update from the app</a>.</>,
   },
   {
     emoji: '🌍',
@@ -701,7 +831,7 @@ export const Bands = ({ data }: { data: Films | null }) => (
       Follow a show, a season or a single episode. Sensorr looks for the whole series first, then season packs, then episodes,
       and hard links finished files into your library.
     </Band>
-    <Band emoji='🔔' label='People' title='Follow the people you love' visual={<Calendar data={data} />}>
+    <Band emoji='🔔' label='People' title='Follow the people you love' visual={<Following data={data} />}>
       Follow a director, an actor or a composer, and their next films land in your calendar, month by month.
     </Band>
     <Band emoji='📱' label='Notifications' title='In your pocket' visual={<Phone data={data} />} reversed={true}>

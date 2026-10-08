@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { buttonStyles } from '@sensorr/ui'
 import { DEMO, GITHUB } from '../data'
 
 const COMMAND = 'curl --proto =https -fsSL https://raw.githubusercontent.com/thcolin/sensorr/main/install.sh | sh'
 const COMPOSE = 'https://docs.docker.com/compose/install/'
+// The command wraps only after a slash or at a space, never inside a word
+const SEGMENTS = COMMAND.split(/(?<=\/)(?!\/)/)
 
 type State = 'idle' | 'copied' | 'failed'
 
@@ -51,7 +53,9 @@ const Command = () => {
     <div sx={Install.styles.terminal}>
       <pre sx={Install.styles.pre}>
         <span sx={Install.styles.prompt} aria-hidden='true'>$ </span>
-        <code ref={code}>{COMMAND}</code>
+        <code ref={code}>
+          {SEGMENTS.map((segment, index) => <Fragment key={index}>{index > 0 && <wbr />}{segment}</Fragment>)}
+        </code>
       </pre>
       <button type='button' onClick={copy} sx={{ ...buttonStyles.outline({ color: 'gray' }), ...Install.styles.copy }}>
         {{ idle: 'Copy', copied: '✓ Copied', failed: `Press ${shortcut()}` }[state]}
@@ -71,6 +75,10 @@ export const Install = () => (
       on <code sx={Install.styles.code}>linux/amd64</code> or <code sx={Install.styles.code}>linux/arm64</code>.
     </p>
     <Command />
+    <p sx={Install.styles.sources}>
+      <a href={`${GITHUB}/blob/main/install.sh`} sx={Install.styles.link}>Read the installer</a>
+      <a href={`${GITHUB}/blob/main/docker-compose.yml`} sx={Install.styles.link}>Read the compose file</a>
+    </p>
     <p sx={Install.styles.prose}>
       The installer asks for a few folders, a login and your <a href='https://www.themoviedb.org/settings/api' sx={Install.styles.link}>TMDB API key</a>, then starts the stack and gives you its URL.
       {' '}<a href={`${GITHUB}#install`} sx={Install.styles.link}>Read the full documentation</a>.
@@ -85,9 +93,9 @@ Install.styles = {
     flexDirection: 'column',
     alignItems: 'flex-start',
     gap: 6,
-    maxWidth: '48em',
+    maxWidth: '72em',
     marginX: 'auto',
-    paddingX: 4,
+    paddingX: [4, 2],
     paddingY: [1, 0],
     scrollMarginTop: 4,
   },
@@ -101,6 +109,7 @@ Install.styles = {
     textWrap: 'balance',
   },
   prose: {
+    maxWidth: '42em',
     margin: '0px',
     fontSize: 4,
     lineHeight: 'body',
@@ -127,6 +136,7 @@ Install.styles = {
     alignItems: ['stretch', 'center'],
     gap: 8,
     width: '100%',
+    maxWidth: '48em',
     padding: 6,
     backgroundColor: 'grayLightest',
     border: '1px solid',
@@ -142,7 +152,8 @@ Install.styles = {
     lineHeight: 'body',
     color: 'textLightest',
     whiteSpace: 'pre-wrap',
-    overflowWrap: 'anywhere',
+    overflowWrap: 'normal',
+    wordBreak: 'normal',
   },
   prompt: {
     color: 'textDarkest',
@@ -151,11 +162,24 @@ Install.styles = {
   copy: {
     flexShrink: 0,
     minWidth: '7em',
+    borderColor: 'grayDarker',
+    ':hover': {
+      borderColor: 'grayDarkest',
+    },
     ':focus-visible': {
       outline: '2px solid',
       outlineColor: 'primary',
       outlineOffset: '2px',
     },
+  },
+  sources: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    columnGap: 6,
+    rowGap: 9,
+    margin: '0px',
+    fontSize: 5,
+    color: 'text',
   },
   status: {
     position: 'absolute',

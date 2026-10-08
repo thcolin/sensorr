@@ -1,11 +1,8 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { Badge, Bar, FADE, Picture, Shadow, TransitionPill, buttonStyles, conceal, pictureSrc, reveal } from '@sensorr/ui'
 import { usePalette } from '@sensorr/palette'
-import { DEMO, WRAPPED, type Film, type Release, type Row } from '../data'
+import { DEMO, WRAPPED, type Film, type Films, type Release, type Row } from '../data'
 
-// The demo's Default policy, `POLICIES[0]` in `tools/demo/tmdb.ts`
-const PREFER = ['2160p', '1080p', 'BLURAY', 'WEB-DL', 'MULTi', 'VOSTFR']
-const AVOID = ['CAM', 'TC', 'SCREENER', 'XviD', 'SD', '3D']
 const AXES = ['resolution', 'source', 'encoding', 'dub', 'language'] as const
 
 const gb = (bytes: number) => `${(Math.abs(bytes) / 1024 ** 3).toFixed(1)} GB`
@@ -27,6 +24,7 @@ type Stage = {
   banned?: Release
   rows: Row[]
   size?: { from: number, to: number }
+  library?: boolean
 }
 
 const metaRows = (release: Release): Row[] => AXES
@@ -38,11 +36,11 @@ const changed = (rows: Row[]) => rows.filter(({ state }) => state !== 'same')
 const stagesOf = (film: Film): Stage[] => [
   { emoji: '🍿', release: null, rows: [] },
   { emoji: '📹', release: film.owned, rows: metaRows(film.owned) },
-  { emoji: '📼', release: film.owned, rows: metaRows(film.owned) },
-  { emoji: '💎', release: film.winner, rows: changed(film.refine.rows), size: { from: film.owned.size, to: film.winner.size } },
-  { emoji: '💍', release: film.shrink, rows: changed(film.shrinked.rows), size: { from: film.winner.size, to: film.shrink.size } },
+  { emoji: '📼', release: film.owned, rows: metaRows(film.owned), library: true },
+  { emoji: '✨', release: film.winner, rows: changed(film.refine.rows), size: { from: film.owned.size, to: film.winner.size } },
+  { emoji: '✂️', release: film.shrink, rows: changed(film.shrinked.rows), size: { from: film.winner.size, to: film.shrink.size } },
   { emoji: '🚨', release: film.replacement, banned: film.shrink, rows: changed(film.reported.rows), size: { from: film.shrink.size, to: film.replacement.size } },
-  { emoji: '📖', release: film.replacement, rows: metaRows(film.replacement) },
+  { emoji: '📖', release: film.replacement, rows: metaRows(film.replacement), library: true },
 ]
 
 const Pills = ({ stage }: { stage: Stage }) => (
@@ -85,6 +83,7 @@ const Content = ({ stage, delta }: { stage: Stage, delta: number }) => (
       <p sx={Journey.styles.size}>
         {gb(stage.release.size)}
         {!!delta && <span sx={{ color: delta < 0 ? 'primary' : 'textLight' }}>{signed(delta)}</span>}
+        {stage.library && <span sx={Journey.styles.library}>In your library · Plex</span>}
       </p>
     )}
     <Pills stage={stage} />
@@ -157,16 +156,29 @@ const Aside = ({ film, step }: { film: Film | null, step: number }) => {
   )
 }
 
-const Policy = () => (
+// Drawn as the Policies settings screen draws its ⭐ prefer and ⛔ avoid values, one cluster per axis
+const Policy = ({ policy }: { policy?: Films['policy'] }) => (
   <dl sx={Journey.styles.policy}>
-    {([['⭐ prefer', PREFER, 'primaryDarker'], ['⛔ avoid', AVOID, 'error']] as const).map(([label, values, color]) => (
-      <div key={label} sx={Journey.styles.group}>
+    {([['⭐ prefer', 'prefer', 'primaryDarker'], ['⛔ avoid', 'avoid', 'error']] as const).map(([label, group, color]) => (
+      <div key={group} sx={Journey.styles.group}>
         <dt sx={Journey.styles.groupLabel}>{label}</dt>
-        {values.map((value) => <dd key={value} sx={{ ...Journey.styles.tag, borderColor: color, backgroundColor: color }}>{value}</dd>)}
+        {!policy ? (
+          <dd sx={Journey.styles.axis}><Bar inline={true} width='12em' height='1.25em' /></dd>
+        ) : Object.entries(policy[group]).filter(([, values]) => values.length).map(([axis, values]) => (
+          <dd key={axis} title={axis} sx={Journey.styles.axis}>
+            {values.map((value) => <span key={value} sx={{ ...Journey.styles.tag, borderColor: color, backgroundColor: color }}>{value}</span>)}
+          </dd>
+        ))}
       </div>
     ))}
   </dl>
 )
+
+// The film's title and year are in the sticky column, so a candidate shows what follows them
+const tail = (title: string, year: number) => {
+  const at = title.indexOf(`.${year}.`)
+  return at < 0 ? title : title.slice(at + `.${year}.`.length)
+}
 
 const Candidates = ({ film }: { film: Film | null }) => {
   if (!film) {
@@ -187,7 +199,7 @@ const Candidates = ({ film }: { film: Film | null }) => {
         return (
           <li key={release.title} sx={{ ...Journey.styles.candidate, color: won ? 'primary' : release.valid ? 'text' : 'error' }}>
             <span sx={Journey.styles.rank}>{index + 1}</span>
-            <span sx={Journey.styles.title} title={release.title}>{release.title}</span>
+            <span sx={Journey.styles.title} title={release.title}>{tail(release.title, film.year)}</span>
             <span sx={Journey.styles.number}>{gb(release.size)}</span>
             <span sx={Journey.styles.number}>
               {won && <span role='img' aria-label='Winner'>✓ </span>}
@@ -206,7 +218,7 @@ const known = (film: Film | null, value: (film: Film) => React.ReactNode, width 
   film ? value(film) : <Bar inline={true} width={width} height='0.875em' />
 )
 
-const stepsOf = (film: Film | null) => [
+const stepsOf = (film: Film | null, policy?: Films['policy']) => [
   {
     emoji: '🍿',
     label: 'Wished',
@@ -233,7 +245,7 @@ const stepsOf = (film: Film | null) => [
           Record asks your Torznab indexers, and your policy ranks what they answer. Here is how it ranks{' '}
           {known(film, ({ title }) => <strong>{title}</strong>)} today.
         </p>
-        <Policy />
+        <Policy policy={policy} />
         <Candidates film={film} />
       </>
     ),
@@ -316,7 +328,7 @@ const stepsOf = (film: Film | null) => [
   },
 ]
 
-export const Journey = ({ film }: { film: Film | null }) => {
+export const Journey = ({ film, policy }: { film: Film | null, policy?: Films['policy'] }) => {
   const [step, setStep] = useState(0)
   const steps = useRef<(HTMLLIElement | null)[]>([])
 
@@ -336,7 +348,7 @@ export const Journey = ({ film }: { film: Film | null }) => {
       <div sx={Journey.styles.layout}>
         <Aside film={film} step={step} />
         <ol sx={Journey.styles.steps}>
-          {stepsOf(film).map(({ emoji, label, title, body }, index) => (
+          {stepsOf(film, policy).map(({ emoji, label, title, body }, index) => (
             <li
               key={label}
               data-step={index}
@@ -366,8 +378,10 @@ const focus = {
 
 Journey.styles = {
   heading: {
-    margin: '0px',
-    paddingX: 4,
+    maxWidth: '72em',
+    marginX: 'auto',
+    marginY: '0px',
+    paddingX: [4, 2],
     paddingBottom: [4, '0px'],
     fontFamily: 'heading',
     fontWeight: 'heading',
@@ -380,7 +394,7 @@ Journey.styles = {
   layout: {
     display: ['block', 'grid'],
     gridTemplateColumns: '45fr 55fr',
-    maxWidth: '80em',
+    maxWidth: '72em',
     marginX: 'auto',
   },
   aside: {
@@ -470,10 +484,6 @@ Journey.styles = {
     minHeight: ['auto', '8em'],
   },
   banned: {
-    display: '-webkit-box',
-    WebkitLineClamp: 1,
-    WebkitBoxOrient: 'vertical',
-    overflow: 'hidden',
     fontFamily: 'monospace',
     fontSize: [7, 6],
     color: 'error',
@@ -488,6 +498,9 @@ Journey.styles = {
     fontSize: [7, 5],
     lineHeight: 'body',
     color: 'text',
+  },
+  library: {
+    fontFamily: 'body',
   },
   none: {
     fontFamily: 'body',
@@ -504,12 +517,9 @@ Journey.styles = {
   },
   pills: {
     display: 'flex',
-    flexWrap: ['nowrap', 'wrap'],
+    flexWrap: 'wrap',
     justifyContent: ['flex-start', 'center'],
     gap: 10,
-    maxWidth: '100%',
-    overflowX: ['auto', 'visible'],
-    scrollbarWidth: 'none',
     fontSize: [6, 4],
   },
   steps: {
@@ -522,8 +532,9 @@ Journey.styles = {
     flexDirection: 'column',
     justifyContent: 'center',
     gap: 6,
-    minHeight: '80vh',
+    minHeight: ['auto', '60vh'],
     paddingX: [4, 2],
+    paddingY: [0, 2],
   },
   label: {
     margin: '0px',
@@ -573,7 +584,13 @@ Journey.styles = {
     display: 'flex',
     flexWrap: 'wrap',
     alignItems: 'center',
-    gap: 9,
+    gap: 8,
+  },
+  axis: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 10,
+    margin: '0px',
   },
   groupLabel: {
     minWidth: '5.5em',
@@ -583,7 +600,6 @@ Journey.styles = {
     color: 'textLight',
   },
   tag: {
-    margin: '0px',
     paddingX: 8,
     paddingY: 10,
     border: '1px solid',
@@ -606,7 +622,7 @@ Journey.styles = {
   },
   candidate: {
     display: 'grid',
-    gridTemplateColumns: '1.5em minmax(0px, 1fr) auto auto',
+    gridTemplateColumns: '1.5em minmax(0px, 1fr) 8ch 4em',
     alignItems: 'baseline',
     columnGap: 6,
     rowGap: 11,
@@ -688,5 +704,6 @@ Journey.styles = {
     paddingX: 2,
     paddingY: 8,
     textDecoration: 'none',
+    ...focus,
   },
 }
