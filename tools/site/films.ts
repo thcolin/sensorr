@@ -58,6 +58,7 @@ const lighten = (release) => ({
   title: release.title,
   size: release.size,
   seeders: release.seeders,
+  znab: release.znab,
   valid: release.valid,
   score: release.score,
   reason: release.reason || null,

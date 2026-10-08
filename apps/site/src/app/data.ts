@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 // Written by `tools/site/films.ts`, see there for what each field holds
 export type Meta = { resolution?: string, source?: string, encoding?: string, dub?: string, language?: string, group?: string }
-export type Release = { title: string, size: number, seeders: number, valid: boolean, score: number, reason: string | null, meta: Meta }
+export type Release = { title: string, size: number, seeders: number, znab: string, valid: boolean, score: number, reason: string | null, meta: Meta }
 export type Row = { axis: string, from?: string, to?: string, state: 'held' | 'broken' | 'moved' | 'quiet' | 'same' }
 export type Diff = { rows: Row[], size: number }
 export type Film = {

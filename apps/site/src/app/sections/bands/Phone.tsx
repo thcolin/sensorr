@@ -1,24 +1,39 @@
 import { Bar, TransitionPill, buttonStyles } from '@sensorr/ui'
-import { Film, Films } from '../../data'
+import { Film, Films, type Release } from '../../data'
 import { EASE, STILL, tmdb, useReveal } from './shared'
+import { language } from '../journey/release'
 
 const TODAY = new Intl.DateTimeFormat('en', { weekday: 'long', month: 'long', day: 'numeric' })
 
-// What a refine changes first: an axis the policy holds or breaks before one it only moves
+// What a refine changes first: an axis the policy holds or breaks before one it only moves; a language a release does not
+// name is its original version
 const changesOf = (film: Film) => film.refine.rows
+  .map((row) => row.axis === 'language' ? { ...row, from: language(row.from), to: language(row.to) } : row)
   .filter(({ state, from, to }) => state !== 'quiet' && state !== 'same' && from && to)
   .sort((a, b) => Number(a.state === 'moved') - Number(b.state === 'moved'))
   .slice(0, 2)
 
-// The first film with a wallpaper and two changes to show, and the next film with a logo, recorded meanwhile
+// The first film with a change to show, and the next one, recorded meanwhile
 export const phoneFilms = (data: Films | null): [Film?, Film?] => {
-  const film = data?.films.find((film) => film.backdrop && changesOf(film).length === 2)
-  return [film, data?.films.find((other) => other !== film && other.logo)]
+  const film = data?.films.find((film) => changesOf(film).length)
+  return [film, data?.films.find((other) => other !== film)]
 }
 
-const Title = ({ film, size }: { film: Film, size: 'big' | 'small' }) => film.logo
-  ? <img src={tmdb('w500', film.logo)} alt={film.title} loading='lazy' decoding='async' sx={{ ...Phone.styles.logo, maxHeight: size === 'big' ? '3.5em' : '1.75em' }} />
-  : <strong sx={Phone.styles.title}>{film.title}</strong>
+// The size as the push counts it (`filesize` in apps/api/src/app/notifications/push.ts)
+const size = (bytes: number) => `${Number((bytes / 1024 ** 3).toFixed(2))} GB`
+
+// A push as the API sends it (`moviePushOf`, same file): the movie and its year, the job's emoji with the indexer, the
+// size and the peers, the release name, and the poster beside it
+const Push = ({ film, emoji, release }: { film: Film, emoji: string, release: Release }) => (
+  <span sx={Phone.styles.push}>
+    <span sx={Phone.styles.pushText}>
+      <strong sx={Phone.styles.title}>{film.title} ({film.year})</strong>
+      <span>{emoji} {release.znab}, {size(release.size)}, {release.seeders} peers</span>
+      <span sx={Phone.styles.release} title={release.title}>{release.title}</span>
+    </span>
+    <img src={tmdb('w185', film.poster)} alt='' loading='lazy' decoding='async' sx={Phone.styles.thumb} />
+  </span>
+)
 
 const App = () => (
   <div sx={Phone.styles.app}>
@@ -48,17 +63,15 @@ export const Phone = ({ film, recorded }: { film?: Film, recorded?: Film }) => {
           <App />
           {film ? (
             <>
-              <span sx={Phone.styles.kind}>✨ Movie refine proposal</span>
-              <Title film={film} size='big' />
-              <span sx={Phone.styles.release} title={film.winner.title}>{film.winner.title}</span>
+              <Push film={film} emoji='✨' release={film.winner} />
               <span sx={Phone.styles.pills}>
                 {changesOf(film).map((row) => <TransitionPill key={row.axis} from={row.from} to={row.to} state={row.state} compact={true} title={row.axis} />)}
               </span>
             </>
           ) : (
             <>
-              <Bar width='50%' height='0.75em' />
-              <Bar width='80%' height='2em' />
+              <Bar width='60%' height='1em' />
+              <Bar width='80%' height='0.75em' />
               <Bar width='100%' height='0.625em' />
               <Bar width='60%' height='1.25em' pill={true} />
             </>
@@ -74,9 +87,7 @@ export const Phone = ({ film, recorded }: { film?: Film, recorded?: Film }) => {
             style={{ opacity: shown ? 1 : 0, transform: shown ? 'none' : 'translateY(-2.5em) scale(0.96)' }}
           >
             <App />
-            <span sx={Phone.styles.kind}>📼 Movie recorded</span>
-            <Title film={recorded} size='small' />
-            <span sx={Phone.styles.release} title={recorded.winner.title}>{recorded.winner.title}</span>
+            <Push film={recorded} emoji='📹' release={recorded.owned} />
           </div>
         )}
         <span sx={Phone.styles.dock} aria-hidden='true'>
@@ -113,7 +124,7 @@ Phone.styles = {
     alignItems: 'center',
     gap: 6,
     aspectRatio: '9 / 19.5',
-    overflow: 'hidden',
+    overflow: 'clip',
     paddingX: 8,
     paddingTop: '3em',
     paddingBottom: 8,
@@ -185,11 +196,25 @@ Phone.styles = {
     marginTop: '0px',
     transitionDelay: '800ms',
   },
-  logo: {
-    display: 'block',
-    maxWidth: '85%',
-    objectFit: 'contain',
-    objectPosition: 'left center',
+  push: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  pushText: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 11,
+    flex: 1,
+    minWidth: '0px',
+    color: 'whitePure',
+  },
+  thumb: {
+    flexShrink: 0,
+    width: '2.75em',
+    aspectRatio: '2 / 3',
+    objectFit: 'cover',
+    borderRadius: '0.375em',
   },
   app: {
     display: 'flex',
@@ -213,23 +238,18 @@ Phone.styles = {
     fontSize: 6,
     color: 'textLight',
   },
-  kind: {
-    fontSize: 6,
-    fontWeight: 'semibold',
-    color: 'textLight',
-  },
   title: {
-    fontFamily: 'heading',
-    fontSize: 3,
-    fontWeight: 'heading',
-    lineHeight: 'heading',
+    fontWeight: 'strong',
     color: 'whitePure',
+    overflow: 'clip',
+    whiteSpace: 'nowrap',
+    textOverflow: 'ellipsis',
   },
   release: {
     fontFamily: 'monospace',
     fontSize: 6,
     color: 'textLight',
-    overflow: 'hidden',
+    overflow: 'clip',
     whiteSpace: 'nowrap',
     textOverflow: 'ellipsis',
   },
