@@ -92,6 +92,18 @@ npx nx run wrapped:build:demo
 
 The key ends up in the page, which is why it is the demo's own. `.github/workflows/demo.yml` runs the same on every push to `main` and on the first of each month, with the key as the `SENSORR_DEMO_TMDB_KEY` secret, and publishes `dist/apps/pages` to GitHub Pages. To look at it locally, serve `dist/apps/pages` under `/sensorr/` with `demo/index.html` copied to `404.html`, as GitHub Pages answers a path it does not know with the `404.html` at its root, and `demo/wrapped/index.html` copied to `demo/wrapped/demo/index.html`.
 
+### The landing page
+
+`apps/site` is the page at **https://thcolin.github.io/sensorr/**, in front of the demo. It follows one movie drawn at random through Sensorr, from a friend's watchlist to their wrapped, with the components of `libs/ui`. `tools/site/films.ts` writes what it plays into `apps/site/src/data/films.json`: the recent and acclaimed movies of TMDB, with the releases of the demo indexer ranked by the demo's `Default` policy, kept when they give a Record, a Refine, a Shrink and a replacement for a report. Like the demo data, the file is not committed.
+
+```sh
+export SENSORR_DEMO_TMDB_KEY=<the demo's own key>
+npx ts-node -r tsconfig-paths/register -P tools/tsconfig.tools.json --transpile-only -O '{"target":"es2022","esModuleInterop":true}' tools/site/films.ts
+npx nx run site:serve
+```
+
+`nx run site:serve` serves it on http://localhost:4240. `nx run site:build:production` writes it into `dist/apps/pages`, under `/sensorr/`, next to the demo.
+
 ## Verify
 
 Two commands are the gate, `lint` and `test`, and both exit 0.
@@ -158,7 +170,7 @@ Measured on 2026-10-02. Each stays below its latest major until the reason goes 
 
 ## Project layout
 
-`apps/` holds `api`, `web`, `wrapped`, `cli`, `db` and `updater`. What each one owns is in [architecture.md](architecture.md#containers).
+`apps/` holds `api`, `web`, `wrapped`, `cli`, `db` and `updater`. What each one owns is in [architecture.md](architecture.md#containers). `site` is the landing page published with the demo, see [The landing page](#the-landing-page).
 
 `libs/` holds `config` (the schema of `config.json`), `tmdb` and `plex` (the two external clients), `sensorr` (release parsing and policy scoring), `services`, `ui` (the shared components), `theme` and `palette`, `i18n` (English and French) and `utils`.
 

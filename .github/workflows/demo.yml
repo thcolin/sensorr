@@ -31,6 +31,12 @@ jobs:
           npx ts-node -P tools/tsconfig.tools.json --transpile-only -O '{"target":"es2022","esModuleInterop":true}' tools/demo/seed.ts
         env:
           SENSORR_DEMO_TMDB_KEY: ${{ secrets.SENSORR_DEMO_TMDB_KEY }}
+      - run: >-
+          npx ts-node -r tsconfig-paths/register -P tools/tsconfig.tools.json --transpile-only -O '{"target":"es2022","esModuleInterop":true}' tools/site/films.ts
+        env:
+          SENSORR_DEMO_TMDB_KEY: ${{ secrets.SENSORR_DEMO_TMDB_KEY }}
+      # The landing at the root of the pages, the demo in demo/ and its wrapped in demo/wrapped/
+      - run: npx nx run site:build:production
       - run: npx nx run web:build:demo
         env:
           SENSORR_DEMO_TMDB_KEY: ${{ secrets.SENSORR_DEMO_TMDB_KEY }}
