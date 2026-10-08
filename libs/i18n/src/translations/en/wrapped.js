@@ -215,6 +215,7 @@ export default {
       },
     },
     tele: {
+      read: 'Read my issue',
       brand: 'TV',
       page: 'p. {page}',
       issue: 'No.<0>{year}</0>Annual edition',

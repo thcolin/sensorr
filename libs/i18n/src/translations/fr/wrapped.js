@@ -215,6 +215,7 @@ export default {
       },
     },
     tele: {
+      read: 'Lire mon numéro',
       brand: 'Télé',
       page: 'p. {page}',
       issue: 'N°<0>{year}</0>Édition annuelle',

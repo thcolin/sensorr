@@ -2182,6 +2182,129 @@ html[data-theme='tele'] {
   }
 }
 
-.tele-presentation .tele-cover {
+/* The issue on the newsstand, opened by Keep in touch in a frame of its own: `?cover` */
+.tele-presentation {
+  position: relative;
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
   height: 100svh;
+  overflow: hidden;
+  background: var(--ink);
+  color: #fff;
+}
+
+.tele-presentation-wall {
+  position: absolute;
+  inset: -12% -6%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  transform: rotate(-6deg);
+}
+
+.tele-presentation-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: tele-roll 70s linear infinite;
+}
+
+.tele-presentation-column:nth-child(even) {
+  animation-direction: reverse;
+  animation-duration: 90s;
+}
+
+.tele-presentation-column .tele-photo {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border: 4px solid #fff;
+}
+
+@keyframes tele-roll {
+  from { transform: translateY(0); }
+  to { transform: translateY(calc(-50% - 6px)); }
+}
+
+/* The front reads over the posters: dark at the masthead, darker under the lines */
+.tele-presentation::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, rgb(22 20 15 / 0.6), rgb(22 20 15 / 0.2) 28%, rgb(22 20 15 / 0.75) 55%, rgb(22 20 15 / 0.96) 80%);
+}
+
+.tele-presentation > :not(.tele-presentation-wall) {
+  position: relative;
+  z-index: 2;
+}
+
+.tele-presentation .tele-sticker {
+  position: absolute;
+}
+
+.tele-presentation-lines {
+  display: grid;
+  gap: 14px;
+  margin-top: auto;
+  padding: 0 24px 28px;
+}
+
+.tele-presentation .tele-cover-title {
+  font-size: clamp(38px, 9cqi, 72px);
+}
+
+.tele-presentation-contents {
+  display: grid;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 3px solid #fff;
+}
+
+.tele-presentation .tele-headline {
+  margin: 0;
+  font-size: clamp(30px, 6cqi, 44px);
+}
+
+.tele-presentation-contents ol {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font: 600 clamp(15px, 2.6cqi, 19px)/1.2 var(--cond);
+  text-transform: uppercase;
+}
+
+.tele-presentation-contents li span {
+  margin-right: 0.5em;
+  color: var(--yellow);
+  font-style: italic;
+  font-weight: 900;
+}
+
+.tele-presentation-read {
+  justify-self: start;
+  padding: 10px 18px 8px;
+  background: var(--red);
+  font: italic 900 clamp(22px, 4cqi, 30px)/1 var(--cond);
+  text-transform: uppercase;
+}
+
+.tele-presentation-read::after {
+  content: ' →';
+}
+
+.tele-presentation > .tele-barcode {
+  position: absolute;
+  right: 24px;
+  bottom: 28px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tele-presentation-column {
+    animation: none;
+  }
 }
