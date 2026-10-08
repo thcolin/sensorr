@@ -61,10 +61,6 @@ export const Hero = ({ wall }: { wall?: string[] }) => (
         Your Friendly Digital Video Recorder.<br />
         Think VCR, but in modern times.
       </p>
-      <p sx={Hero.styles.pitch}>
-        Sensorr watches your Torznab indexers for the movies and shows you want, picks the best release by your rules,
-        and hands it to your download client.
-      </p>
       <div sx={Hero.styles.actions}>
         <div sx={Hero.styles.demo}>
           <a href={DEMO} sx={{ ...buttonStyles.contain({ color: 'primary' }), ...Hero.styles.action }}>Try the demo</a>
@@ -74,6 +70,32 @@ export const Hero = ({ wall }: { wall?: string[] }) => (
           Install <span aria-hidden='true'>→</span>
         </a>
       </div>
+    </div>
+    {/* The app itself, as the README hero shows it: Home in a desktop browser, and on a phone over its corner */}
+    <div sx={Hero.styles.screens}>
+      <figure sx={Hero.styles.browser}>
+        <span sx={Hero.styles.bar} aria-hidden='true'><span /><span /><span /></span>
+        <img
+          src='assets/app-desktop.webp'
+          width={1800}
+          height={1125}
+          alt="Sensorr's Home in a desktop browser: trending movies and shows, each with its poster, score and state"
+          decoding='async'
+          // React 18 only passes the attribute through in lowercase, and its types do not know it yet
+          {...{ fetchpriority: 'high' }}
+          sx={Hero.styles.capture}
+        />
+      </figure>
+      <figure sx={Hero.styles.phone}>
+        <img
+          src='assets/app-mobile.webp'
+          width={600}
+          height={1298}
+          alt="Sensorr's Home on an iPhone: the same trending movies and shows, in rows of posters"
+          decoding='async'
+          sx={{ ...Hero.styles.capture, ...Hero.styles.screen }}
+        />
+      </figure>
     </div>
   </header>
 )
@@ -106,8 +128,9 @@ Hero.styles = {
   element: {
     position: 'relative',
     display: 'flex',
+    flexDirection: 'column',
     alignItems: 'center',
-    minHeight: ['92svh', '100svh'],
+    paddingTop: ['3em', '4em'],
     overflow: 'hidden',
     isolation: 'isolate',
   },
@@ -158,24 +181,17 @@ Hero.styles = {
     position: 'absolute',
     inset: '0px',
     zIndex: -1,
-    // Dark under the text on the left, the wall left bare on the right; a phone darkens it whole
-    background: [
-      'linear-gradient(to bottom, color-mix(in srgb, var(--theme-ui-colors-white) 60%, transparent) 0%, color-mix(in srgb, var(--theme-ui-colors-white) 80%, transparent) 60%, var(--theme-ui-colors-white) 100%)',
-      'linear-gradient(to right, var(--theme-ui-colors-white) 15%, color-mix(in srgb, var(--theme-ui-colors-white) 70%, transparent) 45%, transparent 75%), linear-gradient(to bottom, transparent 70%, var(--theme-ui-colors-white) 100%)',
-    ],
+    // Darkest at the top, under the text, the wall showing more around the screens, solid again at the bottom
+    background: 'linear-gradient(to bottom, color-mix(in srgb, var(--theme-ui-colors-white) 90%, transparent) 0%, color-mix(in srgb, var(--theme-ui-colors-white) 80%, transparent) 35%, color-mix(in srgb, var(--theme-ui-colors-white) 55%, transparent) 60%, var(--theme-ui-colors-white) 100%)',
   },
   content: {
-    // A block on the column's left edge, as wide as its widest line, its lines centered in it
-    display: 'grid',
-    gridTemplateColumns: 'minmax(0px, max-content)',
-    justifyContent: ['center', 'start'],
-    justifyItems: 'center',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
     textAlign: 'center',
+    boxSizing: 'border-box',
     width: '100%',
-    maxWidth: '72em',
-    marginX: 'auto',
-    paddingX: [4, 2],
-    paddingY: 0,
+    paddingX: 4,
   },
   title: {
     display: 'flex',
@@ -218,17 +234,6 @@ Hero.styles = {
     color: 'textLightest',
     ...rise(140),
   },
-  pitch: {
-    maxWidth: '40ch',
-    margin: '0px',
-    marginX: 'auto',
-    marginTop: [6, 5],
-    fontSize: ['0.9375rem', '1.0625rem'],
-    lineHeight: 'body',
-    color: 'textLight',
-    textWrap: 'pretty',
-    ...rise(220),
-  },
   actions: {
     // Two equal halves on a phone, side by side at their own width beyond
     display: ['grid', 'flex'],
@@ -237,8 +242,78 @@ Hero.styles = {
     gap: 6,
     justifyContent: 'center',
     width: ['100%', 'auto'],
-    marginTop: [2, 0],
-    ...rise(300),
+    marginTop: ['2em', '2.5em'],
+    ...rise(220),
+  },
+  screens: {
+    position: 'relative',
+    boxSizing: 'border-box',
+    width: '100%',
+    maxWidth: '76em',
+    marginTop: ['3em', '4em'],
+    paddingX: 4,
+    // The phone hangs below the browser's bottom edge
+    paddingBottom: [0, '3em'],
+    display: ['flex', 'block'],
+    justifyContent: 'center',
+    animationName: 'site-hero-screens',
+    animationDuration: '800ms',
+    animationTimingFunction: 'ease-out',
+    animationDelay: '360ms',
+    animationFillMode: 'both',
+    '@keyframes site-hero-screens': {
+      from: { opacity: 0, transform: 'translateY(40px)' },
+      to: { opacity: 1, transform: 'translateY(0px)' },
+    },
+    '@media (prefers-reduced-motion: reduce)': {
+      animationName: 'none',
+    },
+  },
+  browser: {
+    // A phone only gets the phone
+    display: ['none', 'block'],
+    width: '84%',
+    margin: '0px',
+    border: '1px solid',
+    borderColor: 'grayDark',
+    borderRadius: '0.5em',
+    overflow: 'hidden',
+    backgroundColor: 'white',
+  },
+  bar: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 9,
+    height: '1.75em',
+    paddingX: 6,
+    borderBottom: '1px solid',
+    borderColor: 'grayDark',
+    span: {
+      width: '0.5em',
+      height: '0.5em',
+      borderRadius: '50%',
+      backgroundColor: 'grayDark',
+    },
+  },
+  capture: {
+    display: 'block',
+    width: '100%',
+    height: 'auto',
+  },
+  phone: {
+    position: ['static', 'absolute'],
+    right: 4,
+    bottom: '0px',
+    width: ['min(64vw, 16em)', '21%'],
+    margin: '0px',
+    padding: 9,
+    border: '1px solid',
+    borderColor: 'grayDark',
+    borderRadius: '2em',
+    backgroundColor: 'white',
+  },
+  screen: {
+    borderRadius: '1.625em',
   },
   demo: {
     display: 'flex',

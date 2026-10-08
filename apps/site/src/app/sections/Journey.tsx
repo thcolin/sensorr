@@ -74,7 +74,7 @@ const Paths = ({ film, palette }: { film: Film | null, palette: Palette }) => {
         </li>
       </ul>
       <div sx={{ ...Journey.styles.poster, ...enter(seen, 'scale(0.94)', 0, 700) }}>
-        <Picture path={film?.poster} size='w342' ready={!!film} palette={palette} sx={Journey.styles.picture} />
+        <Picture path={film?.poster} size='w500' ready={!!film} palette={palette} sx={Journey.styles.picture} />
         {step > 0 && <Corner emoji={step > 1 ? '🍿' : '🍻'} label={step > 1 ? 'Wished' : 'Requested'} palette={palette} />}
       </div>
     </div>
@@ -83,35 +83,26 @@ const Paths = ({ film, palette }: { film: Film | null, palette: Palette }) => {
 
 const AXES = ['resolution', 'source', 'encoding', 'language', 'dub', 'flags']
 
-// Drawn as the Policies settings screen draws its ⭐ prefer and ⛔ avoid values, one box per axis
-const Policy = ({ policy }: { policy?: Films['policy'] }) => {
-  const axes = policy ? AXES.filter((axis) => policy.prefer[axis]?.length || policy.avoid[axis]?.length) : AXES.slice(0, 4)
-
-  return (
-    <dl sx={Journey.styles.policy}>
-      {axes.map((axis) => (
-        <div key={axis} sx={Journey.styles.axis}>
-          <dt sx={Journey.styles.axisName}>{axis}</dt>
-          {!policy ? (
-            <dd sx={Journey.styles.tags}><Bar width='100%' height='1.5em' /></dd>
-          ) : (['prefer', 'avoid'] as const).filter((group) => policy[group][axis]?.length).map((group) => (
-            <dd key={group} sx={Journey.styles.tags}>
-              <span aria-label={group} role='img'>{group === 'prefer' ? '⭐' : '⛔'}</span>
-              {policy[group][axis].map((value) => (
-                <span key={value} sx={{ ...Journey.styles.tag, backgroundColor: group === 'prefer' ? 'primaryDarker' : 'error' }}>{value}</span>
-              ))}
-            </dd>
-          ))}
-        </div>
-      ))}
-    </dl>
-  )
-}
+// The policy on two lines, ⭐ what it prefers and ⛔ what it avoids, each value in the app's gray tag
+const Policy = ({ policy }: { policy?: Films['policy'] }) => (
+  <dl sx={Journey.styles.policy}>
+    {(['prefer', 'avoid'] as const).map((group) => (
+      <div key={group} sx={Journey.styles.policyLine}>
+        <dt><span role='img' aria-label={group}>{group === 'prefer' ? '⭐' : '⛔'}</span></dt>
+        <dd sx={Journey.styles.tags}>
+          {policy ? AXES.flatMap((axis) => (policy[group][axis] || []).map((value) => (
+            <TransitionPill key={`${axis}-${value}`} to={value} state='same' compact={true} title={`${group} ${axis}: ${value}`} />
+          ))) : <Bar width='16em' height='1.5em' pill={true} />}
+        </dd>
+      </div>
+    ))}
+  </dl>
+)
 
 // The candidates as the app's release list draws them: state, name, axis tags, then 💯 🌍 📦
 const Record = ({ film, seen, policy }: Visual) => {
   const winner = film?.candidates.find(({ valid }) => valid)
-  const releases = film ? film.candidates.slice(0, 5) : []
+  const releases = film ? film.candidates.slice(0, 4) : []
   const range = rangeOf(releases.length ? releases : [{ score: 0, seeders: 0, size: 1 } as File])
   const landed = 300 + releases.length * 90 + 500
 
@@ -119,7 +110,7 @@ const Record = ({ film, seen, policy }: Visual) => {
     <div sx={Journey.styles.record}>
       <Policy policy={policy} />
       <ol sx={Journey.styles.table}>
-        {!film && Array.from({ length: 5 }, (_, index) => (
+        {!film && Array.from({ length: 4 }, (_, index) => (
           <li key={index} sx={Journey.styles.row}><span sx={{ gridColumn: '1 / -1' }}><Bar width='100%' height='1.5em' /></span></li>
         ))}
         {film && releases.map((release, index) => {
@@ -128,20 +119,20 @@ const Record = ({ film, seen, policy }: Visual) => {
           return (
             <li
               key={release.title}
-              sx={{ ...Journey.styles.row, ...enter(seen, 'translateY(1em)', 200 + index * 90), ...(won ? Journey.styles.won : {}) }}
+              sx={{ ...Journey.styles.row, ...enter(seen, 'translateY(1em)', 200 + index * 90) }}
             >
               <span sx={Journey.styles.state}>
                 {!release.valid ? <span role='img' aria-label='Rejected'>🚨</span> : (
                   <>
                     <span aria-hidden={won} sx={won ? { ...Journey.styles.stateOut, transitionDelay: `${landed}ms`, opacity: seen ? 0 : 1 } : {}}>⭐</span>
                     {won && (
-                      <span role='img' aria-label='Recorded' sx={{ ...Journey.styles.stateIn, ...enter(seen, 'scale(2.4)', landed, 500) }}>📼</span>
+                      <span role='img' aria-label='Winner' sx={{ ...Journey.styles.stateIn, ...enter(seen, 'scale(2.4)', landed, 500) }}>✓</span>
                     )}
                   </>
                 )}
               </span>
               <span sx={Journey.styles.name}>
-                <Name title={release.title} year={film.year} sx={!release.valid ? Journey.styles.rejected : {}} />
+                <Name title={release.title} year={film.year} sx={!release.valid ? Journey.styles.rejected : won ? Journey.styles.winner : {}} />
                 {!release.valid && release.reason && <code sx={Journey.styles.reason}>{release.reason}</code>}
               </span>
               <Tags meta={release.meta} sx={Journey.styles.rowTags} />
@@ -208,7 +199,7 @@ const Archived = ({ film, seen, palette }: Visual) => {
 }
 
 // One release swapped for another, as the Swaps screen draws it
-const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark, badge, lead }: {
+const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark, badge }: {
   film: Film | null
   seen: boolean
   from?: File
@@ -217,7 +208,6 @@ const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark, badge, l
   struck?: string
   mark?: React.ReactNode
   badge?: React.ReactNode
-  lead?: React.ReactNode
 }) => (
   <div sx={Journey.styles.swap}>
     {film?.backdrop && <img src={tmdb('w1280', film.backdrop)} alt='' loading='lazy' decoding='async' sx={Journey.styles.swapBackdrop} />}
@@ -226,7 +216,6 @@ const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark, badge, l
       {badge}
     </div>
     <div sx={Journey.styles.swapBody}>
-      {lead}
       <p sx={{ ...Journey.styles.swapFrom, color: struck }}>
         {film && from ? (
           <>
@@ -254,11 +243,6 @@ const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark, badge, l
   </div>
 )
 
-// What a Refine wins: a higher resolution, or a language closer to the policy
-const gains = (rows: Row[]) => rows.filter(({ axis, from, to, state }) => (
-  ['resolution', 'language'].includes(axis) && (from || null) !== (to || null) && ['held', 'moved'].includes(state)
-))
-
 const Refine = ({ film, seen, palette }: Visual) => (
   <Swap
     film={film}
@@ -270,20 +254,6 @@ const Refine = ({ film, seen, palette }: Visual) => (
       <span sx={enter(seen, 'scale(1.8)', 1100, 500)}>
         <Corner emoji='💎' label='Refined' palette={palette} />
       </span>
-    )}
-    lead={film && (
-      <div sx={Journey.styles.gains}>
-        {gains(film.refine.rows).map(({ axis, from, to }, index) => (
-          <p key={axis} sx={{ ...Journey.styles.gain, ...enter(seen, 'translateY(0.5em)', 200 + index * 200) }}>
-            <span sx={Journey.styles.gainAxis}>{axis}</span>
-            <span sx={Journey.styles.gainValue}>
-              <span sx={Journey.styles.gainFrom}>{axis === 'language' ? language(from) : from}</span>
-              <span aria-label='to' sx={Journey.styles.gainArrow}>→</span>
-              <span sx={Journey.styles.gainTo}>{axis === 'language' ? language(to) : to}</span>
-            </span>
-          </p>
-        ))}
-      </div>
     )}
   />
 )
@@ -439,16 +409,18 @@ export const Journey = ({ film, policy }: { film: Film | null, policy?: Films['p
       <span id='journey' sx={Journey.styles.hidden}>One movie, from a wish to your library</span>
       <Opening film={film} palette={palette} />
       <div ref={stage} sx={Journey.styles.stage}>
-        <div sx={Journey.styles.ambient} aria-hidden='true'>
-          {film?.backdrop && <img key={film.backdrop} src={tmdb('w1280', film.backdrop)} alt='' loading='lazy' decoding='async' sx={Journey.styles.ambientImage} />}
-          {palette && <Shadow palette={palette} fade={0.6} />}
-          <div sx={Journey.styles.ambientVeil} />
+        <div sx={Journey.styles.track} aria-hidden='true'>
+          <div sx={Journey.styles.ambient}>
+            {film?.backdrop && <img key={film.backdrop} src={tmdb('w1280', film.backdrop)} alt='' loading='lazy' decoding='async' sx={Journey.styles.ambientImage} />}
+            {palette && <Shadow palette={palette} fade={0.6} />}
+            <div sx={Journey.styles.ambientVeil} />
+          </div>
         </div>
         {SCENES.map((_, index) => <Scene key={index} index={index} film={film} palette={palette} policy={policy} />)}
-      </div>
-      <div sx={Journey.styles.close}>
-        <p sx={Journey.styles.closeTitle}>Try it with your own rules.</p>
-        <a href={DEMO} sx={{ ...buttonStyles.contain({ color: 'primary' }), ...Journey.styles.action }}>Try the demo</a>
+        <div sx={Journey.styles.close}>
+          <p sx={Journey.styles.closeTitle}>Try it with your own rules.</p>
+          <a href={DEMO} sx={{ ...buttonStyles.contain({ color: 'primary' }), ...Journey.styles.action }}>Try the demo</a>
+        </div>
       </div>
     </section>
   )
@@ -523,11 +495,12 @@ Journey.styles = {
     overflow: 'hidden',
     isolation: 'isolate',
   },
+  // Its last rows masked out on its own layer: the scaled backdrop never shows a line under the veil
   media: {
     position: 'absolute',
     inset: '0px',
     zIndex: -1,
-    backgroundColor: 'white',
+    maskImage: 'linear-gradient(to top, transparent, black 2em)',
   },
   backdrop: {
     position: 'absolute',
@@ -631,7 +604,7 @@ Journey.styles = {
   // 🍿 Wished: the ways in, then the poster they reach
   paths: {
     display: 'grid',
-    gridTemplateColumns: ['minmax(0px, 1fr) 6.5em', '20em 13em'],
+    gridTemplateColumns: ['minmax(0px, 1fr) 8em', '20em 18em'],
     alignItems: 'center',
     columnGap: reach,
     fontSize: [5, 4],
@@ -720,26 +693,21 @@ Journey.styles = {
   stage: {
     position: 'relative',
     isolation: 'isolate',
-    // The sticky backdrop hangs 100svh below its last scene: clipped here, so it never covers the close
-    overflow: 'clip',
-    // After the blurred backdrop and under the scenes: the opening's black runs into it, and it runs into what follows
-    '::after': {
-      content: '""',
-      position: 'absolute',
-      inset: '0px',
-      zIndex: -1,
-      pointerEvents: 'none',
-      background: 'linear-gradient(to bottom, var(--theme-ui-colors-white), transparent 50svh), linear-gradient(to top, var(--theme-ui-colors-white), transparent 50svh)',
-    },
+  },
+  // The blurred backdrop follows the scenes, faded in from the opening's black and out into the page's black below
+  // the close: a mask on its own layer, so no edge of it shows between two sections
+  track: {
+    position: 'absolute',
+    inset: '0px',
+    zIndex: -1,
+    pointerEvents: 'none',
+    maskImage: 'linear-gradient(to bottom, transparent, black 50svh, black calc(100% - 50svh), transparent)',
   },
   ambient: {
     position: 'sticky',
     top: '0px',
     height: '100svh',
-    marginBottom: '-100svh',
     overflow: 'hidden',
-    zIndex: -1,
-    backgroundColor: 'white',
   },
   ambientImage: {
     position: 'absolute',
@@ -861,40 +829,23 @@ Journey.styles = {
     gap: 4,
   },
   policy: {
-    display: 'grid',
-    gridTemplateColumns: ['repeat(2, minmax(0px, 1fr))', 'repeat(auto-fit, minmax(9em, 1fr))'],
-    gap: 8,
-    margin: '0px',
-    fontSize: [6, 5],
-  },
-  axis: {
-    ...card,
     display: 'flex',
     flexDirection: 'column',
-    gap: 9,
-    padding: 8,
+    gap: 8,
+    margin: '0px',
   },
-  axisName: {
-    fontFamily: 'heading',
-    fontWeight: 800,
-    textTransform: 'capitalize',
-    color: 'textLightest',
+  policyLine: {
+    display: 'flex',
+    alignItems: 'baseline',
+    gap: 8,
+    dd: {
+      margin: '0px',
+    },
   },
   tags: {
     display: 'flex',
     flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: 10,
-    margin: '0px',
-  },
-  tag: {
-    paddingX: 8,
-    paddingY: 11,
-    borderRadius: '0.25em',
-    fontFamily: 'monospace',
-    fontWeight: 600,
-    fontSize: 6,
-    color: 'whitePure',
+    gap: 9,
   },
   // The release list, on the app's black, one rule under each row
   table: {
@@ -914,16 +865,11 @@ Journey.styles = {
     rowGap: 8,
     paddingLeft: [8, 6],
     paddingRight: [8, 4],
-    paddingY: [6, 8],
-    borderLeft: '3px solid transparent',
+    paddingY: [4, 2],
     ':not(:last-of-type)': {
       borderBottom: '1px solid',
       borderBottomColor: 'gray',
     },
-  },
-  won: {
-    borderLeftColor: 'primary',
-    backgroundColor: 'color-mix(in srgb, var(--theme-ui-colors-primary) 10%, transparent)',
   },
   state: {
     gridArea: 'state',
@@ -943,6 +889,9 @@ Journey.styles = {
   },
   stateIn: {
     position: 'absolute',
+    fontFamily: 'monospace',
+    fontWeight: 600,
+    color: 'primary',
   },
   name: {
     gridArea: 'name',
@@ -955,6 +904,9 @@ Journey.styles = {
     lineHeight: 'heading',
     color: 'textLightest',
     textWrap: 'balance',
+  },
+  winner: {
+    color: 'primary',
   },
   rejected: {
     color: 'grayDarker',
@@ -1165,49 +1117,6 @@ Journey.styles = {
     marginTop: 8,
     fontSize: [4, 3],
   },
-  // What Refine wins, before the names
-  gains: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    columnGap: 2,
-    rowGap: 6,
-    marginBottom: 6,
-  },
-  gain: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 10,
-    margin: '0px',
-  },
-  gainAxis: {
-    fontFamily: 'heading',
-    fontWeight: 800,
-    fontSize: 6,
-    letterSpacing: '0.14em',
-    textTransform: 'uppercase',
-    color: 'textLight',
-  },
-  gainValue: {
-    display: 'flex',
-    alignItems: 'baseline',
-    gap: 8,
-    fontFamily: 'monospace',
-    fontWeight: 600,
-    fontSize: ['1.75em', 'clamp(2em, 3.5vw, 3em)'],
-    lineHeight: 1,
-    whiteSpace: 'nowrap',
-  },
-  gainFrom: {
-    fontSize: '0.6em',
-    color: 'textLight',
-  },
-  gainArrow: {
-    fontSize: '0.6em',
-    color: 'textLight',
-  },
-  gainTo: {
-    color: 'primary',
-  },
   // ✂️ Shrink
   shrink: {
     display: 'flex',
@@ -1331,11 +1240,8 @@ Journey.styles = {
     alignItems: 'center',
     gap: [2, 1],
     paddingX: [4, 2],
-    paddingY: ['6em', '10em'],
-    borderTop: '1px solid',
-    borderTopColor: 'grayDark',
-    backgroundColor: 'white',
-    backgroundImage: 'radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--theme-ui-colors-primary) 12%, transparent) 0%, transparent 60%)',
+    paddingTop: ['2em', '4em'],
+    paddingBottom: ['6em', '10em'],
     textAlign: 'center',
   },
   closeTitle: {
