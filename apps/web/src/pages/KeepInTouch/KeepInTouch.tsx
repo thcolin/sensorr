@@ -163,7 +163,7 @@ const Wrapped = ({ token, look }) => {
           />
         </a>
       )}
-      <a href={href} target='_blank' rel='noopener noreferrer' sx={{ ...KeepInTouch.styles.action, marginBottom: 0 }}>
+      <a href={href} target='_blank' rel='noopener noreferrer' sx={{ ...KeepInTouch.styles.action, marginBottom: '0px' }}>
         {t('keepInTouch.done.wrapped.open')}
       </a>
       <p sx={Wrapped.styles.keep}>
@@ -179,14 +179,14 @@ Wrapped.styles = {
     flexDirection: 'column',
     alignItems: 'center',
     gap: 8,
-    marginTop: 4,
+    marginTop: 2,
   },
   card: {
     position: 'relative',
     display: 'block',
-    height: '18em',
+    height: '15em',
     aspectRatio: '9 / 16',
-    marginBottom: 8,
+    marginBottom: 4,
     transform: 'rotate(-3deg)',
     transition: 'transform 400ms cubic-bezier(0.16, 1, 0.3, 1)',
     ':hover': {
@@ -204,9 +204,11 @@ Wrapped.styles = {
     display: 'block',
     width: '100%',
     height: '100%',
+    objectFit: 'cover',
     transition: 'opacity 400ms ease-out',
   },
   keep: {
+    margin: '0px',
     fontSize: 6,
     maxWidth: '24em',
     lineHeight: 'body',
