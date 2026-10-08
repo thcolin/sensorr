@@ -189,8 +189,10 @@ Wrapped.styles = {
     marginBottom: 4,
     transform: 'rotate(-3deg)',
     transition: 'transform 400ms cubic-bezier(0.16, 1, 0.3, 1)',
-    ':hover': {
-      transform: 'rotate(0deg) scale(1.03)',
+    '@media (hover: hover)': {
+      ':hover': {
+        transform: 'rotate(0deg) scale(1.03)',
+      },
     },
     '@media (prefers-reduced-motion: reduce)': {
       transition: 'none',
@@ -362,7 +364,7 @@ const KeepInTouch = () => {
                         <Wrapped token={pin.wrapped.token} look={pin.wrapped.look} />
                       )}
                       <br/>
-                      <p sx={{ fontSize: 6 }}>
+                      <p sx={{ fontSize: 6, color: 'grayDark' }}>
                         <Trans t={t} i18nKey='keepInTouch.done.watchlist' components={[<a href="https://support.plex.tv/articles/universal-watchlist/" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }} />]} />
                         <br/><br/>
                         <Trans t={t} i18nKey='keepInTouch.device' components={[<a href="https://support.plex.tv/articles/115007577087-devices/" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }} />, <a href="https://app.plex.tv/desktop/#!/settings/devices/all" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }} />]} />
