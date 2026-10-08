@@ -130,7 +130,7 @@ Hero.styles = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    paddingTop: ['3em', '4em'],
+    paddingTop: ['5em', 'clamp(6em, 14vh, 9em)'],
     overflow: 'hidden',
     isolation: 'isolate',
   },

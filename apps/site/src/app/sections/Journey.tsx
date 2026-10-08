@@ -24,7 +24,7 @@ const ordered = (rows: Row[]) => {
   ]
 }
 
-// Every axis in the app's plain gray: what changed as a transition, what stayed as its value alone
+// Every axis as the app draws a swap: what changed as a transition in the policy's verdict, what stayed as its value alone
 const Pills = ({ rows }: { rows: Row[] }) => (
   <div sx={Journey.styles.pills}>
     {ordered(rows).map(({ axis, from, to, state }) => (
@@ -32,7 +32,7 @@ const Pills = ({ rows }: { rows: Row[] }) => (
         key={axis}
         from={from}
         to={to}
-        state={state === 'same' ? 'same' : 'quiet'}
+        state={state}
         title={state === 'same' ? `${axis}: ${to}` : `${axis}: ${from} ~ ${to}`}
       />
     ))}
@@ -98,26 +98,26 @@ const Paths = ({ film, palette }: { film: Film | null, palette: Palette }) => {
 
 const AXES = ['resolution', 'source', 'encoding', 'language', 'dub', 'flags']
 
-// The policy on two lines, ⭐ what it prefers and ⛔ what it avoids, axis by axis in the policy's order: each axis
-// named, then its values in the app's gray tag
+// The axes as the app's filters name them (libs/i18n jobs.js `filters`)
+const AXIS_LABELS = { resolution: '🎞️ Resolution', source: '💽 Source', encoding: '🎥 Encoding', language: '🇺🇳 Language', dub: '🔈 Dub', flags: '🚩 Flags' }
+
+// The policy axis by axis, as Settings › Policies lays it out: each axis named, ⭐ what it prefers, ⛔ what it avoids
 const Policy = ({ policy }: { policy?: Films['policy'] }) => (
-  <dl sx={Journey.styles.policy}>
-    {(['prefer', 'avoid'] as const).map((group) => (
-      <div key={group} sx={Journey.styles.policyLine}>
-        <dt><span role='img' aria-label={group}>{group === 'prefer' ? '⭐' : '⛔'}</span></dt>
-        <dd sx={Journey.styles.axes}>
-          {policy ? AXES.filter((axis) => policy[group][axis]?.length).map((axis) => (
-            <span key={axis} sx={Journey.styles.axis}>
-              <span sx={Journey.styles.axisName}>{axis}</span>
-              {policy[group][axis].map((value) => (
-                <TransitionPill key={value} to={value} state='same' compact={true} title={`${group} ${axis}: ${value}`} />
-              ))}
-            </span>
-          )) : <Bar width='16em' height='1.5em' pill={true} />}
-        </dd>
-      </div>
-    ))}
-  </dl>
+  <div sx={Journey.styles.policy}>
+    {policy ? AXES.filter((axis) => policy.prefer[axis]?.length || policy.avoid[axis]?.length).map((axis) => (
+      <dl key={axis} sx={Journey.styles.axis}>
+        <dt sx={Journey.styles.axisName}>{AXIS_LABELS[axis] || axis}</dt>
+        {(['prefer', 'avoid'] as const).filter((group) => policy[group][axis]?.length).map((group) => (
+          <dd key={group} sx={Journey.styles.axisGroup}>
+            <span role='img' aria-label={group}>{group === 'prefer' ? '⭐' : '⛔'}</span>
+            {policy[group][axis].map((value) => (
+              <TransitionPill key={value} to={value} state='same' compact={true} title={`${group} ${axis}: ${value}`} />
+            ))}
+          </dd>
+        ))}
+      </dl>
+    )) : <Bar width='16em' height='1.5em' pill={true} />}
+  </div>
 )
 
 // The candidates as the app's release list draws them: state, name, axis tags, then 💯 🌍 📦
@@ -307,7 +307,7 @@ const Shrink = ({ film, seen }: Visual) => {
                 <TransitionPill
                   from={film.winner.meta.resolution}
                   to={film.shrink.meta.resolution}
-                  state='quiet'
+                  state={film.shrinked.rows.find(({ axis }) => axis === 'resolution')?.state || 'held'}
                   compact={true}
                   title={`resolution: ${film.winner.meta.resolution} ~ ${film.shrink.meta.resolution}`}
                 />
@@ -818,39 +818,36 @@ Journey.styles = {
     gap: 4,
   },
   policy: {
-    display: 'flex',
-    flexDirection: 'column',
+    display: 'grid',
+    gridTemplateColumns: ['repeat(2, minmax(0px, 1fr))', 'repeat(3, minmax(0px, 1fr))', 'repeat(6, minmax(0px, 1fr))'],
     gap: 8,
     margin: '0px',
-    fontSize: [5, 4],
+    fontSize: 5,
   },
-  policyLine: {
-    display: 'grid',
-    gridTemplateColumns: '1.5em minmax(0px, 1fr)',
-    alignItems: 'baseline',
-    columnGap: 8,
-    dd: {
-      margin: '0px',
-    },
+  axis: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 9,
+    margin: '0px',
+    paddingX: 8,
+    paddingY: 8,
+    border: '1px solid',
+    borderColor: 'grayDark',
+    borderRadius: '0.25em',
+    backgroundColor: 'color-mix(in srgb, var(--theme-ui-colors-white) 85%, transparent)',
   },
-  // The axes one after another, a thin gap between two of them
-  axes: {
+  axisName: {
+    fontFamily: 'heading',
+    fontWeight: 'heading',
+    fontSize: 5,
+    whiteSpace: 'nowrap',
+  },
+  axisGroup: {
     display: 'flex',
     flexWrap: 'wrap',
     alignItems: 'center',
-    columnGap: 4,
-    rowGap: 9,
-  },
-  axis: {
-    display: 'inline-flex',
-    alignItems: 'center',
     gap: 10,
-  },
-  axisName: {
-    marginRight: 10,
-    fontFamily: 'monospace',
-    fontSize: 7,
-    color: 'grayDarkest',
+    margin: '0px',
   },
   // The release list, on the app's black, one rule under each row
   table: {
