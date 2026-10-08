@@ -23,7 +23,10 @@ const UPCOMING = 12
 // What Record shows of the candidates, the winner first
 const CANDIDATES = 5
 
-const policy = new Policy(POLICIES[0] as any)
+// The demo's Default policy, requiring MULTi too: a VO copy falls short of it, so Refine takes the movie, and once the
+// copy is MULTi Shrink does (docs/jobs.md, refine and shrink)
+const STORY = { ...POLICIES[0], require: { ...POLICIES[0].require, language: ['MULTi'] } }
+const policy = new Policy(STORY as any)
 // Bytes a minute of a 1080p encode weighs, as the demo indexer counts it
 const MINUTE = 70e6
 
@@ -82,7 +85,11 @@ const storyOf = (details) => {
   const [owned, winner, shrink, replacement] = [story.owned, story.winner, story.shrink, story.replacement].map(({ guid }) => ranked.find((release) => release.guid === guid))
   const candidates = policy.apply([story.owned, ...story.others], query)
 
-  if (![owned, winner, shrink, replacement].every(({ valid }) => valid) || candidates[0].guid !== owned.guid) {
+  // In strict mode, what Refine and Shrink apply, the copy Record grabbed falls short of the rules and the refined one meets them
+  const strict = policy.apply([story.owned, story.winner], query, true)
+  const meets = (guid: string) => strict.find((release) => release.guid === guid)?.valid
+
+  if (![owned, winner, shrink, replacement].every(({ valid }) => valid) || candidates[0].guid !== owned.guid || meets(owned.guid) || !meets(winner.guid)) {
     return null
   }
 
@@ -128,7 +135,7 @@ const main = async () => {
 
   fs.mkdirSync(path.dirname(OUTPUT), { recursive: true })
   fs.writeFileSync(OUTPUT, JSON.stringify({
-    policy: { name: POLICIES[0].name, require: POLICIES[0].require, prefer: POLICIES[0].prefer, avoid: POLICIES[0].avoid },
+    policy: { name: STORY.name, require: STORY.require, prefer: STORY.prefer, avoid: STORY.avoid },
     wall: discovered.slice(0, WALL).map(({ poster_path }) => poster_path),
     films,
     shows: seasons.map(({ id, name, poster_path, first_air_date, seasons, number_of_episodes }) => ({

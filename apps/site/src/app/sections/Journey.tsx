@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { Badge, Bar, Icon, Picture, Shadow, TransitionPill, pictureSrc } from '@sensorr/ui'
 import { usePalette, type Palette as Colors } from '@sensorr/palette'
 import { type Film, type Films, type Release as File, type Row } from '../data'
@@ -351,26 +351,88 @@ const Report = ({ film, seen }: Visual) => (
   </div>
 )
 
+// A copy as the rail names it: its language, then its resolution
+const short = (file: File) => `${language(file.meta.language)} ${file.meta.resolution}`
+
+// The copy in Plex across the scenes, as the jobs hand it on: Refine while it falls short of your rules, Shrink once it
+// meets them (docs/jobs.md, refine and shrink), and a report that strikes whatever copy you hold
+const Rail = ({ film, active }: { film: Film | null, active: number }) => {
+  const steps = [
+    { emoji: '📼', label: 'Archived', file: film?.owned },
+    { emoji: '💎', label: 'Refined', file: film?.winner },
+    { emoji: '💍', label: 'Shrinked', file: film?.shrink },
+  ]
+  // The scenes after Record, Archived first, map onto the steps; Report stays on the last one
+  const current = Math.min(Math.max(active - 1, 0), steps.length - 1)
+  const reported = active === SCENES.length - 1
+
+  return (
+    <ol aria-label='Your copy in Plex' sx={Journey.styles.rail}>
+      {steps.map(({ emoji, label, file }, index) => (
+        <Fragment key={label}>
+          {index === steps.length - 1 && <li sx={Journey.styles.threshold}><span>Your rules met</span></li>}
+          <li
+            aria-current={index === current ? 'step' : undefined}
+            sx={{ ...Journey.styles.node, ...(index === current ? Journey.styles.nodeNow : index < current ? Journey.styles.nodeDone : Journey.styles.nodeNext) }}
+          >
+            <span sx={Journey.styles.nodeDot} aria-hidden='true'>{emoji}</span>
+            <span sx={Journey.styles.nodeBody}>
+              <strong>{label}</strong>
+              {file ? (
+                <span sx={index === current && reported ? Journey.styles.nodeBanned : {}}>
+                  {short(file)}<span sx={Journey.styles.nodeSize}> · {gb(file.size)}</span>
+                </span>
+              ) : <Bar width='6em' height='0.8em' />}
+              {index === current && reported && film && (
+                <span>{short(film.replacement)}<span sx={Journey.styles.nodeSize}> · {gb(film.replacement.size)}</span></span>
+              )}
+            </span>
+          </li>
+        </Fragment>
+      ))}
+    </ol>
+  )
+}
+
 const SCENES = [
   { emoji: '📹', label: 'Record', title: 'Your rules, not a quality profile.', line: 'Your indexers answer, your policy ranks every release.', Visual: Record },
   { emoji: '📼', label: 'Archived', title: 'Recorded. In your library, in Plex.', line: 'The .torrent goes to the blackhole, your download client does the rest.', Visual: Archived },
-  { emoji: '✨', label: 'Refine', title: 'Closer to your rules.', line: 'A release that wins on your policy replaces the copy you have: here your language, for a little more space.', Visual: Refine },
-  { emoji: '✂️', label: 'Shrink', title: 'The same movie, lighter.', line: 'A lighter release that loses nothing: a better resolution, the same language, the space back on your disk.', Visual: Shrink },
-  { emoji: '🚨', label: 'Report', title: 'A friend reports, Sensorr swaps.', line: 'The release they watched is banned, another one takes its place.', Visual: Report },
+  { emoji: '✨', label: 'Refine', title: 'Not your rules yet. Refine keeps looking.', line: 'Until your copy meets your policy, a release that wins on it replaces the one in Plex: here your language, for a little more space.', Visual: Refine },
+  { emoji: '✂️', label: 'Shrink', title: 'Your rules are met. Shrink takes over.', line: 'Now a lighter release that loses nothing: a better resolution, the same language, the space back on your disk.', Visual: Shrink },
+  { emoji: '🚨', label: 'Report', title: 'A friend reports, Sensorr swaps.', line: 'At any step. The copy they watched is banned, another one takes its place.', Visual: Report },
 ]
 
-const Scene = ({ index, film, palette, policy }: { index: number, film: Film | null, palette: Palette, policy?: Films['policy'] }) => {
+const Scene = ({ index, film, palette, policy, onCenter, flush = false }: {
+  index: number
+  film: Film | null
+  palette: Palette
+  policy?: Films['policy']
+  onCenter?: (index: number) => void
+  flush?: boolean
+}) => {
   const [ref, seen] = useSeen<HTMLElement>(0.25)
   const { emoji, label, title, line, Visual } = SCENES[index]
 
+  // Tells the rail which scene crosses the middle of the viewport
+  useEffect(() => {
+    const element = ref.current
+    if (!element || !onCenter) {
+      return
+    }
+
+    const observer = new IntersectionObserver(([entry]) => entry.isIntersecting && onCenter(index), { rootMargin: '-50% 0px -50% 0px' })
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [ref, index, onCenter])
+
   return (
     <article ref={ref} aria-labelledby={`journey-${label.toLowerCase()}`} sx={Journey.styles.scene}>
-      <header sx={Journey.styles.text}>
+      <header sx={{ ...Journey.styles.text, ...(flush && Journey.styles.flush) }}>
         <p sx={Journey.styles.label}><span aria-hidden='true'>{emoji}</span> {label}</p>
         <h3 id={`journey-${label.toLowerCase()}`} sx={{ ...Journey.styles.title, ...enter(seen, 'translateY(0.4em)', 0, 700) }}>{title}</h3>
         <p sx={Journey.styles.line}>{line}</p>
       </header>
-      <div sx={column}>
+      <div sx={{ ...column, ...(flush && Journey.styles.flush) }}>
         <div sx={Journey.styles.visual}>
           <Visual film={film} seen={seen} palette={palette} policy={policy} />
         </div>
@@ -434,6 +496,7 @@ const Opening = ({ film, palette }: { film: Film | null, palette: Palette }) => 
 export const Journey = ({ film, policy }: { film: Film | null, policy?: Films['policy'] }) => {
   const { palette } = usePalette(film && pictureSrc(film.poster, 'w92'), null, film?.poster)
   const stage = useScrollProgress<HTMLDivElement>('--stage')
+  const [active, setActive] = useState(1)
 
   return (
     <section aria-labelledby='journey' sx={Journey.styles.element}>
@@ -447,7 +510,13 @@ export const Journey = ({ film, policy }: { film: Film | null, policy?: Films['p
             <div sx={Journey.styles.ambientVeil} />
           </div>
         </div>
-        {SCENES.map((_, index) => <Scene key={index} index={index} film={film} palette={palette} policy={policy} />)}
+        <Scene index={0} film={film} palette={palette} policy={policy} />
+        <div sx={Journey.styles.chain}>
+          <Rail film={film} active={active} />
+          <div sx={Journey.styles.chainScenes}>
+            {SCENES.slice(1).map((_, index) => <Scene key={index} index={index + 1} film={film} palette={palette} onCenter={setActive} flush={true} />)}
+          </div>
+        </div>
       </div>
     </section>
   )
@@ -759,6 +828,132 @@ Journey.styles = {
   },
   visual: {
     fontSize: [4, 3],
+  },
+  // From 📼 Archived to 🚨 Report the scenes share a column with the rail of the copy, sticky beside them, above on a phone
+  chain: {
+    ...column,
+    display: 'grid',
+    gridTemplateColumns: ['minmax(0px, 1fr)', '15em minmax(0px, 1fr)'],
+    columnGap: 2,
+    alignItems: 'start',
+  },
+  chainScenes: {
+    minWidth: '0px',
+  },
+  flush: {
+    paddingX: '0px',
+    maxWidth: 'none',
+  },
+  rail: {
+    position: 'sticky',
+    top: ['0px', '50svh'],
+    zIndex: 2,
+    display: 'flex',
+    flexDirection: ['row', 'column'],
+    alignItems: ['flex-start', 'stretch'],
+    justifyContent: ['space-between', 'flex-start'],
+    gap: [8, '0px'],
+    margin: '0px',
+    // Edge to edge on a phone: out by the chain's own gutter, the 16px of its column
+    marginX: ['-16px', '0px'],
+    paddingX: ['16px', '0px'],
+    paddingY: [6, '0px'],
+    listStyle: 'none',
+    fontFamily: 'monospace',
+    fontSize: [7, 4],
+    transform: ['none', 'translateY(-50%)'],
+    // On a phone it rides over the scenes, so it gets the page's ground behind it
+    backgroundColor: ['color-mix(in srgb, var(--theme-ui-colors-white) 88%, transparent)', 'transparent'],
+    backdropFilter: ['blur(12px)', 'none'],
+    borderBottom: ['1px solid', 'none'],
+    borderColor: 'grayDark',
+  },
+  node: {
+    position: 'relative',
+    display: 'flex',
+    flexDirection: ['column', 'row'],
+    alignItems: ['center', 'flex-start'],
+    gap: [10, 8],
+    minWidth: '0px',
+    paddingBottom: ['0px', '1.5em'],
+    textAlign: ['center', 'left'],
+    transition: `opacity 400ms ${EASE}`,
+    // The thread from one step down to the next
+    '::before': {
+      content: '""',
+      display: ['none', 'block'],
+      position: 'absolute',
+      left: '0.85em',
+      top: '1.9em',
+      bottom: '0.2em',
+      width: '1px',
+      backgroundColor: 'grayDark',
+    },
+    ':last-of-type::before': {
+      display: 'none',
+    },
+  },
+  nodeNow: {
+    opacity: 1,
+    '> span:first-of-type': {
+      borderColor: 'textLightest',
+      boxShadow: '0 0 0 3px color-mix(in srgb, var(--theme-ui-colors-textLightest) 20%, transparent)',
+    },
+  },
+  nodeDone: {
+    opacity: 0.6,
+  },
+  nodeNext: {
+    opacity: 0.35,
+  },
+  nodeDot: {
+    display: 'grid',
+    placeItems: 'center',
+    flexShrink: 0,
+    width: '1.75em',
+    height: '1.75em',
+    border: '1px solid',
+    borderColor: 'grayDark',
+    borderRadius: '50%',
+    backgroundColor: 'white',
+    transition: `border-color 400ms ${EASE}, box-shadow 400ms ${EASE}`,
+  },
+  nodeBody: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 11,
+    minWidth: '0px',
+    paddingTop: ['0px', '0.2em'],
+    color: 'text',
+    strong: {
+      fontFamily: 'heading',
+      fontWeight: 800,
+      color: 'textLightest',
+    },
+  },
+  nodeSize: {
+    display: ['none', 'inline'],
+  },
+  nodeBanned: {
+    color: 'error',
+    textDecoration: 'line-through',
+  },
+  // Where Refine hands the copy on to Shrink
+  threshold: {
+    alignSelf: ['stretch', 'auto'],
+    display: 'flex',
+    alignItems: 'center',
+    margin: ['0px', '-0.75em 0px 0.75em'],
+    paddingTop: ['0px', '0.35em'],
+    borderTop: ['none', '1px dashed'],
+    borderLeft: ['1px dashed', 'none'],
+    borderColor: 'primary',
+    color: 'primary',
+    fontSize: [7, 6],
+    letterSpacing: '0.04em',
+    span: {
+      display: ['none', 'inline'],
+    },
   },
   picture: {
     borderRadius: '0.25em',
@@ -1201,6 +1396,10 @@ Journey.styles = {
   report: {
     display: 'flex',
     flexDirection: 'column',
+    // The bubble overlaps the card's top edge, the struck release starts below it
+    '> div': {
+      paddingTop: [6, '3.5em'],
+    },
   },
   bubble: {
     ...card,
