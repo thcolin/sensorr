@@ -50,13 +50,10 @@ export const Emblem = ({ icon, label }) => {
 
 Emblem.styles = {
   element: {
-    flex: 1,
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'flex-start',
-    justifyContent: 'center',
-    alignSelf: 'center',
-    marginY: 'auto',
+    margin: 'auto',
     gap: 4,
   },
   side: {
