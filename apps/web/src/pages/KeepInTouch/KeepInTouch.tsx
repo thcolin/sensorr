@@ -267,7 +267,7 @@ const KeepInTouch = () => {
       <LoadingBar />
       <div sx={KeepInTouch.styles.wrapper}>
         <div sx={KeepInTouch.styles.register}>
-          <div sx={{ maxWidth: '40em', overflow: ['visible', 'scroll'] }}>
+          <div sx={{ maxWidth: '40em', marginY: 'auto' }}>
             <Warning
               emoji='🍻'
               title={t('keepInTouch.heading')}
@@ -365,12 +365,14 @@ KeepInTouch.styles = {
     ...Splash.styles.wrapper,
     flexDirection: ['column', 'row-reverse'],
   },
+  // A container, so the wrapped's ticket can take its whole width
   register: {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
     alignItems: 'center',
+    overflowY: ['visible', 'auto'],
+    containerType: 'inline-size',
   },
 }
 

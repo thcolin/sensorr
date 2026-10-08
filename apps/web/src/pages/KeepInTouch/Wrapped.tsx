@@ -167,9 +167,10 @@ WrappedTicket.styles = {
     gap: 4,
     marginY: 2,
   },
+  // Across the whole column, out of the Warning it sits in; its content keeps the column's measure
   ticket: {
-    width: '100%',
-    maxWidth: '32em',
+    width: '100cqw',
+    marginX: 'calc(50% - 50cqw)',
     textAlign: 'left',
   },
   body: {
@@ -177,7 +178,8 @@ WrappedTicket.styles = {
     flexDirection: ['column', 'row'],
     alignItems: 'center',
     gap: 2,
-    padding: '1.5em',
+    paddingY: '1.5em',
+    paddingX: 'max(24px, calc(50% - 288px))',
   },
   card: {
     position: 'relative',
@@ -232,7 +234,8 @@ WrappedTicket.styles = {
   // Below a tear line, as the stub of a ticket
   keep: {
     margin: '0px',
-    padding: '1em 1.5em',
+    paddingY: '1em',
+    paddingX: 'max(24px, calc(50% - 288px))',
     borderTop: '1px dashed',
     fontSize: 6,
     lineHeight: 'body',
