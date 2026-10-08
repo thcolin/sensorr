@@ -363,7 +363,8 @@ const PIPELINE = [
   { emoji: '💍', label: 'Shrinked' },
 ]
 
-const Pipeline = ({ at }: { at: string }) => {
+// `compact` keeps the other steps to their emoji at every width, for a column narrower than the scenes'
+const Pipeline = ({ at, compact = false }: { at: string, compact?: boolean }) => {
   const current = PIPELINE.findIndex(({ label }) => label === at)
 
   return (
@@ -375,7 +376,7 @@ const Pipeline = ({ at }: { at: string }) => {
           sx={{ ...Journey.styles.step, ...(index === current ? Journey.styles.stepNow : index < current ? Journey.styles.stepDone : {}) }}
         >
           <span aria-hidden='true'>{emoji}</span>
-          <span sx={index === current ? {} : Journey.styles.stepName}>{label}</span>
+          <span sx={index === current ? {} : compact ? Journey.styles.hidden : Journey.styles.stepName}>{label}</span>
         </span>
       ))}
     </p>
@@ -453,7 +454,7 @@ const Opening = ({ film, palette }: { film: Film | null, palette: Palette }) => 
               : <Bar inline={true} width='16em' height='1em' />}
           </p>
           <div sx={Journey.styles.openingScene}>
-            <Pipeline at='Wished' />
+            <Pipeline at='Wished' compact={true} />
             <h3 id='journey-wished' sx={Journey.styles.openingTitle}>Wish it, or let it come to you.</h3>
             <p sx={Journey.styles.line}>A friend's request, a star you follow, or your own search: each way ends wished.</p>
           </div>
@@ -593,7 +594,8 @@ Journey.styles = {
   openingContent: {
     ...column,
     display: 'grid',
-    gridTemplateColumns: ['minmax(0px, 1fr)', 'minmax(0px, 1fr) auto'],
+    // Side by side once the cards leave the text a column of its own, stacked on a phone and a tablet
+    gridTemplateColumns: ['minmax(0px, 1fr)', 'minmax(0px, 1fr)', 'minmax(0px, 1fr) auto'],
     alignItems: 'end',
     gap: ['2.5em', '3em'],
     paddingTop: ['40svh', '6em'],
@@ -793,18 +795,21 @@ Journey.styles = {
   visual: {
     fontSize: [4, 3],
   },
-  // The eyebrow's line, on one line: on a phone and a tablet the other steps keep their emoji alone
+  // The eyebrow's line: on a phone and a tablet the other steps keep their emoji alone
   pipeline: {
     display: 'flex',
     alignItems: 'center',
-    gap: ['0.6em', '0.9em'],
+    gap: ['0.45em', '0.45em', '0.9em'],
     margin: '0px',
     fontFamily: 'heading',
     fontWeight: 800,
-    fontSize: [6, 5],
+    fontSize: [6, 6, 5],
     letterSpacing: '0.14em',
     textTransform: 'uppercase',
     whiteSpace: 'nowrap',
+    // One line wherever it fits; in a column narrower than that, the next line rather than over its neighbour
+    flexWrap: 'wrap',
+    rowGap: 10,
   },
   step: {
     display: 'inline-flex',
@@ -815,7 +820,7 @@ Journey.styles = {
     // The README's arrow before every step but the first
     ':not(:first-of-type)::before': {
       content: '"→"',
-      marginRight: ['0.6em', '0.9em'],
+      marginRight: ['0.45em', '0.45em', '0.9em'],
       letterSpacing: '0px',
       opacity: 0.6,
     },
