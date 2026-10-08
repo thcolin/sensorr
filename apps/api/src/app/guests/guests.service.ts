@@ -1,5 +1,5 @@
 import { Model, PaginateModel, PaginateResult } from 'mongoose'
-import { BadGatewayException, Injectable, Logger, NotFoundException } from '@nestjs/common'
+import { BadGatewayException, BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { Plex, createPin, checkPin, PlexApp } from '@sensorr/plex'
@@ -47,6 +47,11 @@ export class GuestsService {
   // One-shot PIN status check, polled by the client (replaces the previous SSE stream whose
   // server-side polling died whenever the client connection dropped — e.g. a backgrounded mobile tab).
   async checkRegistration(id, code: string): Promise<{ done: boolean, expired?: boolean, refused?: boolean, wrapped?: { token: string, look: string } | null }> {
+    // A page from before the code was asked keeps polling on a 400, where an `expired` would make it mint PIN after PIN
+    if (typeof code !== 'string' || !code) {
+      throw new BadRequestException()
+    }
+
     const result = await checkPin(id, this.plexApp())
 
     // The status is public and Plex numbers its PINs in a row: the code proves the PIN is this visitor's

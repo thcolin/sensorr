@@ -183,7 +183,7 @@ export class WrappedService {
 
   // Two polls of one PIN may ask at once: only the first writes a token
   private async tokenOf(email: string) {
-    await this.guestModel.updateOne({ email, wrapped_token: { $exists: false } }, { wrapped_token: randomBytes(18).toString('base64url') })
+    await this.guestModel.updateOne({ email, wrapped_token: null }, { wrapped_token: randomBytes(18).toString('base64url') })
     return (await this.guestModel.findOne({ email }, { wrapped_token: 1 }).lean()).wrapped_token
   }
 

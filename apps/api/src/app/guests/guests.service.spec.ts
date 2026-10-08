@@ -113,7 +113,7 @@ describe('GuestsService.checkRegistration, the wrapped link', () => {
     const { service, wrappedService, guests } = serviceOf([], { token: 'wrapped-token', look: 'tele' })
 
     expect(await service.checkRegistration(42, 'ZZ99')).toEqual({ done: false, expired: true })
-    expect(await service.checkRegistration(42, undefined)).toEqual({ done: false, expired: true })
+    await expect(service.checkRegistration(42, undefined as any)).rejects.toThrow('Bad Request')
     expect(guests).toEqual([])
     expect(wrappedService.linkOf).not.toHaveBeenCalled()
   })
