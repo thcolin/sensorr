@@ -7,13 +7,12 @@
 
 import fs from 'fs'
 import path from 'path'
-import oleoo from 'oleoo'
 import { refresh } from '../../apps/web/src/contexts/MoviesMetadata/refresh'
 import { lightenShow, lightenEpisodes } from '../../libs/tmdb/src/shows'
 import { INDEXER, searchOf } from '../../apps/web/src/demo/releases'
+import { tmdb, all, pages, parse, POLICIES, keyed } from './tmdb'
 import { editionBounds, editionOf, lookOf, watchedHoursOf, wrappedOf, WrappedPlay, WrappedTitle, WRAPPED_TIME_ZONE } from '../../libs/sensorr/src/lib/wrapped'
 
-const KEY = process.env.SENSORR_DEMO_TMDB_KEY
 const OUTPUT = path.join(__dirname, '../../apps/web/src/demo/seed/seed.json')
 const SHARE = path.join(__dirname, '../../apps/wrapped/src/demo/share.json')
 const MOVIES = 300
@@ -42,64 +41,6 @@ const pick = <T>(values: T[]): T => values[Math.floor(next() * values.length)]
 const jobId = () => Array.from({ length: 21 }, () => pick([...'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-'])).join('')
 const objectId = () => Array.from({ length: 24 }, () => pick([...'0123456789abcdef'])).join('')
 const iso = (value: string | number | Date) => value ? new Date(value).toISOString() : value
-
-const tmdb = {
-  async fetch(uri: string, params: { [key: string]: any } = {}) {
-    const query = new URLSearchParams({ api_key: KEY, language: 'en-US', ...params })
-
-    for (let attempt = 0; ; attempt++) {
-      const res = await fetch(`https://api.themoviedb.org/3/${uri}?${query}`)
-
-      if (res.status === 429 && attempt < 5) {
-        await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1)))
-        continue
-      }
-
-      if (!res.ok) {
-        throw new Error(`[TMDB] ${res.status} on ${uri}`)
-      }
-
-      return res.json()
-    }
-  },
-}
-
-// A few at a time, as TMDB asks
-const all = async <T, R>(items: T[], fn: (item: T) => Promise<R>, size = 10): Promise<R[]> => {
-  const results: R[] = []
-
-  for (let index = 0; index < items.length; index += size) {
-    results.push(...await Promise.all(items.slice(index, index + size).map(fn)))
-  }
-
-  return results
-}
-
-const pages = async (uri: string, count: number) => (await all(Array.from({ length: count }, (_, page) => page + 1), (page) => tmdb.fetch(uri, { page })))
-  .flatMap(({ results }) => results)
-
-const parse = (title: string) => oleoo.parse(title, { strict: false, flagged: true, defaults: { language: 'VO', resolution: 'SD', year: '0' } })
-
-const POLICIES = [
-  {
-    name: 'Default',
-    sorting: 'seeders',
-    descending: true,
-    match: { original_languages: [] },
-    require: { znab: [], source: [], encoding: [], resolution: ['1080p', '2160p'], language: [], dub: [], flags: [] },
-    prefer: { znab: [], source: ['BLURAY', 'WEB-DL'], encoding: ['x265', 'h265', 'x264'], resolution: ['2160p', '1080p'], language: ['MULTi', 'VOSTFR'], dub: ['EAC3', 'AC3'], flags: ['REMUX', 'HDR'] },
-    avoid: { znab: [], source: ['CAM', 'TC', 'SCREENER'], encoding: ['XviD'], resolution: ['SD'], language: [], dub: [], flags: ['3D'] },
-  },
-  {
-    name: 'French',
-    sorting: 'seeders',
-    descending: true,
-    match: { original_languages: ['fr'] },
-    require: { znab: [], source: [], encoding: [], resolution: ['1080p', '2160p'], language: ['MULTi', 'TRUEFRENCH', 'FRENCH'], dub: [], flags: [] },
-    prefer: { znab: [], source: ['BLURAY', 'WEB-DL'], encoding: ['x265', 'x264'], resolution: ['1080p', '2160p'], language: ['TRUEFRENCH', 'MULTi', 'FRENCH'], dub: ['AC3'], flags: [] },
-    avoid: { znab: [], source: ['CAM', 'TC', 'SCREENER'], encoding: ['XviD'], resolution: ['SD'], language: [], dub: [], flags: [] },
-  },
-]
 
 const config = () => {
   const defaults = JSON.parse(fs.readFileSync(path.join(__dirname, '../../config.default.json'), 'utf8'))
@@ -469,9 +410,7 @@ const wrapped = async (movieDocs: any[], showDocs: any[], episodeDocs: any[]) =>
 }
 
 const main = async () => {
-  if (!KEY) {
-    throw new Error('SENSORR_DEMO_TMDB_KEY is not set')
-  }
+  keyed()
 
   const { movies: movieDocs, logs } = await movies()
   const { shows: showDocs, episodes } = await shows()
