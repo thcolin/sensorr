@@ -51,8 +51,11 @@ export const Hero = ({ wall }: { wall?: string[] }) => (
     <Wall wall={wall} />
     <div sx={Hero.styles.veil} />
     <div sx={Hero.styles.content}>
+      {/* Drawn as the app's Login screen draws it, live text so it stays sharp at any size */}
       <h1 sx={Hero.styles.title}>
-        <img src='assets/logo-dark.webp' alt='Sensorr' width={519} height={368} sx={Hero.styles.logo} />
+        <span sx={Hero.styles.hidden}>Sensorr</span>
+        <span sx={Hero.styles.emoji} aria-hidden='true'>🍿📼</span>
+        <span sx={Hero.styles.wordmark} aria-hidden='true'>sensorr</span>
       </h1>
       <p sx={Hero.styles.tagline}>
         Your Friendly Digital Video Recorder.<br />
@@ -72,6 +75,30 @@ export const Hero = ({ wall }: { wall?: string[] }) => (
     </div>
   </header>
 )
+
+// Each block of the hero rises in turn, once, on load
+const rise = (delay: number) => ({
+  animationName: 'site-hero-rise',
+  animationDuration: '700ms',
+  animationTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+  animationDelay: `${delay}ms`,
+  animationFillMode: 'both',
+  '@keyframes site-hero-rise': {
+    from: { opacity: 0, transform: 'translateY(1.5rem)' },
+    to: { opacity: 1, transform: 'translateY(0px)' },
+  },
+  '@media (prefers-reduced-motion: reduce)': {
+    animationName: 'none',
+  },
+})
+
+const focus = {
+  ':focus-visible': {
+    outline: '2px solid',
+    outlineColor: 'primary',
+    outlineOffset: '2px',
+  },
+}
 
 Hero.styles = {
   element: {
@@ -136,61 +163,95 @@ Hero.styles = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: 6,
-    maxWidth: '40em',
+    maxWidth: '48em',
     paddingX: [4, 2],
     paddingY: 0,
     textAlign: 'center',
   },
   title: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
     margin: '0px',
-    fontSize: 4,
-    lineHeight: 0,
   },
-  logo: {
-    width: ['12em', '16em'],
-    maxWidth: '100%',
-    height: 'auto',
+  hidden: {
+    position: 'absolute',
+    width: '1px',
+    height: '1px',
+    overflow: 'hidden',
+    clipPath: 'inset(50%)',
+    whiteSpace: 'nowrap',
+  },
+  emoji: {
+    fontSize: 'clamp(4rem, 9vw, 7rem)',
+    lineHeight: 1,
+    ...rise(0),
+  },
+  wordmark: {
+    fontFamily: 'heading-no-emoji',
+    fontWeight: 800,
+    // A phone sizes the word from its own width, so it outweighs the tagline
+    fontSize: ['clamp(5.5rem, 26vw, 10rem)', 'clamp(4rem, 13vw, 10rem)'],
+    lineHeight: 0.9,
+    letterSpacing: '-0.03em',
+    textTransform: 'lowercase',
+    color: 'textLightest',
+    // Raleway's descender-free word sits high in its line box: pull it under the emoji
+    marginTop: '-0.08em',
+    ...rise(80),
   },
   tagline: {
     margin: '0px',
+    // Margins count in the element's own em: 24px on a phone, 28px wide, the same step as before the actions
+    marginTop: [2, 4],
     fontFamily: 'heading',
     fontWeight: 'heading',
-    fontSize: [3, 2],
+    fontSize: [4, 1],
     lineHeight: 'heading',
     color: 'textLightest',
     textWrap: 'balance',
+    ...rise(180),
   },
   pitch: {
+    // The tagline already says it on a phone
+    display: ['none', 'block'],
+    maxWidth: '36em',
     margin: '0px',
-    fontSize: 4,
+    marginTop: 4,
+    fontSize: [4, 3],
     lineHeight: 'body',
-    color: 'text',
+    color: 'textLight',
     textWrap: 'pretty',
+    ...rise(260),
   },
   actions: {
     display: 'flex',
-    flexWrap: 'wrap',
+    flexDirection: ['column', 'row'],
+    alignItems: 'stretch',
     justifyContent: 'center',
-    gap: 8,
-    marginTop: 8,
+    width: ['100%', 'auto'],
+    maxWidth: ['20em', 'none'],
+    gap: 6,
+    marginTop: [2, 1],
+    ...rise(340),
   },
   action: {
     display: 'inline-block',
-    fontSize: 4,
-    paddingX: 2,
-    paddingY: 8,
+    textAlign: 'center',
+    fontSize: 3,
+    fontWeight: 'bold',
+    paddingX: 1,
+    paddingY: 6,
     textDecoration: 'none',
-    ':focus-visible': {
-      outline: '2px solid',
-      outlineColor: 'primary',
-      outlineOffset: '2px',
-    },
+    ...focus,
   },
   login: {
     margin: '0px',
-    fontSize: 6,
+    marginTop: 4,
+    fontSize: 5,
     color: 'textLight',
+    textWrap: 'balance',
+    ...rise(400),
     code: {
       fontFamily: 'monospace',
     },

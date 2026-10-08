@@ -13,7 +13,6 @@ export const Footer = () => (
     <div sx={Footer.styles.content}>
       <p sx={Footer.styles.brand}>
         <span aria-hidden='true'>🍿📼</span> sensorr
-        <span sx={Footer.styles.tagline}>Your Friendly Digital Video Recorder</span>
       </p>
       <nav aria-label='Sensorr'>
         <ul sx={Footer.styles.links}>
@@ -61,21 +60,16 @@ Footer.styles = {
     margin: '0px',
     fontFamily: 'heading',
     fontWeight: 'heading',
-    fontSize: 5,
-  },
-  tagline: {
-    fontFamily: 'body',
-    fontWeight: 'normal',
-    fontSize: 5,
+    fontSize: 4,
   },
   links: {
     display: 'flex',
     flexWrap: 'wrap',
-    columnGap: 6,
-    rowGap: 9,
+    columnGap: 2,
+    rowGap: 8,
     margin: '0px',
     padding: '0px',
-    fontSize: 6,
+    fontSize: 5,
     listStyle: 'none',
   },
   link: {

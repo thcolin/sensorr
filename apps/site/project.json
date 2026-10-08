@@ -17,8 +17,7 @@
         "tsConfig": "apps/site/tsconfig.app.json",
         "assets": [
           "apps/site/src/assets",
-          { "input": "apps/site/src/data", "glob": "films.json", "output": "data" },
-          { "input": "docs/assets/readme", "glob": "logo-dark.webp", "output": "assets" }
+          { "input": "apps/site/src/data", "glob": "films.json", "output": "data" }
         ],
         "styles": [],
         "scripts": [],

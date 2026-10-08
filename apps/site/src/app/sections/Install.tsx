@@ -9,6 +9,33 @@ const SEGMENTS = COMMAND.split(/(?<=\/)(?!\/)/)
 
 type State = 'idle' | 'copied' | 'failed'
 
+// Shown once scrolled into view
+const useReveal = () => {
+  const ref = useRef<HTMLElement>(null)
+  const [shown, setShown] = useState(false)
+
+  useEffect(() => {
+    const element = ref.current
+
+    if (!element || typeof IntersectionObserver === 'undefined') {
+      setShown(true)
+      return
+    }
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setShown(true)
+        observer.disconnect()
+      }
+    }, { rootMargin: '0px 0px -20% 0px' })
+
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
+
+  return [ref, shown] as const
+}
+
 const shortcut = () => /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) ? '⌘C' : 'Ctrl+C'
 
 const Command = () => {
@@ -67,87 +94,176 @@ const Command = () => {
   )
 }
 
-export const Install = () => (
-  <section id='install' sx={Install.styles.element} aria-labelledby='install-title'>
-    <h2 id='install-title' sx={Install.styles.title}>Install</h2>
-    <p sx={Install.styles.prose}>
-      You need <a href={COMPOSE} sx={Install.styles.link}>Docker and Docker Compose</a>,
-      on <code sx={Install.styles.code}>linux/amd64</code> or <code sx={Install.styles.code}>linux/arm64</code>.
-    </p>
-    <Command />
-    <p sx={Install.styles.sources}>
-      <a href={`${GITHUB}/blob/main/install.sh`} sx={Install.styles.link}>Read the installer</a>
-      <a href={`${GITHUB}/blob/main/docker-compose.yml`} sx={Install.styles.link}>Read the compose file</a>
-    </p>
-    <p sx={Install.styles.prose}>
-      The installer asks for a few folders, a login and your <a href='https://www.themoviedb.org/settings/api' sx={Install.styles.link}>TMDB API key</a>, then starts the stack and gives you its URL.
-      {' '}<a href={`${GITHUB}#install`} sx={Install.styles.link}>Read the full documentation</a>.
-    </p>
-    <a href={DEMO} sx={{ ...buttonStyles.outline({ color: 'white' }), ...Install.styles.demo }}>Try the demo first</a>
-  </section>
+// The other end of the hero's wall, blurred behind the closing call as on the README tiles
+const Wall = ({ wall }: { wall?: string[] }) => (
+  <div sx={Install.styles.wall} aria-hidden='true'>
+    {(wall || []).slice(-40).map((path) => (
+      <img key={path} src={`https://image.tmdb.org/t/p/w185${path}`} alt='' loading='lazy' decoding='async' sx={Install.styles.poster} />
+    ))}
+  </div>
 )
+
+export const Install = ({ wall }: { wall?: string[] }) => {
+  const [ref, shown] = useReveal()
+
+  return (
+    <section id='install' ref={ref} sx={Install.styles.element} data-shown={shown} aria-labelledby='install-title'>
+      <Wall wall={wall} />
+      <div sx={Install.styles.veil} />
+      <div sx={Install.styles.content}>
+        <h2 id='install-title' sx={Install.styles.title}>Install it at home.</h2>
+        <p sx={Install.styles.lead}>
+          One command, with <a href={COMPOSE} sx={Install.styles.link}>Docker and Docker Compose</a> on{' '}
+          <code sx={Install.styles.code}>linux/amd64</code> or <code sx={Install.styles.code}>linux/arm64</code>.
+        </p>
+        <Command />
+        <ul sx={Install.styles.sources}>
+          <li><a href={`${GITHUB}/blob/main/install.sh`} sx={Install.styles.link}>Read the installer</a></li>
+          <li><a href={`${GITHUB}/blob/main/docker-compose.yml`} sx={Install.styles.link}>Read the compose file</a></li>
+          <li><a href={`${GITHUB}#install`} sx={Install.styles.link}>Read the full documentation</a></li>
+        </ul>
+        <a href={DEMO} sx={{ ...buttonStyles.outline({ color: 'white' }), ...Install.styles.demo }}>Try the demo first</a>
+      </div>
+    </section>
+  )
+}
+
+const focus = {
+  ':focus-visible': {
+    outline: '2px solid',
+    outlineColor: 'primary',
+    outlineOffset: '2px',
+  },
+}
+
+// Heading, terminal and links rise in turn once the section scrolls in
+const rise = (delay: number) => ({
+  opacity: 0,
+  transform: 'translateY(2rem)',
+  transitionProperty: 'opacity, transform',
+  transitionDuration: '700ms',
+  transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+  transitionDelay: `${delay}ms`,
+  '[data-shown=true] &': {
+    opacity: 1,
+    transform: 'translateY(0px)',
+  },
+  '@media (prefers-reduced-motion: reduce)': {
+    opacity: 1,
+    transform: 'none',
+    transition: 'none',
+  },
+})
 
 Install.styles = {
   element: {
+    position: 'relative',
+    overflow: 'hidden',
+    isolation: 'isolate',
+    // One screen, filled on purpose, as the hero fills the first
+    display: 'flex',
+    alignItems: 'center',
+    minHeight: '100svh',
+    paddingY: ['5em', '7em'],
+    scrollMarginTop: '0px',
+  },
+  wall: {
+    position: 'absolute',
+    inset: '-2em',
+    display: 'grid',
+    gridTemplateColumns: ['repeat(5, 1fr)', 'repeat(10, 1fr)'],
+    alignContent: 'center',
+    gap: 6,
+    filter: 'blur(2.5px)',
+    opacity: 0.65,
+    transform: 'rotate(-6deg) scale(1.15)',
+    zIndex: -2,
+  },
+  poster: {
+    display: 'block',
+    width: '100%',
+    aspectRatio: '2 / 3',
+    objectFit: 'cover',
+    borderRadius: '0.25em',
+    backgroundColor: 'grayDark',
+  },
+  veil: {
+    position: 'absolute',
+    inset: '0px',
+    zIndex: -1,
+    // Fades into the page at both ends, and darkens only behind the text, so the posters stay readable around it
+    background: [
+      'radial-gradient(ellipse 75% 45% at 50% 50%, var(--theme-ui-colors-white) 30%, transparent 100%), linear-gradient(to bottom, var(--theme-ui-colors-white) 0%, transparent 20%, transparent 80%, var(--theme-ui-colors-white) 100%)',
+      'radial-gradient(ellipse 45% 50% at 32% 50%, var(--theme-ui-colors-white) 35%, transparent 100%), linear-gradient(to bottom, var(--theme-ui-colors-white) 0%, transparent 18%, transparent 82%, var(--theme-ui-colors-white) 100%)',
+    ],
+  },
+  content: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'flex-start',
-    gap: 6,
+    width: '100%',
     maxWidth: '72em',
     marginX: 'auto',
     paddingX: [4, 2],
-    paddingY: [1, 0],
-    scrollMarginTop: 4,
   },
   title: {
     margin: '0px',
     fontFamily: 'heading',
-    fontWeight: 'heading',
-    fontSize: [1, 0],
-    lineHeight: 'heading',
+    fontWeight: 800,
+    fontSize: 'clamp(2.5rem, 6vw, 5.5rem)',
+    lineHeight: 1.05,
+    letterSpacing: '-0.02em',
     color: 'textLightest',
     textWrap: 'balance',
+    ...rise(0),
   },
-  prose: {
-    maxWidth: '42em',
+  lead: {
+    maxWidth: '40em',
     margin: '0px',
-    fontSize: 4,
+    marginTop: 6,
+    fontSize: [3, 2],
     lineHeight: 'body',
-    color: 'text',
+    color: 'textLight',
     textWrap: 'pretty',
+    ...rise(140),
   },
   link: {
     color: 'textLightest',
     textDecoration: 'underline',
+    textDecorationColor: 'grayDarker',
     textUnderlineOffset: '0.2em',
-    ':focus-visible': {
-      outline: '2px solid',
-      outlineColor: 'primary',
-      outlineOffset: '2px',
+    transition: 'text-decoration-color 200ms ease-in-out',
+    ':hover': {
+      textDecorationColor: 'currentColor',
     },
+    ...focus,
   },
   code: {
     fontFamily: 'monospace',
-    fontSize: 5,
+    fontSize: '0.85em',
   },
   terminal: {
+    position: 'relative',
     display: 'flex',
     flexDirection: ['column', 'row'],
     alignItems: ['stretch', 'center'],
-    gap: 8,
+    gap: 4,
     width: '100%',
-    maxWidth: '48em',
-    padding: 6,
+    marginTop: 2,
+    paddingX: [4, 2],
+    paddingY: [4, 1],
     backgroundColor: 'grayLightest',
     border: '1px solid',
     borderColor: 'grayDark',
     borderRadius: '0.25em',
+    ...rise(240),
   },
   pre: {
     flex: 1,
     minWidth: '0px',
     margin: '0px',
     fontFamily: 'monospace',
+    // 14px keeps the whole command on one line at 1440, beside the Copy button
     fontSize: 5,
     lineHeight: 'body',
     color: 'textLightest',
@@ -156,30 +272,34 @@ Install.styles = {
     wordBreak: 'normal',
   },
   prompt: {
-    color: 'textDarkest',
+    color: 'primary',
     userSelect: 'none',
   },
   copy: {
     flexShrink: 0,
-    minWidth: '7em',
+    minWidth: '8em',
+    fontSize: 4,
+    fontWeight: 'bold',
+    paddingX: 4,
+    paddingY: 6,
     borderColor: 'grayDarker',
     ':hover': {
       borderColor: 'grayDarkest',
     },
-    ':focus-visible': {
-      outline: '2px solid',
-      outlineColor: 'primary',
-      outlineOffset: '2px',
-    },
+    ...focus,
   },
   sources: {
     display: 'flex',
     flexWrap: 'wrap',
-    columnGap: 6,
-    rowGap: 9,
+    columnGap: 2,
+    rowGap: 8,
     margin: '0px',
-    fontSize: 5,
+    marginTop: 4,
+    padding: '0px',
+    listStyle: 'none',
+    fontSize: [4, 3],
     color: 'text',
+    ...rise(320),
   },
   status: {
     position: 'absolute',
@@ -191,15 +311,15 @@ Install.styles = {
   },
   demo: {
     display: 'inline-block',
-    marginTop: 8,
-    fontSize: 4,
-    paddingX: 2,
-    paddingY: 8,
+    width: ['100%', 'auto'],
+    textAlign: 'center',
+    marginTop: 1,
+    fontSize: 3,
+    fontWeight: 'bold',
+    paddingX: 1,
+    paddingY: 6,
     textDecoration: 'none',
-    ':focus-visible': {
-      outline: '2px solid',
-      outlineColor: 'primary',
-      outlineOffset: '2px',
-    },
+    ...focus,
+    ...rise(400),
   },
 }

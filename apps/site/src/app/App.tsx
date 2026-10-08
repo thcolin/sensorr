@@ -1,5 +1,6 @@
 import { Hero } from './sections/Hero'
 import { Journey } from './sections/Journey'
+import { Wrapped } from './sections/Wrapped'
 import { Bands } from './sections/Bands'
 import { BuiltOn } from './sections/BuiltOn'
 import { Install } from './sections/Install'
@@ -13,9 +14,10 @@ const App = () => {
     <main sx={App.styles.element}>
       <Hero wall={data?.wall} />
       <Journey film={film} policy={data?.policy} />
+      <Wrapped />
       <Bands data={data} />
       <BuiltOn film={film} />
-      <Install />
+      <Install wall={data?.wall} />
       <Footer />
     </main>
   )
