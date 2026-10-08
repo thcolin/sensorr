@@ -32,8 +32,8 @@ export const createPin = async (app: PlexApp): Promise<Pin> => {
 }
 
 export type PinStatus =
-  | { status: 'waiting' }
-  | { status: 'authorized', token: string }
+  | { status: 'waiting', code: string }
+  | { status: 'authorized', token: string, code: string }
   | { status: 'invalid' }
 
 // Check a PIN status. The X-Plex-Client-Identifier MUST be the same one used to create the PIN,
@@ -53,8 +53,8 @@ export const checkPin = async (id: string, app: PlexApp): Promise<PinStatus> => 
     throw new Error(`Unable to check Plex PIN "${id}" (HTTP ${res.status})`)
   }
 
-  const { authToken } = (await res.json()) as { authToken: string | null }
-  return authToken ? { status: 'authorized', token: authToken } : { status: 'waiting' }
+  const { authToken, code } = (await res.json()) as { authToken: string | null, code: string }
+  return authToken ? { status: 'authorized', token: authToken, code } : { status: 'waiting', code }
 }
 
 // Keep a Plex account token alive and validate it. Plex expires tokens based on last-used time,

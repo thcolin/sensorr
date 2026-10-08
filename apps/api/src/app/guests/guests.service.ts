@@ -5,6 +5,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter'
 import { Plex, createPin, checkPin, PlexApp } from '@sensorr/plex'
 import { ConfigService } from '../config/config.service'
 import { MailService } from '../mail/mail.service'
+import { WrappedService } from '../wrapped/wrapped.service'
 import { mails } from '../mail/templates'
 import { Play, Viewer } from '../wrapped/wrapped.schema'
 import { Guest as GuestDocument } from './guest.schema'
@@ -26,6 +27,7 @@ export class GuestsService {
     private configService: ConfigService,
     private eventEmitter: EventEmitter2,
     private mailService: MailService,
+    private wrappedService: WrappedService,
   ) {}
 
   private plexApp(): PlexApp {
@@ -44,11 +46,12 @@ export class GuestsService {
 
   // One-shot PIN status check, polled by the client (replaces the previous SSE stream whose
   // server-side polling died whenever the client connection dropped — e.g. a backgrounded mobile tab).
-  async checkRegistration(id): Promise<{ done: boolean, expired?: boolean, refused?: boolean }> {
+  async checkRegistration(id, code: string): Promise<{ done: boolean, expired?: boolean, refused?: boolean, wrapped?: { token: string, look: string } | null }> {
     const result = await checkPin(id, this.plexApp())
 
-    if (result.status === 'invalid') {
-      this.logger.log(`CheckRegistration "${id}", status="invalid"`)
+    // The status is public and Plex numbers its PINs in a row: the code proves the PIN is this visitor's
+    if (result.status === 'invalid' || result.code !== code) {
+      this.logger.log(`CheckRegistration "${id}", status="${result.status === 'invalid' ? 'invalid' : 'wrong code'}"`)
       return { done: false, expired: true }
     }
 
@@ -72,10 +75,14 @@ export class GuestsService {
     const { updated: guest, reconnected } = await this.writeGuest({ email, avatar, name: title || username, plex_id: id, plex_token: result.token, plex_token_valid: true, plex_token_checked_at: Date.now() })
     // The status is polled, several polls of one PIN may land here: the first to write the date sends the welcome
     const first = !known && (await this.guestModel.updateOne({ email, welcome_mailed_at: { $exists: false } }, { welcome_mailed_at: Date.now() })).modifiedCount === 1
+    const wrapped = await this.wrappedService.linkOf(email).catch((error) => {
+      this.logger.warn(`Wrapped of "${email}" not linked: ${error.message}`)
+      return null
+    })
 
     if (first && this.mailService.enabled('welcome')) {
       this.mailService.service()
-        .then((service) => this.mailService.send(email, mails.welcome({ t: this.mailService.t(), url: this.mailService.url(), sender: this.mailService.sender(), service, name: guest.name, wrapped: guest.wrapped_token })))
+        .then((service) => this.mailService.send(email, mails.welcome({ t: this.mailService.t(), url: this.mailService.url(), sender: this.mailService.sender(), service, name: guest.name, wrapped: wrapped?.token })))
         .catch((error) => this.logger.warn(`Welcome "${email}" not sent: ${error.message}`))
     }
 
@@ -86,7 +93,7 @@ export class GuestsService {
         .catch((error) => this.logger.warn(`Reconnected "${email}" not sent: ${error.message}`))
     }
 
-    return { done: true }
+    return { done: true, wrapped }
   }
 
   private async plexTv(url: string) {

@@ -6,6 +6,7 @@ jest.mock('@sensorr/plex', () => ({ Plex: jest.fn(), createPin: jest.fn(), check
 // The schemas and the services only name injection tokens here; loading them pulls modules the API's jest setup cannot compile
 jest.mock('../config/config.service', () => ({ ConfigService: class ConfigService {} }))
 jest.mock('../mail/mail.service', () => ({ MailService: class MailService {} }))
+jest.mock('../wrapped/wrapped.service', () => ({ WrappedService: class WrappedService {} }))
 jest.mock('../wrapped/wrapped.schema', () => ({ Play: class Play {}, Viewer: class Viewer {} }))
 jest.mock('./guest.schema', () => ({ Guest: class Guest {} }))
 
@@ -32,7 +33,7 @@ const guestModelOf = (guests: Record<string, any>[]) => {
   }
 }
 
-const serviceOf = (guests: Record<string, any>[]) => {
+const serviceOf = (guests: Record<string, any>[], link: { token: string, look: string } | null = null) => {
   const guestModel = guestModelOf(guests)
   const configService = { config: { get: (key: string) => ({ 'guests.public': true })[key] } }
   const mailService = {
@@ -44,22 +45,24 @@ const serviceOf = (guests: Record<string, any>[]) => {
     send: jest.fn(async () => undefined),
     unsubscribeOf: async () => ({ href: 'u', headers: {} }),
   }
-  ;(checkPin as jest.Mock).mockResolvedValue({ status: 'authorized', token: 'new-token' })
+  const wrappedService = { linkOf: jest.fn(async () => link) }
+  ;(checkPin as jest.Mock).mockResolvedValue({ status: 'authorized', token: 'new-token', code: 'AB12' })
   ;(Plex as jest.Mock).mockReturnValue({ query: async () => ({ id: 1, email: 'lea@example.com', thumb: '', title: 'Léa' }) })
 
-  const service = new GuestsService(guestModel as any, {} as any, {} as any, configService as any, {} as any, mailService as any)
-  return { service, mailService, guests }
+  const service = new GuestsService(guestModel as any, {} as any, {} as any, configService as any, {} as any, mailService as any, wrappedService as any)
+  return { service, mailService, wrappedService, guests }
 }
 
 const flush = () => new Promise((resolve) => setImmediate(resolve))
 const subjectsOf = (mailService) => mailService.send.mock.calls.map(([, mail]) => mail.subject)
+const textsOf = (mailService) => mailService.send.mock.calls.map(([, mail]) => mail.text)
 
 describe('GuestsService.checkRegistration', () => {
   it('mails a disconnected friend who links again, once, and resets their reminders', async () => {
     const { service, mailService, guests } = serviceOf([{ email: 'lea@example.com', name: 'Léa', plex_token_valid: false, reconnect_mails: 2, reconnect_mailed_at: 1, welcome_mailed_at: 1 }])
 
     // Two polls of one PIN answered at once
-    await Promise.all([service.checkRegistration(42), service.checkRegistration(42)])
+    await Promise.all([service.checkRegistration(42, 'AB12'), service.checkRegistration(42, 'AB12')])
     await flush()
 
     expect(subjectsOf(mailService)).toEqual(["Your movie wishes reach Living Room's Sensorr again"])
@@ -70,7 +73,7 @@ describe('GuestsService.checkRegistration', () => {
   it('mails a friend who stopped the reminders too, the mail answers what they just did', async () => {
     const { service, mailService } = serviceOf([{ email: 'lea@example.com', name: 'Léa', plex_token_valid: false, mail_unsubscribed: ['reconnect'], welcome_mailed_at: 1 }])
 
-    await service.checkRegistration(42)
+    await service.checkRegistration(42, 'AB12')
     await flush()
 
     expect(subjectsOf(mailService)).toEqual(["Your movie wishes reach Living Room's Sensorr again"])
@@ -79,7 +82,7 @@ describe('GuestsService.checkRegistration', () => {
   it('welcomes a new friend and sends them no reconnection', async () => {
     const { service, mailService } = serviceOf([])
 
-    await service.checkRegistration(42)
+    await service.checkRegistration(42, 'AB12')
     await flush()
 
     expect(subjectsOf(mailService)).toEqual(["You're all set"])
@@ -88,7 +91,7 @@ describe('GuestsService.checkRegistration', () => {
   it('sends nothing to a linked friend who links again', async () => {
     const { service, mailService } = serviceOf([{ email: 'lea@example.com', name: 'Léa', plex_token_valid: true, welcome_mailed_at: 1 }])
 
-    await service.checkRegistration(42)
+    await service.checkRegistration(42, 'AB12')
     await flush()
 
     expect(mailService.send).not.toHaveBeenCalled()
@@ -98,10 +101,37 @@ describe('GuestsService.checkRegistration', () => {
     const { service, mailService } = serviceOf([{ email: 'lea@example.com', name: 'Léa', plex_token_valid: false, welcome_mailed_at: 1 }])
     mailService.enabled.mockReturnValue(false)
 
-    await service.checkRegistration(42)
+    await service.checkRegistration(42, 'AB12')
     await flush()
 
     expect(mailService.send).not.toHaveBeenCalled()
+  })
+})
+
+describe('GuestsService.checkRegistration, the wrapped link', () => {
+  it('answers a PIN asked with another code as expired, and links no one', async () => {
+    const { service, wrappedService, guests } = serviceOf([], { token: 'wrapped-token', look: 'tele' })
+
+    expect(await service.checkRegistration(42, 'ZZ99')).toEqual({ done: false, expired: true })
+    expect(await service.checkRegistration(42, undefined)).toEqual({ done: false, expired: true })
+    expect(guests).toEqual([])
+    expect(wrappedService.linkOf).not.toHaveBeenCalled()
+  })
+
+  it('gives a new friend their wrapped link, and their welcome carries it', async () => {
+    const { service, mailService } = serviceOf([], { token: 'wrapped-token', look: 'tele' })
+
+    expect(await service.checkRegistration(42, 'AB12')).toEqual({ done: true, wrapped: { token: 'wrapped-token', look: 'tele' } })
+    await flush()
+
+    expect(textsOf(mailService)[0]).toContain('https://sensorr.example/wrapped/wrapped-token')
+  })
+
+  it('still links a friend whose wrapped cannot be read', async () => {
+    const { service, wrappedService } = serviceOf([{ email: 'lea@example.com', name: 'Léa', plex_token_valid: true, welcome_mailed_at: 1 }])
+    wrappedService.linkOf.mockRejectedValue(new Error('down'))
+
+    expect(await service.checkRegistration(42, 'AB12')).toEqual({ done: true, wrapped: null })
   })
 })
 

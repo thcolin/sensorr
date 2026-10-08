@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Get, Post, Delete } from '@nestjs/common'
+import { Body, Controller, Param, Query, Get, Post, Delete } from '@nestjs/common'
 import { Public } from '../auth/auth.decorators'
 import { GuestsService } from './guests.service'
 import { GuestDTO } from './guest.dto'
@@ -15,8 +15,8 @@ export class GuestsController {
 
   @Public()
   @Get(':id/status')
-  status(@Param('id') id): Promise<{ done: boolean, expired?: boolean, refused?: boolean }> {
-    return this.guestsService.checkRegistration(id)
+  status(@Param('id') id, @Query('code') code: string): Promise<{ done: boolean, expired?: boolean, refused?: boolean, wrapped?: { token: string, look: string } | null }> {
+    return this.guestsService.checkRegistration(id, code)
   }
 
   @Get('shared')
