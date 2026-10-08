@@ -67,7 +67,7 @@ const storyOf = (details) => {
   // The friend reports the lighter one: another release takes its place, the best one left
   const replacement = valid.find((release) => release !== shrink && release !== owned)
 
-  if (!winner || !owned || !shrink || !replacement) {
+  if (!winner || !owned || !shrink || !replacement || winner.score <= owned.score) {
     return null
   }
 
@@ -103,10 +103,15 @@ const main = async () => {
     .filter(({ origin_country, poster_path }) => poster_path && !origin_country?.includes('JP'))
     .slice(0, SHOWS)
   const seasons = await all(shows.map(({ id }) => id), (id) => tmdb.fetch(`tv/${id}`))
-  const upcoming = (await pages('movie/upcoming', 1)).filter(({ poster_path }) => poster_path).slice(0, UPCOMING)
+  const today = new Date().toISOString().slice(0, 10)
+  const upcoming = (await tmdb.fetch('discover/movie', { sort_by: 'popularity.desc', 'primary_release_date.gte': today, with_release_type: '2|3' })).results
+    .filter(({ poster_path }) => poster_path)
+    .sort((a, b) => a.release_date.localeCompare(b.release_date))
+    .slice(0, UPCOMING)
 
   fs.mkdirSync(path.dirname(OUTPUT), { recursive: true })
   fs.writeFileSync(OUTPUT, JSON.stringify({
+    policy: { name: POLICIES[0].name, require: POLICIES[0].require, prefer: POLICIES[0].prefer, avoid: POLICIES[0].avoid },
     wall: discovered.slice(0, WALL).map(({ poster_path }) => poster_path),
     films,
     shows: seasons.map(({ id, name, poster_path, first_air_date, seasons, number_of_episodes }) => ({

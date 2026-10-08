@@ -25,7 +25,9 @@ export type Film = {
 }
 export type Show = { id: number, title: string, poster: string, year: number, seasons: { number: number, episodes: number }[], episodes: number }
 export type Upcoming = { id: number, title: string, poster: string, date: string }
-export type Films = { wall: string[], films: Film[], shows: Show[], upcoming: Upcoming[] }
+export type Axes = { [axis: string]: string[] }
+export type Policy = { name: string, require: Axes, prefer: Axes, avoid: Axes }
+export type Films = { policy: Policy, wall: string[], films: Film[], shows: Show[], upcoming: Upcoming[] }
 
 export const DEMO = 'demo/'
 export const WRAPPED = 'demo/wrapped/demo'
