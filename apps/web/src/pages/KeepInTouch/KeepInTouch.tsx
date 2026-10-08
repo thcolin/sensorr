@@ -6,7 +6,7 @@ import { useTitle } from '@sensorr/utils'
 import i18n from '@sensorr/i18n'
 import { useAPI } from '../../store/api'
 import { LoadingBar } from '../../layout/LoadingBar'
-import { LookFont, WrappedTicket, WrappedTitle, WrappedWall, lookOf, useShare } from './Wrapped'
+import { LookFont, WrappedPage, WrappedTicket, lookOf, useShare } from './Wrapped'
 
 // Persist the PIN so a page reload (e.g. a mobile tab discarded while the user is on plex.tv/link)
 // reuses the SAME code instead of minting a new one and orphaning the code already entered.
@@ -84,15 +84,15 @@ Emblem.styles = {
   },
 }
 
-export const Splash = ({ emblem, step = 0, backdrop = null, ink = undefined }) => {
+export const Splash = ({ emblem, step = 0, cover = null }) => {
   const { t } = useTranslation()
 
   return (
-    <div sx={Splash.styles.element} style={{ '--step': step, color: ink } as any}>
-      {backdrop}
+    <div sx={Splash.styles.element} style={{ '--step': step, ...(cover && { minHeight: '85svh' }) } as any}>
+      {cover}
       {emblem}
       <div sx={{ width: '100%' }}>
-        <a href="https://github.com/thcolin/sensorr" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.reset' }}><h1 sx={{ color: 'inherit' }}>Sensorr</h1></a>
+        <a href="https://github.com/thcolin/sensorr" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.reset' }}><h1>Sensorr</h1></a>
         <p>{t('keepInTouch.tagline')}</p>
       </div>
     </div>
@@ -140,7 +140,7 @@ Splash.styles = {
         transition: 'none',
       },
       opacity: 0.25,
-      zIndex: -2,
+      zIndex: -1,
     },
   },
 }
@@ -328,15 +328,10 @@ const KeepInTouch = () => {
             />
           </div>
         </div>
-        {share ? (
-          <Splash
-            backdrop={<WrappedWall token={pin.wrapped.token} share={share} look={look} />}
-            emblem={<WrappedTitle token={pin.wrapped.token} share={share} look={look} />}
-            ink={look.ink}
-          />
-        ) : (
-          <Splash emblem={<Emblem icon={<Icon value='plex' sx={{ height: '4em' }} />} label='Plex' />} />
-        )}
+        <Splash
+          emblem={<Emblem icon={<Icon value='plex' sx={{ height: '4em' }} />} label='Plex' />}
+          cover={share && <WrappedPage token={pin.wrapped.token} look={look} />}
+        />
         {look && <LookFont look={look} />}
       </div>
     </div>

@@ -105,7 +105,6 @@ export default {
       watchlist: 'Administrator is now allowed to follow movies from your <0>Plex "Watchlist"</0> and consider adding them to his library.',
       wrapped: {
         open: 'Open my wrapped',
-        explore: 'Explore my year',
         copy: 'Copy the link',
         copied: 'Link to your wrapped copied to the clipboard',
         uncopied: 'The link could not be copied, open your wrapped and keep its address',

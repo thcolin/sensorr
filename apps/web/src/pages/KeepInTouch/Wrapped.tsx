@@ -4,28 +4,12 @@ import toast from 'react-hot-toast'
 import { Bar } from '@sensorr/ui'
 import { WRAPPED_LOOKS, WrappedLook } from '@sensorr/sensorr'
 import i18n from '@sensorr/i18n'
+import { useDevice } from '@sensorr/utils'
 
-const WALL = 48
 const ENTRANCE = 'cubic-bezier(0.16, 1, 0.3, 1)'
 
 const linkOf = (token) => new URL(`wrapped/${token}`, document.baseURI).href
-const imageOf = (token, key) => `/api/wrapped/share/${encodeURIComponent(token)}/images/thumb?key=${encodeURIComponent(key)}&width=320`
 export const lookOf = (theme): WrappedLook => WRAPPED_LOOKS[theme] || WRAPPED_LOOKS.tele
-
-// Every title of the wrapped that has a poster, once
-const postersOf = (value, found = new Map()) => {
-  if (Array.isArray(value)) {
-    value.forEach((item) => postersOf(item, found))
-  } else if (value && typeof value === 'object') {
-    if (typeof value.key === 'string' && value.thumb && !found.has(value.key)) {
-      found.set(value.key, value)
-    }
-
-    Object.values(value).forEach((item) => postersOf(item, found))
-  }
-
-  return [...found.values()]
-}
 
 // What the wrapped page itself reads; `null` while it loads, and when it cannot open
 export const useShare = (token) => {
@@ -39,7 +23,7 @@ export const useShare = (token) => {
     const controller = new AbortController()
     fetch(`/api/wrapped/share/${encodeURIComponent(token)}`, { signal: controller.signal, headers: { Accept: 'application/json' } })
       .then((res) => res.ok ? res.json() : null)
-      .then((body) => setShare(body && { ...body, posters: postersOf(body.wrapped) }))
+      .then(setShare)
       .catch(() => null)
 
     return () => controller.abort()
@@ -61,126 +45,55 @@ const displayOf = (look: WrappedLook) => ({
   lineHeight: 1,
 })
 
-// The wall of the splash, made of the friend's own posters under the colour of their look
-export const WrappedWall = ({ token, share, look }) => {
-  const tiles = share.posters.length ? Array.from({ length: WALL }, (_, index) => share.posters[index % share.posters.length]) : []
-
-  return (
-    <div sx={WrappedWall.styles.element} aria-hidden={true}>
-      <div sx={WrappedWall.styles.grid}>
-        {tiles.map((poster, index) => (
-          <img
-            key={index}
-            src={imageOf(token, poster.key)}
-            alt=''
-            decoding='async'
-            sx={WrappedWall.styles.tile}
-            style={{ animationDelay: `${(index % 12) * 60}ms` }}
-          />
-        ))}
-      </div>
-      <div sx={{ ...WrappedWall.styles.veil, backgroundColor: look.ground }} />
-    </div>
-  )
+const labelStyle = {
+  fontFamily: 'monospace',
+  fontSize: 6,
+  letterSpacing: '0.2em',
+  textTransform: 'uppercase',
 }
 
-WrappedWall.styles = {
-  element: {
-    position: 'absolute',
-    inset: '0px',
-    zIndex: -1,
-    overflow: 'hidden',
-    animation: 'wall-in 1200ms ease-out both',
-    '@keyframes wall-in': {
-      from: { opacity: 0 },
-      to: { opacity: 1 },
-    },
-    '@media (prefers-reduced-motion: reduce)': {
-      animation: 'none',
-    },
-  },
-  grid: {
-    position: 'absolute',
-    width: '200%',
-    height: '200%',
-    top: '-50%',
-    left: '-50%',
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(8em, 1fr))',
-    gap: '0.5em',
-    transform: 'rotate(30deg)',
-  },
-  tile: {
-    width: '100%',
-    aspectRatio: '2 / 3',
-    objectFit: 'cover',
-    animation: `tile-in 900ms ${ENTRANCE} both`,
-    '@keyframes tile-in': {
-      from: { opacity: 0, transform: 'translateY(3em)' },
-      to: { opacity: 1, transform: 'translateY(0)' },
-    },
-    '@media (prefers-reduced-motion: reduce)': {
-      animation: 'none',
-    },
-  },
-  veil: {
-    position: 'absolute',
-    inset: '0px',
-    opacity: 0.72,
+// A button in the colours of the look, which `sx` merges with them
+const actionStyle = {
+  variant: 'button.default',
+  textDecoration: 'none',
+  borderColor: 'transparent',
+  marginTop: 4,
+  ':hover': {
+    filter: 'brightness(1.1)',
   },
 }
 
-// Takes the place of the Plex + sensorr emblem once the wall is the friend's
-export const WrappedTitle = ({ token, share, look }) => {
+// Their wrapped itself takes the place of the splash, revealed over the poster wall once it has loaded
+export const WrappedPage = ({ token, look }) => {
   const { t } = useTranslation()
+  const [loaded, setLoaded] = useState(false)
 
   return (
-    <div sx={WrappedTitle.styles.element}>
-      <h2 sx={{ ...displayOf(look), ...WrappedTitle.styles.title }}>{t('wrapped.title', { name: share.name, year: share.year })}</h2>
-      <a href={linkOf(token)} target='_blank' rel='noopener noreferrer' sx={{ ...WrappedTitle.styles.action, backgroundColor: look.button.background, color: look.button.color }}>
-        {t('keepInTouch.done.wrapped.explore')}
-      </a>
+    <div sx={{ ...WrappedPage.styles.element, backgroundColor: look.ground }} data-loaded={loaded}>
+      <iframe src={linkOf(token)} title={t('keepInTouch.done.wrapped.open')} onLoad={() => setLoaded(true)} sx={WrappedPage.styles.frame} />
     </div>
   )
 }
 
-WrappedTitle.styles = {
+WrappedPage.styles = {
   element: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 4,
-    margin: 'auto',
-    maxWidth: '20em',
-    textAlign: 'center',
-    animation: `title-in 900ms ${ENTRANCE} 500ms both`,
-    '@keyframes title-in': {
-      from: { opacity: 0, transform: 'translateY(1em)' },
-      to: { opacity: 1, transform: 'translateY(0)' },
+    position: 'absolute',
+    inset: '0px',
+    zIndex: 1,
+    clipPath: 'inset(0 0 0 100%)',
+    transition: `clip-path 1200ms ${ENTRANCE}`,
+    '&[data-loaded="true"]': {
+      clipPath: 'inset(0 0 0 0)',
     },
     '@media (prefers-reduced-motion: reduce)': {
-      animation: 'none',
+      transition: 'none',
     },
   },
-  label: {
-    fontFamily: 'monospace',
-    fontSize: 6,
-    letterSpacing: '0.2em',
-    textTransform: 'uppercase',
-  },
-  title: {
-    margin: '0px',
-    fontSize: ['2.25em', '3em'],
-    textWrap: 'balance',
-  },
-  action: {
-    variant: 'button.default',
-    textDecoration: 'none',
-    borderColor: 'transparent',
-    marginTop: 4,
-    ':hover': {
-      filter: 'brightness(1.1)',
-    },
+  frame: {
+    display: 'block',
+    width: '100%',
+    height: '100%',
+    border: 'none',
   },
 }
 
@@ -189,6 +102,8 @@ export const WrappedTicket = ({ token, share, look }) => {
   const { t } = useTranslation()
   const [card, setCard] = useState('loading')
   const href = linkOf(token)
+  // Beside the page their wrapped already fills, the story would show it twice
+  const beside = useDevice() !== 'mobile'
 
   const copy = async () => {
     try {
@@ -204,7 +119,7 @@ export const WrappedTicket = ({ token, share, look }) => {
       <div sx={{ ...WrappedTicket.styles.ticket, backgroundColor: look.ground, color: look.ink }}>
         <Edge look={look} />
         <div sx={WrappedTicket.styles.body}>
-          {card !== 'failed' && (
+          {!beside && card !== 'failed' && (
             <a href={href} target='_blank' rel='noopener noreferrer' sx={WrappedTicket.styles.card} tabIndex={-1} aria-hidden={true}>
               {card === 'loading' && <Bar width='100%' height='100%' sx={WrappedTicket.styles.skeleton} />}
               <img
@@ -217,9 +132,9 @@ export const WrappedTicket = ({ token, share, look }) => {
             </a>
           )}
           <div sx={WrappedTicket.styles.text}>
-            <span sx={{ ...WrappedTitle.styles.label, color: look.label }}>{t('mail.wrapped.band')} {share.year}</span>
+            <span sx={{ ...labelStyle, color: look.label }}>{t('mail.wrapped.band')} {share.year}</span>
             <h3 sx={{ ...displayOf(look), ...WrappedTicket.styles.title }}>{t('mail.wrapped.title', { open: share.frozen ? 'no' : 'yes' })}</h3>
-            <a href={href} target='_blank' rel='noopener noreferrer' sx={{ ...WrappedTitle.styles.action, marginTop: 2, backgroundColor: look.button.background, color: look.button.color }}>
+            <a href={href} target='_blank' rel='noopener noreferrer' sx={{ ...actionStyle, marginTop: 2, backgroundColor: look.button.background, color: look.button.color }}>
               {t('keepInTouch.done.wrapped.open')}
             </a>
             <button type='button' onClick={copy} sx={{ ...WrappedTicket.styles.copy, color: look.ink }}>
@@ -227,11 +142,11 @@ export const WrappedTicket = ({ token, share, look }) => {
             </button>
           </div>
         </div>
+        <p sx={{ ...WrappedTicket.styles.keep, borderColor: look.label }}>
+          {t('keepInTouch.done.wrapped.keep')}
+        </p>
         <Edge look={look} />
       </div>
-      <p sx={WrappedTicket.styles.keep}>
-        {t('keepInTouch.done.wrapped.keep')}
-      </p>
     </div>
   )
 }
@@ -246,7 +161,7 @@ WrappedTicket.styles = {
   },
   ticket: {
     width: '100%',
-    maxWidth: '30em',
+    maxWidth: '32em',
     textAlign: 'left',
   },
   body: {
@@ -260,7 +175,7 @@ WrappedTicket.styles = {
     position: 'relative',
     flexShrink: 0,
     display: 'block',
-    height: '14em',
+    height: '16em',
     aspectRatio: '9 / 16',
     transform: 'rotate(-3deg)',
     transition: `transform 400ms ${ENTRANCE}`,
@@ -293,7 +208,7 @@ WrappedTicket.styles = {
   },
   title: {
     margin: '0px',
-    fontSize: ['1.5em', '2em'],
+    fontSize: ['1.25em', '1.5em'],
     textWrap: 'balance',
   },
   copy: {
@@ -306,11 +221,14 @@ WrappedTicket.styles = {
     textUnderlineOffset: '0.2em',
     cursor: 'pointer',
   },
+  // Below a tear line, as the stub of a ticket
   keep: {
     margin: '0px',
-    maxWidth: '26em',
+    padding: '1em 1.5em',
+    borderTop: '1px dashed',
     fontSize: 6,
     lineHeight: 'body',
+    textAlign: ['center', 'left'],
   },
 }
 

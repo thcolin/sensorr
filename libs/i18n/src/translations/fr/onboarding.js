@@ -105,7 +105,6 @@ export default {
       watchlist: 'L’administrateur peut maintenant suivre les films de votre <0>« Watchlist » Plex</0> et envisager de les ajouter à sa bibliothèque.',
       wrapped: {
         open: 'Ouvrir mon wrapped',
-        explore: 'Explorer mon année',
         copy: 'Copier le lien',
         copied: 'Lien de votre wrapped copié dans le presse-papiers',
         uncopied: 'Le lien n’a pas pu être copié, ouvrez votre wrapped et gardez son adresse',
