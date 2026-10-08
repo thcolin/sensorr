@@ -11,6 +11,8 @@ export interface ThemeProps {
   colophon: Colophon
   closed: boolean
   art: Art
+  // The address of the wrapped opened on a story, from 0; given to a look's cover only
+  link?: (index: number) => string
 }
 
 // A story is a sheet on its own page, or the summary that closes them and is shared for the whole year

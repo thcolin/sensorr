@@ -16,7 +16,7 @@ export const rng = (seed: number) => {
   return () => (state = (state * 16807) % 2147483647) / 2147483647
 }
 
-const two = (value: number) => String(value).padStart(2, '0')
+export const two = (value: number) => String(value).padStart(2, '0')
 
 // A quantity is written over the print in grease pencil with its unit: not a date, nor the digits of a name or of a title in quotes
 export const figures = (text: string) => text.split(QUOTED).flatMap((part, index) => {

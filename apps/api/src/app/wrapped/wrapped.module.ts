@@ -21,5 +21,6 @@ import { Play, PlaySchema, Viewer, ViewerSchema, Title, TitleSchema, Edition, Ed
   ],
   controllers: [WrappedController],
   providers: [WrappedService, CardsService, ConfigService],
+  exports: [WrappedService],
 })
 export class WrappedModule {}

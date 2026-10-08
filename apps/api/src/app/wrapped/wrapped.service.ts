@@ -166,7 +166,7 @@ export class WrappedService {
 
   private async mailWrapped(guest, year: number) {
     const viewer = await this.viewerOf(guest.email)
-    const token = guest.wrapped_token || (await this.guestModel.findOneAndUpdate({ email: guest.email }, { wrapped_token: randomBytes(18).toString('base64url') }, { returnDocument: 'after' }).lean()).wrapped_token
+    const token = await this.tokenOf(guest.email)
     const { theme } = this.lookOf(year)
     await this.mailService.send(guest.email, mails.wrapped({
       t: this.mailService.t(),
@@ -179,6 +179,18 @@ export class WrappedService {
       open: year >= editionOf(Date.now() / 1000, TIME_ZONE),
     }))
     await this.guestModel.updateOne({ email: guest.email }, { wrapped_mailed_at: Date.now() })
+  }
+
+  // Two polls of one PIN may ask at once: only the first writes a token
+  private async tokenOf(email: string) {
+    await this.guestModel.updateOne({ email, wrapped_token: null }, { wrapped_token: randomBytes(18).toString('base64url') })
+    return (await this.guestModel.findOne({ email }, { wrapped_token: 1 }).lean()).wrapped_token
+  }
+
+  // What Keep in touch shows a friend who just linked their Plex account, when their wrapped opens
+  async linkOf(email: string) {
+    const year = await this.openedEdition(email)
+    return year ? { token: await this.tokenOf(email), look: this.lookOf(year).theme } : null
   }
 
   // Sent from the Friends page, with the edition the link opens on

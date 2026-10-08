@@ -1,4 +1,4 @@
-import type { WrappedTheme } from '@sensorr/sensorr'
+import { WRAPPED_LOOKS, type WrappedTheme } from '@sensorr/sensorr'
 import type { Translator } from '@sensorr/i18n/server'
 
 // Mail clients ignore stylesheets and most modern CSS: every mail is tables with inline styles, fonts fall back in Gmail
@@ -28,51 +28,54 @@ const GREEN = '#01d076'
 // The test card of the app, `apps/web/src/layout/LoadingBar.tsx`
 const BARS = ['rgb(235, 235, 235)', 'rgb(235, 235, 16)', 'rgb(16, 235, 235)', 'rgb(16, 235, 16)', 'rgb(235, 16, 235)', 'rgb(235, 16, 16)', 'rgb(16, 16, 235)']
 
+const { tele, labo, videoclub, scenario, affiche } = WRAPPED_LOOKS
+
 const LOOKS: Record<WrappedTheme, { band: (year: number, label: string) => string, button: { background: string, color: string, font?: string } }> = {
   tele: {
     band: (year, label) => `
-      ${stripe(['#f4efe4', '#f8d44a', '#63b7c9', '#5aa457', '#b14e9e', '#d1312b', '#2135a3'], 44)}
-      <tr><td style="background:#f4efe4;padding:22px 26px 20px">
-        <div style="font:400 12px/1 ${MONO};letter-spacing:2px;text-transform:uppercase;color:#5c564a">${label}</div>
-        <div style="font:italic 800 44px/1 'Barlow Condensed','Arial Narrow',Arial,sans-serif;color:#d1312b;padding-top:6px">${year}</div>
+      ${stripe(tele.stripe, 44)}
+      <tr><td style="background:${tele.ground};padding:22px 26px 20px">
+        <div style="font:400 12px/1 ${MONO};letter-spacing:2px;text-transform:uppercase;color:${tele.label}">${label}</div>
+        <div style="font:italic 800 44px/1 ${tele.display.family};color:${tele.display.color};padding-top:6px">${year}</div>
       </td></tr>`,
-    button: { background: '#d1312b', color: '#ffffff', font: `italic 600 16px/1 ${BODY}` },
+    button: { ...tele.button, font: `italic 600 16px/1 ${BODY}` },
   },
   labo: {
     band: (year, label) => `
       ${perforations()}
-      <tr><td style="background:#2a1c12;padding:18px 26px">
-        <div style="font:400 12px/1 ${MONO};letter-spacing:2px;text-transform:uppercase;color:#ff4b1f">${label}</div>
-        <div style="font:800 46px/1 'Big Shoulders Display','Arial Narrow',Arial,sans-serif;color:#ffb238;padding-top:6px">${year}</div>
+      <tr><td style="background:${labo.ground};padding:18px 26px">
+        <div style="font:400 12px/1 ${MONO};letter-spacing:2px;text-transform:uppercase;color:${labo.label}">${label}</div>
+        <div style="font:800 46px/1 ${labo.display.family};color:${labo.display.color};padding-top:6px">${year}</div>
       </td></tr>
       ${perforations()}`,
-    button: { background: '#ffb238', color: '#120c08' },
+    button: labo.button,
   },
   videoclub: {
     band: (year, label) => `
-      ${stripe(['#ff3fa4', '#3ef2ff', '#ff3fa4'], 6)}
-      <tr><td style="background:#221a3d;padding:34px 26px 20px">
-        <div style="font:400 12px/1 ${MONO};letter-spacing:2px;text-transform:uppercase;color:#3ef2ff">${label}</div>
-        <div style="font:400 44px/1 'Tilt Neon','Trebuchet MS',sans-serif;color:#ff3fa4;text-shadow:0 0 6px #ff3fa4;padding-top:6px">${year}</div>
+      ${stripe(videoclub.stripe, 6)}
+      <tr><td style="background:${videoclub.ground};padding:34px 26px 20px">
+        <div style="font:400 12px/1 ${MONO};letter-spacing:2px;text-transform:uppercase;color:${videoclub.label}">${label}</div>
+        <div style="font:400 44px/1 ${videoclub.display.family};color:${videoclub.display.color};text-shadow:0 0 6px ${videoclub.display.color};padding-top:6px">${year}</div>
       </td></tr>`,
-    button: { background: '#ff3fa4', color: '#0c0a1a' },
+    button: videoclub.button,
   },
   scenario: {
     band: (year, label) => `
-      <tr><td style="background:#fbfaf5;padding:40px 26px 20px">
-        <div style="font:700 14px/1 'Courier Prime','Courier New',monospace;color:#a3201a">${label}</div>
-        <div style="font:700 28px/1.2 'Courier Prime','Courier New',monospace;color:#1b1a17;padding-top:8px"><span style="background:#fff06a;padding:0 4px">${year}</span></div>
+      <tr><td style="background:${scenario.ground};padding:40px 26px 20px">
+        <div style="font:700 14px/1 ${scenario.display.family};color:${scenario.label}">${label}</div>
+        <div style="font:700 28px/1.2 ${scenario.display.family};color:${scenario.display.color};padding-top:8px"><span style="background:#fff06a;padding:0 4px">${year}</span></div>
       </td></tr>`,
-    button: { background: '#fbfaf5', color: '#1b1a17', font: `700 16px/1 'Courier Prime','Courier New',monospace` },
+    // The mail is dark, the page of the script stands out on it
+    button: { background: scenario.ground, color: scenario.ink, font: `700 16px/1 ${scenario.display.family}` },
   },
   affiche: {
     band: (year, label) => `
-      <tr><td style="background:#b8955a;padding:40px 26px 20px">
-        <div style="font:600 12px/1 ${BODY};letter-spacing:2px;text-transform:uppercase;color:#241a2e">${label}</div>
-        <div style="font:400 42px/1 'Permanent Marker',Impact,'Arial Black',sans-serif;color:#241a2e;padding-top:6px">${year}</div>
+      <tr><td style="background:${affiche.ground};padding:40px 26px 20px">
+        <div style="font:600 12px/1 ${BODY};letter-spacing:2px;text-transform:uppercase;color:${affiche.label}">${label}</div>
+        <div style="font:400 42px/1 ${affiche.display.family};color:${affiche.display.color};padding-top:6px">${year}</div>
       </td></tr>
-      ${stripe(['#5c4668', '#b3221a', '#5c4668'], 8)}`,
-    button: { background: '#b3221a', color: '#e9dcc0' },
+      ${stripe(affiche.stripe, 8)}`,
+    button: affiche.button,
   },
 }
 

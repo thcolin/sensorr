@@ -12,12 +12,12 @@ type Scene = { scene: number, art: Art }
 
 // Production revision colours, in the order a shooting script goes through them
 // White is the first draft, it carries no revision line
-const REVISIONS = ['white', 'blue', 'pink', 'yellow', 'green', 'gold', 'buff', 'salmon', 'cherry', 'tan']
+export const REVISIONS = ['white', 'blue', 'pink', 'yellow', 'green', 'gold', 'buff', 'salmon', 'cherry', 'tan']
 
 export const TRANSITIONS = ['dissolve', 'cut', 'crossfade', 'cutTo']
 
 // The same lean for the same poster on every visit
-const lean = (seed: string | number) => {
+export const lean = (seed: string | number) => {
   const text = String(seed)
   let hash = 0
   for (let index = 0; index < text.length; index++) hash = (hash * 31 + text.charCodeAt(index)) | 0
@@ -118,7 +118,7 @@ const Props = () => (
   </div>
 )
 
-const Holes = ({ brads }: { brads?: boolean }) => (
+export const Holes = ({ brads }: { brads?: boolean }) => (
   <span className={`scenario-holes${brads ? ' scenario-holes-brads' : ''}`} aria-hidden="true">
     <i /><i /><i />
   </span>
@@ -182,7 +182,7 @@ export const Shout = ({ figure, children, long, className = '' }: { figure: Reac
 
 export const Pencil = ({ children, className }: { children: ReactNode, className?: string }) => <p className={`scenario-pencil-note ${className || ''}`}>{children}</p>
 
-const Clip = () => (
+export const Clip = () => (
   <svg className="scenario-clip" viewBox="0 0 22 58" aria-hidden="true">
     <path d="M6 44 V10 a5 5 0 0 1 10 0 V48 a8 8 0 0 1 -16 0 V16" fill="none" stroke="#7d828a" strokeWidth="2.6" strokeLinecap="round" />
     <path d="M7 42 V11 a4 4 0 0 1 4 -4" fill="none" stroke="#d4d8dd" strokeWidth="0.9" strokeLinecap="round" />

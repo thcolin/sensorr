@@ -6,6 +6,7 @@ import { useTitle } from '@sensorr/utils'
 import i18n from '@sensorr/i18n'
 import { useAPI } from '../../store/api'
 import { LoadingBar } from '../../layout/LoadingBar'
+import { LookFont, WrappedPage, WrappedTicket, lookOf, useShare } from './Wrapped'
 
 // Persist the PIN so a page reload (e.g. a mobile tab discarded while the user is on plex.tv/link)
 // reuses the SAME code instead of minting a new one and orphaning the code already entered.
@@ -83,11 +84,12 @@ Emblem.styles = {
   },
 }
 
-export const Splash = ({ emblem, step = 0 }) => {
+export const Splash = ({ emblem, step = 0, cover = null }) => {
   const { t } = useTranslation()
 
   return (
-    <div sx={Splash.styles.element} style={{ '--step': step } as any}>
+    <div sx={Splash.styles.element} style={{ '--step': step, ...(cover && { minHeight: '85svh' }) } as any}>
+      {cover}
       {emblem}
       <div sx={{ width: '100%' }}>
         <a href="https://github.com/thcolin/sensorr" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.reset' }}><h1>Sensorr</h1></a>
@@ -148,11 +150,13 @@ const KeepInTouch = () => {
   useTitle(t('keepInTouch.title'))
   const api = useAPI()
   const [pin, setPin] = useState(null) as any
+  const share = useShare(pin?.wrapped?.token)
+  const look = share && lookOf(share.look.theme)
 
   useEffect(() => {
     let stopped = false
     let interval = null
-    let currentId = null
+    let currentPin = null
     let done = false
 
     const register = async () => {
@@ -168,13 +172,13 @@ const KeepInTouch = () => {
 
     // Client-driven polling: a fresh request always succeeds when the tab returns to the
     // foreground, unlike the previous SSE whose server-side polling died on mobile backgrounding.
-    const check = async (id) => {
-      if (stopped || done || id !== currentId) {
+    const check = async ({ id, code }) => {
+      if (stopped || done || id !== currentPin?.id) {
         return
       }
 
       try {
-        const { uri, params, init } = api.query.guests.status({ id })
+        const { uri, params, init } = api.query.guests.status({ id, code })
         const raw = await api.fetch(uri, params, init)
 
         if (raw.done) {
@@ -183,7 +187,7 @@ const KeepInTouch = () => {
           if (interval) {
             clearInterval(interval)
           }
-          setPin(prev => ({ ...prev, done: true }))
+          setPin(prev => ({ ...prev, done: true, wrapped: raw.wrapped }))
           return
         }
 
@@ -222,7 +226,7 @@ const KeepInTouch = () => {
           return
         }
 
-        currentId = current.id
+        currentPin = current
         setPin(current)
 
         if (current.done) {
@@ -230,8 +234,8 @@ const KeepInTouch = () => {
           return
         }
 
-        check(current.id)
-        interval = setInterval(() => check(current.id), POLL_INTERVAL)
+        check(current)
+        interval = setInterval(() => check(current), POLL_INTERVAL)
       } catch (err) {
         console.warn(err)
         toast.error(i18n.t('keepInTouch.pin'))
@@ -239,8 +243,8 @@ const KeepInTouch = () => {
     }
 
     const onVisible = () => {
-      if (document.visibilityState === 'visible' && currentId && !done) {
-        check(currentId)
+      if (document.visibilityState === 'visible' && currentPin && !done) {
+        check(currentPin)
       }
     }
 
@@ -263,7 +267,7 @@ const KeepInTouch = () => {
       <LoadingBar />
       <div sx={KeepInTouch.styles.wrapper}>
         <div sx={KeepInTouch.styles.register}>
-          <div sx={{ maxWidth: '40em', overflow: ['visible', 'scroll'] }}>
+          <div sx={{ maxWidth: '40em', marginY: 'auto' }}>
             <Warning
               emoji='🍻'
               title={t('keepInTouch.heading')}
@@ -282,12 +286,15 @@ const KeepInTouch = () => {
                     </div>
                   ) : pin?.done ? (
                     <div>
-                      <Icon value='check' height='1em' width='1em' sx={{ fontSize: '4em', color: 'black' }} />
+                      {!share && <Icon value='check' height='1em' width='1em' sx={{ fontSize: '4em', color: 'black' }} />}
                       <p sx={{ marginTop: 2 }}>
                         {t('keepInTouch.done.title')}
                       </p>
+                      {share && (
+                        <WrappedTicket token={pin.wrapped.token} share={share} look={look} />
+                      )}
                       <br/>
-                      <p sx={{ fontSize: 6 }}>
+                      <p sx={{ fontSize: 6, color: 'grayDark' }}>
                         <Trans t={t} i18nKey='keepInTouch.done.watchlist' components={[<a href="https://support.plex.tv/articles/universal-watchlist/" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }} />]} />
                         <br/><br/>
                         <Trans t={t} i18nKey='keepInTouch.device' components={[<a href="https://support.plex.tv/articles/115007577087-devices/" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }} />, <a href="https://app.plex.tv/desktop/#!/settings/devices/all" target='_blank' rel='noreferer noopener' sx={{ variant: 'link.default' }} />]} />
@@ -299,27 +306,7 @@ const KeepInTouch = () => {
                         href='https://plex.tv/link'
                         rel='noopener noreferrer'
                         target='_blank'
-                        sx={{
-                          variant: 'button.default',
-                          display: 'block',
-                          textDecoration: 'none',
-                          borderColor: 'primary',
-                          backgroundColor: 'primary',
-                          color: 'hsl(0, 0%, 100%)',
-                          marginBottom: 4,
-                          ':hover': {
-                            borderColor: 'primaryDark',
-                            backgroundColor: 'primaryDark',
-                          },
-                          ':active': {
-                            borderColor: 'primaryDarker',
-                            backgroundColor: 'primaryDarker',
-                          },
-                          ':disabled': {
-                            borderColor: 'primaryDarkest',
-                            backgroundColor: 'primaryDarkest',
-                          },
-                        }}
+                        sx={KeepInTouch.styles.action}
                       >
                         <Trans t={t} i18nKey='keepInTouch.link.go' components={[<span sx={{ textDecoration: 'underline' }} />]} />
                       </a>
@@ -341,24 +328,51 @@ const KeepInTouch = () => {
             />
           </div>
         </div>
-        <Splash emblem={<Emblem icon={<Icon value='plex' sx={{ height: '4em' }} />} label='Plex' />} />
+        <Splash
+          emblem={<Emblem icon={<Icon value='plex' sx={{ height: '4em' }} />} label='Plex' />}
+          cover={share && <WrappedPage token={pin.wrapped.token} theme={share.look.theme} look={look} />}
+        />
+        {look && <LookFont look={look} />}
       </div>
     </div>
   )
 }
 
 KeepInTouch.styles = {
+  action: {
+    variant: 'button.default',
+    display: 'block',
+    textDecoration: 'none',
+    borderColor: 'primary',
+    backgroundColor: 'primary',
+    color: 'hsl(0, 0%, 100%)',
+    marginBottom: 4,
+    ':hover': {
+      borderColor: 'primaryDark',
+      backgroundColor: 'primaryDark',
+    },
+    ':active': {
+      borderColor: 'primaryDarker',
+      backgroundColor: 'primaryDarker',
+    },
+    ':disabled': {
+      borderColor: 'primaryDarkest',
+      backgroundColor: 'primaryDarkest',
+    },
+  },
   // The register comes first, so a phone opens on it, at the top of the page, as Onboarding does
   wrapper: {
     ...Splash.styles.wrapper,
     flexDirection: ['column', 'row-reverse'],
   },
+  // A container, so the wrapped's ticket can take its whole width
   register: {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
     alignItems: 'center',
+    overflowY: ['visible', 'auto'],
+    containerType: 'inline-size',
   },
 }
 

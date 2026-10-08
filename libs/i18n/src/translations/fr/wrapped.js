@@ -215,6 +215,7 @@ export default {
       },
     },
     tele: {
+      read: 'Lire mon numéro',
       brand: 'Télé',
       page: 'p. {page}',
       issue: 'N°<0>{year}</0>Édition annuelle',
@@ -258,6 +259,8 @@ export default {
       zeroCopy: 'Copie zéro',
       dominant: 'Dominante',
       approved: 'Bon à tirer',
+      contents: 'Sur la bobine',
+      develop: 'Développer ma bobine',
     },
     scenario: {
       pages: 'Pages',
@@ -293,6 +296,10 @@ export default {
       chorus: '(en chœur)',
       nothing: 'Rien.',
       premiere: 'Première projection',
+      cover: {
+        contents: 'Séquencier',
+        read: 'Lire le scénario',
+      },
     },
     videoclub: {
       receipt: 'Vidéoclub · N° {year}',
@@ -305,8 +312,14 @@ export default {
       sameWeek: 'Même semaine',
       rarities: 'Introuvables',
       loanCard: 'Fiche de prêt',
+      cover: {
+        releases: 'Nouveautés',
+        rewind: 'Rembobiner mon année',
+      },
     },
     affiche: {
+      bill: 'À l’affiche',
+      paste: 'Afficher mon année',
       first: 'Le 1er',
       h: 'h',
     },
