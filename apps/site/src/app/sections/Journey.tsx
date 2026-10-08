@@ -101,7 +101,8 @@ const AXES = ['resolution', 'source', 'encoding', 'language', 'dub', 'flags']
 // The axes as the app's filters name them (libs/i18n jobs.js `filters`)
 const AXIS_LABELS = { resolution: '🎞️ Resolution', source: '💽 Source', encoding: '🎥 Encoding', language: '🇺🇳 Language', dub: '🔈 Dub', flags: '🚩 Flags' }
 
-// The policy axis by axis, as Settings › Policies lays it out: each axis named, ⭐ what it prefers, ⛔ what it avoids
+// The policy axis by axis, as Settings › Policies lays it out: each axis named, ⭐ what it prefers and ⛔ what it avoids
+// in the colors of its tags (`colors` in libs/ui/src/inputs/Select/SortableSelect.tsx)
 const Policy = ({ policy }: { policy?: Films['policy'] }) => (
   <div sx={Journey.styles.policy}>
     {policy ? AXES.filter((axis) => policy.prefer[axis]?.length || policy.avoid[axis]?.length).map((axis) => (
@@ -111,7 +112,7 @@ const Policy = ({ policy }: { policy?: Films['policy'] }) => (
           <dd key={group} sx={Journey.styles.axisGroup}>
             <span role='img' aria-label={group}>{group === 'prefer' ? '⭐' : '⛔'}</span>
             {policy[group][axis].map((value) => (
-              <TransitionPill key={value} to={value} state='same' compact={true} title={`${group} ${axis}: ${value}`} />
+              <span key={value} title={`${group} ${axis}: ${value}`} sx={{ ...Journey.styles.tag, bg: group === 'prefer' ? 'primaryDarker' : 'error', borderColor: group === 'prefer' ? 'primaryDarker' : 'error' }}>{value}</span>
             ))}
           </dd>
         ))}
@@ -840,6 +841,17 @@ Journey.styles = {
     fontFamily: 'heading',
     fontWeight: 'heading',
     fontSize: 5,
+    whiteSpace: 'nowrap',
+  },
+  tag: {
+    paddingX: 9,
+    paddingY: 11,
+    border: '1px solid',
+    borderRadius: '2px',
+    fontFamily: 'monospace',
+    fontWeight: 600,
+    fontSize: 6,
+    color: 'whitePure',
     whiteSpace: 'nowrap',
   },
   axisGroup: {

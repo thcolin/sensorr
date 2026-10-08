@@ -120,16 +120,16 @@ export const Release = {
       left: '0.375em',
     },
     // One line, a short bar under each value on a wide screen, none on a phone, as the app's rows draw them without room
+    // One under the other, as the app's release rows stack them
     statistics: {
       display: 'flex',
-      flexWrap: 'wrap',
-      columnGap: 6,
+      flexDirection: 'column',
       rowGap: 11,
-      fontSize: 6,
+      fontSize: 7,
     },
     statistic: {
       display: 'grid',
-      gridTemplateColumns: ['1.25em auto', '1.25em 2.5em auto'],
+      gridTemplateColumns: ['1.25em auto', '1.25em 4em auto'],
       alignItems: 'center',
       columnGap: 8,
       whiteSpace: 'nowrap',
