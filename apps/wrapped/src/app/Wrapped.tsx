@@ -3,7 +3,7 @@ import type { WrappedTheme } from '@sensorr/sensorr'
 import { useTranslation } from 'react-i18next'
 import type { Share } from './App'
 import { sheetsOf } from './sheets'
-import { DEFAULT_THEME, LOADERS, STORIES, STORY_LOADERS, THEMES, THEME_COLORS } from './themes'
+import { COVERS, DEFAULT_THEME, LOADERS, STORIES, STORY_LOADERS, THEMES, THEME_COLORS } from './themes'
 import type { Art, StoryModel } from './themes/types'
 import { Card, ShareImage, Stories, idOf } from './Stories'
 import { known, read, write } from './look'
@@ -24,6 +24,8 @@ const usePhone = () => useSyncExternalStore(subscribe, () => window.matchMedia(P
 // Set by the API's browser when it renders a story as an image: `?card=<story>&look=<look>&lang=<language>`
 const query = new URLSearchParams(window.location.search)
 const card = { story: query.get('card'), look: query.get('look') }
+// Set by Keep in touch, which shows the opening of the look in its own frame
+const cover = query.has('cover')
 
 const Switch = ({ at, theme, looks, onChoose }: { at: At, theme: WrappedTheme, looks: WrappedTheme[], onChoose: (theme: WrappedTheme, at: At, from: HTMLElement) => void }) => {
   const { t } = useTranslation()
@@ -146,6 +148,17 @@ export const WrappedPage = ({ share, token }: { share: Share, token: string }) =
 
   const choice = look.choice && looks.length > 1
   const years = share.editions.length > 1
+
+  if (cover) {
+    const Cover = COVERS[theme]
+    return (
+      <Suspense fallback={null}>
+        {Cover
+          ? <Cover share={share} sheets={sheets} colophon={colophon} closed={closed} art={art} />
+          : Story && <Card missing={false}><Story story={stories[0]} index={0} share={share} sheets={sheets} colophon={colophon} closed={closed} art={art} /></Card>}
+      </Suspense>
+    )
+  }
 
   if (card.story) {
     const story = stories.find((other) => idOf(other) === card.story)

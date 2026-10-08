@@ -2181,3 +2181,7 @@ html[data-theme='tele'] {
     animation: none;
   }
 }
+
+.tele-presentation .tele-cover {
+  height: 100svh;
+}

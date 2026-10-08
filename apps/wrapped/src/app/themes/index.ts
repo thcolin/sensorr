@@ -38,6 +38,11 @@ export const STORIES = Object.fromEntries(Object.entries(STORY_LOADERS).map(([id
 
 export const THEMES = Object.fromEntries(Object.entries(LOADERS).map(([id, loader]) => [id, lazy(loader)])) as Record<WrappedTheme, React.LazyExoticComponent<React.ComponentType<ThemeProps>>>
 
+// A look's opening on its own, the size of the frame it is shown in: `?cover`, opened by Keep in touch
+export const COVERS: Partial<Record<WrappedTheme, React.LazyExoticComponent<React.ComponentType<ThemeProps>>>> = {
+  tele: lazy(() => import('./tele/Cover')),
+}
+
 // The colour the browser paints around each look, on phones the status bar
 export const THEME_COLORS: Record<WrappedTheme, string> = {
   tele: '#f4efe4',
