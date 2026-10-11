@@ -2,7 +2,7 @@ import oleoo from 'oleoo'
 
 // What a movie already has: its Plex files, and the releases Sensorr recorded that were not
 // refused nor left pending. A record replaced since stays: it was downloaded once.
-const RECORDED = ['record', 'refine', 'shrink', 'report', 'airing']
+export const RECORDED = ['record', 'refine', 'shrink', 'report', 'airing']
 
 export const ownedOf = (releases) => (releases || []).filter(release => (
   release.from === 'sync' ||
@@ -13,7 +13,7 @@ export const ownedOf = (releases) => (releases || []).filter(release => (
 // and the same audio MULTi-VFF or MULTi depending on who reads it
 const FAMILIES = {
   encoding: (value) => /265|hevc/i.test(value) ? '265' : /264|avc/i.test(value) ? '264' : value,
-  language: (value) => /^multi/i.test(value) ? 'MULTi' : value === 'TRUEFRENCH' ? 'FRENCH' : value,
+  language: (value) => /^multi/i.test(value) ? 'MULTi' : ['TRUEFRENCH', 'VFQ'].includes(value) ? 'FRENCH' : value,
   resolution: (value) => value,
   group: (value) => value.toLowerCase(),
 }
@@ -24,9 +24,11 @@ const NO_GROUP = 'NOTEAM'
 // A record and its Plex file differ by up to 1% in size: the indexer rounds what it announces
 const SIZE_TOLERANCE = 0.01
 
+// The title, not the search result's `meta`: that one is parsed with defaults, VO and SD, that the
+// release never wrote. VO is what a generated title writes for no language.
 const metaOf = (release) => {
-  const meta = release.meta || oleoo.parse(release.title || '', { strict: false, flagged: true })
-  return meta.group === NO_GROUP ? { ...meta, group: null } : meta
+  const meta = oleoo.parse(release.title || '', { strict: false, flagged: true })
+  return { ...meta, group: meta.group === NO_GROUP ? null : meta.group, language: meta.language === 'VO' ? null : meta.language }
 }
 
 // A value missing on one side says nothing against the match, except the group: without it,
