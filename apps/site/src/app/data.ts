@@ -44,7 +44,7 @@ const filmsOf = () => (films ??= fetch(new URL('data/films.json', document.baseU
   : Promise.reject(new Error(`[Site] films.json answered ${res.status}`))))
 
 // The first of the browser's languages the stories are told in, English otherwise
-const languageOf = (written: Written) => navigator.languages.map((tag) => tag.slice(0, 2).toLowerCase()).find((language) => written.policies[language]) || 'en'
+const languageOf = (written: Written) => navigator.languages.map((tag) => tag.split('-')[0].toLowerCase()).find((language) => written.policies[language]) || 'en'
 
 const told = (written: Written): Films => {
   const language = languageOf(written)
