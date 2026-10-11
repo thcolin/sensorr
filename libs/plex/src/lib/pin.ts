@@ -60,12 +60,21 @@ export const checkPin = async (id: string, app: PlexApp): Promise<PinStatus> => 
 // Keep a Plex account token alive and validate it. Plex expires tokens based on last-used time,
 // and neither profile (/api/v2/user) nor watchlist reads refresh it — but /api/v2/ping does.
 // (cf Sonarr, PlexTvProxy.Ping: "tell plex.tv that we're still active and tokens should not be expired")
-// Returns true when the token is still valid (and its last-seen has been refreshed), false when dead.
+// Returns true when the token is still valid (and its last-seen has been refreshed), false when plex.tv refuses it
+// with a 401. Any other answer says nothing about the token and throws.
 export const pingToken = async (token: string, app: PlexApp): Promise<boolean> => {
   const res = await fetch(`${PLEX_API_URL}/ping?X-Plex-Token=${encodeURIComponent(token)}`, {
     method: 'GET',
     headers: buildHeaders(app),
   })
 
-  return res.ok
+  if (res.status === 401) {
+    return false
+  }
+
+  if (!res.ok) {
+    throw new Error(`plex.tv answered ${res.status} on /ping`)
+  }
+
+  return true
 }
