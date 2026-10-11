@@ -82,9 +82,8 @@ const UIRelease = ({
                     </i>
                   </div>
                 )}
-                {/* A search result the movie already has wears the state of the release it copies, unless it
-                    is the proposal the drawer was opened for or the policy rejects it */}
-                <ReleaseState entity={owned && !entity?.proposal && entity?.valid !== false ? owned : entity} />
+                {/* A search result the movie already has, unless it is the proposal the drawer was opened for */}
+                {owned && !entity?.proposal ? <ReleaseCopy owned={owned} /> : <ReleaseState entity={entity} />}
               </div>
               <div sx={UIRelease.styles.head}>
                 <div sx={UIRelease.styles.title}>
@@ -117,9 +116,8 @@ const UIRelease = ({
                   )}
                 </div>
                 {(display !== 'column' && !entity?.valid && !!entity?.reason) ? (
-                  // An owned copy's note stays next to the reason
                   <div sx={{ ...UIRelease.styles.reason, whiteSpace: 'nowrap', overflow: ['visible', 'hidden'], textOverflow: 'ellipsis' }}>
-                    <code title={reason}>{owned && note ? `${note} · ${reason}` : reason}</code>
+                    <code title={reason}>{reason}</code>
                   </div>
                 ) : !!note && (
                   // A note in the place of the reason, which it gives way to
@@ -362,6 +360,15 @@ const UIReleaseState = ({ entity = null }) => (
 )
 
 export const ReleaseState = memo(UIReleaseState)
+
+// 📼 on a search result that copies a release the movie owns, a Plex file or a record
+const UIReleaseCopy = ({ owned }) => (
+  <Tippy maxWidth='80vw' content={<code><Trans i18nKey={owned.from === 'sync' ? 'sensorr.release.synced' : 'sensorr.release.recorded'} values={{ from: owned.from, job: owned.job }} components={[<strong />]} /></code>}>
+    <span><Link to={`/jobs/${owned.job}`} sx={{ fontSize: 2, paddingX: 4 }}>📼</Link></span>
+  </Tippy>
+)
+
+const ReleaseCopy = memo(UIReleaseCopy)
 
 // One tag of a release row: a logo, or a value in a gray code box, at the `fontSize` of where it sits
 const UIReleaseTag = ({ children, fontSize = 5, ...props }) => (

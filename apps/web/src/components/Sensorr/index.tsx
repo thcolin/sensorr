@@ -284,7 +284,7 @@ const UISensorr = compose(
               }}
               banned={banned.includes(release?.title)}
               ban={onBan === false ? null : () => toggleBan(release?.title)}
-              note={describe ? describe(release) : copies.get(release) ? t(`sensorr.release.owned.${copies.get(release).from === 'sync' ? 'sync' : 'record'}`) : null}
+              note={describe ? describe(release) : null}
             />
           ))}
         </div>

@@ -286,10 +286,6 @@ export default {
       proposal: 'Proposal de <0>{from}#{job}</0>',
       refused: 'Refusé depuis <0>{from}#{job}</0>',
       recorded: 'Enregistré par <0>{from}#{job}</0>',
-      owned: {
-        sync: 'Sur Plex',
-        record: 'Enregistrée',
-      },
       peers: 'Peers ({seeders}/{peers})',
       score: 'Score ({score})',
       size: 'Taille ({size})',
