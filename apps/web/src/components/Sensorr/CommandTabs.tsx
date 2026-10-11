@@ -2,6 +2,7 @@ import { memo, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { jobLabelOf, jobNameOf } from '@sensorr/sensorr'
 import { glide, useDragScroll } from '@sensorr/utils'
+import { Bar } from '@sensorr/ui'
 
 export interface CommandTab {
   value: string
@@ -210,3 +211,10 @@ UICommandTabs.styles = {
 }
 
 export const CommandTabs = memo(UICommandTabs)
+
+// The row while its items load, a bar per pill or capsule at the width the first ones take
+export const CommandTabsPlaceholder = ({ shape }: { shape: { width: string, capsule?: boolean }[] }) => (
+  <div aria-hidden={true} sx={{ ...UICommandTabs.styles.element, overflowX: 'hidden', '>span': { flexShrink: 0 } }}>
+    {shape.map(({ width, capsule }, index) => <Bar key={index} width={width} height='28px' pill={true} color={capsule ? 'accentDarkest' : 'accentDarker'} />)}
+  </div>
+)

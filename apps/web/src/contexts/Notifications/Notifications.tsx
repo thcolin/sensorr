@@ -25,7 +25,7 @@ export const Provider = ({ ...props }) => {
   const api = useAPI()
   const { authenticated } = useAuthContext()
   const { config } = useConfigContext()
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [subscribable, setSubscribable] = useState(null)
   const [subscribed, setSubscribed] = useState(null)
   const [notifications, setNotifications] = useState([])

@@ -208,7 +208,9 @@ const UIEntities = ({
 }
 
 UIEntities.styles = {
+  // Grows in a flex parent as `element` does, or the header search's columns shrink to their posters
   fold: {
+    flex: 1,
     display: 'grid',
     gridTemplateRows: '1fr',
     transition: 'grid-template-rows 400ms ease-in-out, opacity 400ms ease-in-out',
@@ -223,6 +225,7 @@ UIEntities.styles = {
   },
   // Clipped only while it folds: a row at rest lets its badges and credits overflow
   folded: {
+    flexGrow: 0,
     gridTemplateRows: '0fr',
     '>div': {
       minHeight: '0px',

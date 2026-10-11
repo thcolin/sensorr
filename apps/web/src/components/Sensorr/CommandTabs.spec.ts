@@ -2,6 +2,7 @@ import { commandTabsOf } from './CommandTabs'
 
 // The barrel reaches ESM packages jest leaves untransformed, and the tabs need none of it
 jest.mock('@sensorr/utils', () => ({ glide: jest.fn(), useDragScroll: jest.fn() }))
+jest.mock('@sensorr/ui', () => ({ Bar: jest.fn() }))
 
 const COMMANDS = {
   'record movies': { emoji: '📹' },
