@@ -8,7 +8,7 @@ import api from '../store/api'
 import { lighten } from '../store/logger'
 import command from '../utils/command'
 import { fetchSensorrShows, fetchShow, requestedShowOf, isNotedShow } from '../utils/shows'
-import { requestedAtOf } from '../utils/plex'
+import { requestedAtOf, watchlistOf } from '../utils/plex'
 
 const meta = {
   command: 'keep-in-touch',
@@ -186,29 +186,14 @@ const FetchGuestsRequestsFromPlexWatchlistTask = ({ ...props }) => {
 
           setTask((task) => ({ ...task, output: <Text>Look at <Text bold={true}>{guest.email}</Text> Plex watchlist</Text> }))
           const plex = Plex({ url: 'https://discover.provider.plex.tv:443', token: guest.plex_token, fallbackPort: 443 }, state.app)
-          let total_results = 0
-          results[guest.email] = []
-
-          do {
-            const { MediaContainer: { Metadata, totalSize } } = await plex.query(`/library/sections/watchlist/all?&includeFields=title%2Ctype%2Cguid%2Cslug%2Ckey&sort=watchlistedAt%3Adesc&type=1&X-Plex-Container-Start=${results[guest.email].length || 0}`)
-            total_results = totalSize
-            results[guest.email].push(...Metadata)
-          } while (results[guest.email].length < total_results)
+          results[guest.email] = await watchlistOf(plex, 1)
 
           setTask((task) => ({ ...task, output: <Text><Text bold={true}>{results[guest.email].length}</Text> movie(s) found on <Text bold={true}>{guest.email}</Text> Plex watchlist</Text> }))
           state.logger.info({ message: `${results[guest.email].length} movies found on ${guest.email} Plex watchlist`, metadata: { ...state.metadata, type: 'movie', guest: guest.email, watchlist: results[guest.email].length } })
 
           // Movies are already in: a failure on the shows says nothing about the token
           try {
-            let page = []
-            shows[guest.email] = []
-
-            do {
-              const { MediaContainer: { Metadata, totalSize } } = await plex.query(`/library/sections/watchlist/all?&includeFields=title%2Ctype%2Cguid%2Cslug%2Ckey&sort=watchlistedAt%3Adesc&type=2&X-Plex-Container-Start=${shows[guest.email].length || 0}`)
-              total_results = totalSize
-              page = Metadata || []
-              shows[guest.email].push(...page)
-            } while (page.length && shows[guest.email].length < total_results)
+            shows[guest.email] = await watchlistOf(plex, 2)
 
             setTask((task) => ({ ...task, output: <Text><Text bold={true}>{shows[guest.email].length}</Text> show(s) found on <Text bold={true}>{guest.email}</Text> Plex watchlist</Text> }))
             state.logger.info({ message: `${shows[guest.email].length} shows found on ${guest.email} Plex watchlist`, metadata: { ...state.metadata, guest: guest.email, type: 'show', watchlist: shows[guest.email].length } })

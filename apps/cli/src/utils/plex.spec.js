@@ -1,5 +1,5 @@
 import oleoo from 'oleoo'
-import { languageOf, settleLanguage, dubOf, releaseOf, showFilesOf, unreadItemsOf, episodeVersionsOf, requestedAtOf, isMassLoss, LOSS_CEILING } from './plex'
+import { languageOf, settleLanguage, dubOf, releaseOf, showFilesOf, unreadItemsOf, episodeVersionsOf, requestedAtOf, watchlistOf, isMassLoss, LOSS_CEILING } from './plex'
 
 const video = { streamType: 1, codec: 'h264', languageTag: 'en' }
 const audio = (languageTag, title = null) => ({ streamType: 2, languageTag, title })
@@ -221,5 +221,24 @@ describe('isMassLoss', () => {
 
   it('has nothing to hold back when Sensorr holds nothing from Plex', () => {
     expect(isMassLoss(0, 0)).toBe(false)
+  })
+})
+
+describe('watchlistOf', () => {
+  const clientOf = (pages) => ({ query: jest.fn(async (uri) => ({ MediaContainer: pages[Number(uri.match(/X-Plex-Container-Start=(\d+)/)[1])] })) })
+
+  it('reads every page of the watchlist of one type', async () => {
+    const plex = clientOf({ 0: { Metadata: [{ guid: 'a' }, { guid: 'b' }], totalSize: 3 }, 2: { Metadata: [{ guid: 'c' }], totalSize: 3 } })
+    expect(await watchlistOf(plex, 1)).toEqual([{ guid: 'a' }, { guid: 'b' }, { guid: 'c' }])
+    expect(plex.query).toHaveBeenCalledWith(expect.stringContaining('&type=1&'))
+  })
+
+  it('reads an empty watchlist, which Plex sends without Metadata', async () => {
+    expect(await watchlistOf(clientOf({ 0: { size: 0, totalSize: 0 } }), 1)).toEqual([])
+  })
+
+  it('stops on a page that comes back empty before the total', async () => {
+    const plex = clientOf({ 0: { Metadata: [{ guid: 'a' }], totalSize: 2 }, 1: { size: 0, totalSize: 2 } })
+    expect(await watchlistOf(plex, 2)).toEqual([{ guid: 'a' }])
   })
 })
