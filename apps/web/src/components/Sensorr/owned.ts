@@ -18,20 +18,27 @@ const FAMILIES = {
   group: (value) => value.toLowerCase(),
 }
 
+// What oleoo writes in a generated title when the release names no group
+const NO_GROUP = 'NOTEAM'
+
 // Measured on Cortex on 2026-10-11: a record and its Plex file differ by up to 1% in size,
 // the indexer rounding what it announces
 const SIZE_TOLERANCE = 0.01
 
-const metaOf = (release) => release.meta || oleoo.parse(release.title || '', { strict: false, flagged: true })
+const metaOf = (release) => {
+  const meta = release.meta || oleoo.parse(release.title || '', { strict: false, flagged: true })
+  return meta.group === NO_GROUP ? { ...meta, group: null } : meta
+}
 
-// A value missing on one side says nothing against the match
-const sameAs = (a, b) => Object.entries(FAMILIES).every(([axis, family]) => !a[axis] || !b[axis] || family(a[axis]) === family(b[axis]))
+// A value missing on one side says nothing against the match, except the group: without it,
+// another release of a close size passes for the owned one
+const sameAs = (a, b) => !!a.group && !!b.group && Object.entries(FAMILIES).every(([axis, family]) => !a[axis] || !b[axis] || family(a[axis]) === family(b[axis]))
 
 const sameSize = (a, b) => !!a && !!b && Math.abs(a - b) / Math.max(a, b) < SIZE_TOLERANCE
 
 // The owned release a search result is a copy of, the Plex file first: it is what is on disk
 export const ownedMatchOf = (release, owned) => {
   const meta = metaOf(release)
-  const matches = owned.filter(candidate => metaOf(candidate).group && meta.group && sameSize(release.size, candidate.size) && sameAs(meta, metaOf(candidate)))
+  const matches = owned.filter(candidate => sameSize(release.size, candidate.size) && sameAs(meta, metaOf(candidate)))
   return matches.find(({ from }) => from === 'sync') || matches[0] || null
 }
