@@ -29,16 +29,29 @@ export type Upcoming = { id: number, title: string, poster: string, date: string
 export type Axes = { [axis: string]: string[] }
 export type Policy = { name: string, require: Axes, prefer: Axes, avoid: Axes }
 export type Films = { policy: Policy, wall: string[], films: Film[], shows: Show[], upcoming: Upcoming[] }
+// The same story of releases told in each language the page knows, `films.json` as written
+type Story = Pick<Film, 'candidates' | 'owned' | 'winner' | 'shrink' | 'replacement' | 'refine' | 'shrinked' | 'reported'>
+type Written = Omit<Films, 'policy' | 'films'> & { policies: { [language: string]: Policy }, films: (Omit<Film, keyof Story> & { stories: { [language: string]: Story } })[] }
 
 export const DEMO = 'demo/'
 export const WRAPPED = 'demo/wrapped/demo'
 export const GITHUB = 'https://github.com/thcolin/sensorr'
 
 // Next to the page, under its <base href>
-let films: Promise<Films> | null = null
+let films: Promise<Written> | null = null
 const filmsOf = () => (films ??= fetch(new URL('data/films.json', document.baseURI)).then((res) => res.ok
   ? res.json()
   : Promise.reject(new Error(`[Site] films.json answered ${res.status}`))))
+
+// The first of the browser's languages the stories are told in, English otherwise
+const languageOf = (written: Written) => navigator.languages.map((tag) => tag.slice(0, 2).toLowerCase()).find((language) => written.policies[language]) || 'en'
+
+const told = (written: Written): Films => {
+  const language = languageOf(written)
+  const { policies, films, ...rest } = written
+
+  return { ...rest, policy: policies[language], films: films.map(({ stories, ...film }) => ({ ...film, ...stories[language] })) }
+}
 
 // The films, and one of them drawn for this visit
 export const useFilms = () => {
@@ -48,6 +61,7 @@ export const useFilms = () => {
     let live = true
 
     filmsOf()
+      .then(told)
       .then((data) => live && setState({ data, film: data.films[Math.floor(Math.random() * data.films.length)] || null, error: null }))
       .catch((error) => live && setState({ data: null, film: null, error }))
 

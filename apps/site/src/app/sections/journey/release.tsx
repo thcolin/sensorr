@@ -7,16 +7,10 @@ export const gb = (bytes: number) => `${(Math.abs(bytes) / 1024 ** 3).toFixed(1)
 // The language a release names, or the original version when it names none, as the app's parser reads it
 export const language = (value?: string | null) => value || 'VO'
 
-// The title and the year are on screen already: a release shows what follows them
-const tail = (title: string, year: number) => {
-  const at = title.indexOf(`.${year}.`)
-  return at < 0 ? title : title.slice(at + `.${year}.`.length)
-}
-
 // A release name breaks after its dots only: its hyphens are non-breaking, so a long one wraps on whole parts
-export const Name = ({ title, year, ...props }: { title: string, year: number } & React.HTMLAttributes<HTMLSpanElement>) => (
+export const Name = ({ title, ...props }: { title: string } & React.HTMLAttributes<HTMLSpanElement>) => (
   <span title={title} {...props}>
-    {tail(title, year).replace(/-/g, '‑').split('.').map((part, index, parts) => (
+    {title.replace(/-/g, '‑').split('.').map((part, index, parts) => (
       <Fragment key={index}>{part}{index < parts.length - 1 && <>.<wbr /></>}</Fragment>
     ))}
   </span>

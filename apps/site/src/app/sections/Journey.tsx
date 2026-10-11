@@ -154,7 +154,7 @@ const Record = ({ film, seen, policy }: Visual) => {
                 )}
               </span>
               <span sx={Journey.styles.name}>
-                <Name title={release.title} year={film.year} sx={!release.valid ? Journey.styles.rejected : won ? Journey.styles.winner : {}} />
+                <Name title={release.title} sx={!release.valid ? Journey.styles.rejected : won ? Journey.styles.winner : {}} />
                 {!release.valid && release.reason && <code sx={Journey.styles.reason}>{release.reason}</code>}
               </span>
               <Tags meta={release.meta} sx={Journey.styles.rowTags} />
@@ -204,7 +204,7 @@ const Archived = ({ film, seen, palette }: Visual) => {
           )) : <Bar width='12em' height='1.5em' pill={true} />}
         </div>
         <p sx={Journey.styles.fileName}>
-          {film && file ? <Name title={file.title} year={film.year} /> : <Bar width='100%' height='1em' />}
+          {film && file ? <Name title={file.title} /> : <Bar width='100%' height='1em' />}
         </p>
         <p sx={Journey.styles.fileMeta}>
           {file ? gb(file.size) : <Bar inline={true} width='4em' height='1em' />}
@@ -240,7 +240,7 @@ const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark, badge }:
         {film && from ? (
           <>
             <s sx={{ ...Journey.styles.strike, textDecorationColor: seen ? 'currentColor' : 'transparent' }}>
-              <Name title={from.title} year={film.year} />
+              <Name title={from.title} />
             </s>
             <span sx={Journey.styles.swapSize}>{gb(from.size)}</span>
             {mark}
@@ -251,7 +251,7 @@ const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark, badge }:
       <p sx={{ ...Journey.styles.swapTo, ...enter(seen, 'translateY(1em)', 700) }}>
         {film && to ? (
           <>
-            <Name title={to.title} year={film.year} />
+            <Name title={to.title} />
             <span sx={Journey.styles.swapSize}>{gb(to.size)} <Delta from={from?.size || 0} to={to.size} /></span>
           </>
         ) : <Bar width='80%' height='1em' />}
@@ -386,7 +386,7 @@ const Pipeline = ({ at, compact = false }: { at: string, compact?: boolean }) =>
 const SCENES = [
   { emoji: '📹', label: 'Record', title: 'Your rules, not a quality profile.', line: 'A scheduled job, like every step after it: on each run Record asks your indexers for the movies you wished, and your policy ranks every release.', Visual: Record },
   { emoji: '📼', label: 'Archived', title: 'Recorded. In your library, in Plex.', line: 'The .torrent goes to the blackhole, your download client does the rest.', Visual: Archived },
-  { emoji: '✨', label: 'Refine', title: 'Not your rules yet. Refine keeps looking.', line: 'Until your copy meets your policy, a release that wins on it replaces the one in Plex: here your language, for a little more space.', Visual: Refine },
+  { emoji: '✨', label: 'Refine', title: 'Not your rules yet. Refine keeps looking.', line: 'Until your copy meets your policy, a release that wins on it replaces the one in Plex: here the original and your language together, for a little more space.', Visual: Refine },
   { emoji: '✂️', label: 'Shrink', title: 'Your rules are met. Shrink takes over.', line: 'Now a lighter release that loses nothing: a better resolution, the same language, the space back on your disk.', Visual: Shrink },
   { emoji: '🚨', label: 'Report', title: 'A friend reports, Sensorr swaps.', line: 'At any step. The copy they watched is banned, another one takes its place.', Visual: Report },
 ]

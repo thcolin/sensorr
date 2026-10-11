@@ -15,5 +15,8 @@ export const LANGUAGES: { [language: string]: [string, string?] } = {
   VOSTFR: ['🇬🇧', '🇫🇷'],
   VFQ: ['🇨🇦'],
   ENGLISH: ['🇬🇧'],
+  GERMAN: ['🇩🇪'],
+  SPANiSH: ['🇪🇸'],
+  iTALiAN: ['🇮🇹'],
   VO: ['🏳️'],
 }
