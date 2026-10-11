@@ -44,7 +44,10 @@ describe('ownedMatchOf', () => {
     expect(ownedMatchOf(result('Le.Narcisse.Noir.1947.MULTi.1080p.x264.AAC-mHDgz', 1.6e9), [plex])).toBeNull()
   })
 
-  it('matches nothing without a group', () => {
-    expect(ownedMatchOf(result('Le.Narcisse.Noir.1947.MULTi.1080p.x264', 1527178583), [{ ...plex, title: 'Le.Narcisse.Noir.1947.MULTi.1080p.x264' }])).toBeNull()
+  it('matches nothing without a group, NOTEAM in a generated title', () => {
+    const owned = [{ title: 'Le.Narcisse.Noir.1947.CRITERION.VOSTFR.1080p.DTS.x264-NOTEAM', from: 'record', size: 8209578624 }]
+
+    expect(ownedMatchOf(result('Le.Narcisse.Noir.1947.CRITERION.VOSTFR.1080p.DTS.x264-NOTEAM', 8209578624), owned)).toBeNull()
+    expect(ownedMatchOf(result('Le.Narcisse.Noir.1947.VOSTFR.1080p.BLURAY.DTS.x264-GCJM', 8289000000), owned)).toBeNull()
   })
 })

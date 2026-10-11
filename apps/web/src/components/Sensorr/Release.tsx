@@ -21,6 +21,7 @@ const UIRelease = ({
   actions = true,
   note = null,
   bars = downloadable,
+  owned = null,
 }) => {
   const { t } = useTranslation()
   // A release judged by an older Sensorr carries its English reason alone
@@ -80,7 +81,8 @@ const UIRelease = ({
                     </i>
                   </div>
                 )}
-                <ReleaseState entity={entity} />
+                {/* A search result the movie already has wears the state of the release it copies */}
+                <ReleaseState entity={owned || entity} />
               </div>
               <div sx={UIRelease.styles.head}>
                 <div sx={UIRelease.styles.title}>

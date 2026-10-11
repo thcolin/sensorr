@@ -15,6 +15,7 @@ import { withSensorrRequest } from './withSensorrRequest'
 import { EncodingFilter, ResolutionFilter, SourceFilter, DubFilter, LanguageFilter, FlagsFilter, ZNABFilter } from './Controls/Oleoo'
 import { Progress } from './Controls/Progress'
 import { Release, statisticsOf } from './Release'
+import { ownedMatchOf, ownedOf } from './owned'
 
 const UISensorr = compose(
   withSensorrRequest(),
@@ -249,13 +250,14 @@ const UISensorr = compose(
       },
     },
   }),
-)(({ override, movie, entities = [], controls, progress, toggle, onPick = null, proposal = null, onBan = null, describe = null, ...props }) => {
+)(({ override, movie, entities = [], controls, progress, toggle, onPick = null, proposal = null, onBan = null, describe = null, owned = [], ...props }) => {
   const { t } = useTranslation()
   const { setMovieMetadata, banMovieRelease, unbanMovieRelease, metadata: { [movie.id]: metadata = {} } } = useMoviesMetadataContext() as any
   const banned = (onBan !== null ? props.banned : metadata?.banned_releases) || []
   const toggleBan = (title) => (onBan ? onBan(title, banned.includes(title)) : (banned.includes(title) ? unbanMovieRelease : banMovieRelease)(movie?.id, title))
     .catch(() => toast.error(banned.includes(title) ? t('sensorr.release.errors.unban') : t('sensorr.release.errors.ban')))
   const statistics = useMemo(() => statisticsOf(entities), [entities])
+  const copies = useMemo(() => new Map(entities.map(release => [release, ownedMatchOf(release, owned)])), [entities, owned])
 
   return (
     <div sx={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: ['visible', 'hidden'] }}>
@@ -266,6 +268,7 @@ const UISensorr = compose(
             <Release
               key={release.link}
               entity={release.id === proposal?.id ? { ...release, proposal: true, from: proposal.from, job: proposal.job } : release}
+              owned={copies.get(release)}
               statistics={statistics}
               downloadable={true}
               actions={false}
@@ -281,7 +284,7 @@ const UISensorr = compose(
               }}
               banned={banned.includes(release?.title)}
               ban={onBan === false ? null : () => toggleBan(release?.title)}
-              note={describe ? describe(release) : null}
+              note={describe ? describe(release) : copies.get(release) ? t(`sensorr.release.owned.${copies.get(release).from === 'sync' ? 'sync' : 'record'}`) : null}
             />
           ))}
         </div>
@@ -293,6 +296,7 @@ const UISensorr = compose(
 const UISensorrWrapper = ({ entity, metadata, onChange = null, onPick = null, title = undefined, proposal = null, unit = null, banned = null, onBan = null, describe = null, button = null, loading = false, ...props }) => {
   const { t } = useTranslation()
   const { Portal, closePortal, togglePortal, isOpen: open } = usePortal({ closeOnOutsideClick: false, closeOnEsc: false })
+  const owned = useMemo(() => ownedOf(metadata?.releases), [metadata?.releases])
 
   if (props.setPortalToggle) {
     props.setPortalToggle(togglePortal)
@@ -313,6 +317,7 @@ const UISensorrWrapper = ({ entity, metadata, onChange = null, onPick = null, ti
             </div>
             <UISensorr
               metadata={metadata}
+              owned={owned}
               onChange={onChange}
               onPick={onPick}
               proposal={proposal}
