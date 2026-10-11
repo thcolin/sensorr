@@ -83,8 +83,8 @@ const UIRelease = ({
                   </div>
                 )}
                 {/* A search result the movie already has wears the state of the release it copies, unless it
-                    is the proposal the drawer was opened for */}
-                <ReleaseState entity={owned && !entity?.proposal ? owned : entity} />
+                    is the proposal the drawer was opened for or the policy rejects it */}
+                <ReleaseState entity={owned && !entity?.proposal && entity?.valid !== false ? owned : entity} />
               </div>
               <div sx={UIRelease.styles.head}>
                 <div sx={UIRelease.styles.title}>
@@ -117,8 +117,9 @@ const UIRelease = ({
                   )}
                 </div>
                 {(display !== 'column' && !entity?.valid && !!entity?.reason) ? (
+                  // An owned copy's note stays next to the reason
                   <div sx={{ ...UIRelease.styles.reason, whiteSpace: 'nowrap', overflow: ['visible', 'hidden'], textOverflow: 'ellipsis' }}>
-                    <code title={reason}>{reason}</code>
+                    <code title={reason}>{owned && note ? `${note} · ${reason}` : reason}</code>
                   </div>
                 ) : !!note && (
                   // A note in the place of the reason, which it gives way to
