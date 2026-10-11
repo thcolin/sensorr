@@ -37,9 +37,6 @@ const COMMANDS = {
 
 const timestampOf = (notification) => new Date(notification.timestamp).getTime()
 
-// Every command while the notifications load, built at render, where their labels are translated
-const loadingTabsOf = () => Object.entries(COMMANDS).map(([value, command]) => ({ value, ...command, count: 0 }))
-
 const UINotifications = ({ ...props }) => {
   const { t } = useTranslation()
   const { pwa } = useDeviceContext()
@@ -127,7 +124,15 @@ const UINotifications = ({ ...props }) => {
               </button>
             </span>
             <div ref={setScroller} sx={UINotifications.styles.container} aria-busy={loading}>
-              <CommandTabs options={loading ? loadingTabsOf() : options} all={notifications.length} value={filter} onChange={setFilter} />
+              {loading ? (
+                <div sx={UINotifications.styles.tabs} aria-hidden={true}>
+                  <Bar width='108px' height='28px' pill={true} color='accentDarker' />
+                  <Bar width='657px' height='28px' pill={true} color='accentDarkest' />
+                  <Bar width='132px' height='28px' pill={true} color='accentDarker' />
+                </div>
+              ) : (
+                <CommandTabs options={options} all={notifications.length} value={filter} onChange={setFilter} />
+              )}
               {loading ? (
                 <div aria-hidden={true}>
                   {[[13, 9, 7], [10, 6, 8.5], [13, 11, 7], [10, 7.5, 8.5]].map(([heading, title, subtitle], index) => (
@@ -246,6 +251,21 @@ UINotifications.styles = {
           color: 'whitePure',
         },
       },
+    },
+  },
+  // The command tabs as bars, at the size of the `all` pill and the movies capsule that come first
+  tabs: {
+    position: 'sticky',
+    top: '0px',
+    zIndex: 2,
+    display: 'flex',
+    gap: '6px',
+    overflow: 'hidden',
+    backgroundColor: 'primary',
+    paddingX: [4, 3],
+    paddingBottom: 4,
+    '>span': {
+      flexShrink: 0,
     },
   },
   // The tabs stick at its top: a bounce would show the dark ground above them
