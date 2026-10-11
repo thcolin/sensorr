@@ -148,7 +148,7 @@ const Record = ({ film, seen, policy }: Visual) => {
                   <>
                     <span aria-hidden={won} sx={won ? { ...Journey.styles.stateOut, transitionDelay: `${landed}ms`, opacity: seen ? 0 : 1 } : {}}>⭐</span>
                     {won && (
-                      <span role='img' aria-label='Winner' sx={{ ...Journey.styles.stateIn, ...enter(seen, 'scale(2.4)', landed, 500) }}>✓</span>
+                      <span role='img' aria-label='Archived' sx={{ ...Journey.styles.stateIn, ...enter(seen, 'scale(2.4)', landed, 500) }}>📼</span>
                     )}
                   </>
                 )}
@@ -978,9 +978,6 @@ Journey.styles = {
   },
   stateIn: {
     position: 'absolute',
-    fontFamily: 'monospace',
-    fontWeight: 600,
-    color: 'primary',
   },
   name: {
     gridArea: 'name',
