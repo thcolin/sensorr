@@ -236,11 +236,11 @@ const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark, badge }:
       {badge}
     </div>
     <div sx={Journey.styles.swapBody}>
-      <p sx={{ ...Journey.styles.swapFrom, color: struck }}>
+      <p sx={{ ...Journey.styles.swapFrom, ...(mark && Journey.styles.swapFromLine), color: struck }}>
         {film && from ? (
           <>
-            <s sx={{ ...Journey.styles.strike, textDecorationColor: seen ? 'currentColor' : 'transparent' }}>
-              <Name title={from.title} />
+            <s title={mark ? from.title : undefined} sx={{ ...Journey.styles.strike, ...(mark && Journey.styles.strikeLine), textDecorationColor: seen ? 'currentColor' : 'transparent' }}>
+              {mark ? from.title : <Name title={from.title} />}
             </s>
             <span sx={Journey.styles.swapSize}>{gb(from.size)}</span>
             {mark}
@@ -1157,6 +1157,12 @@ Journey.styles = {
     fontSize: [5, 4],
     lineHeight: 'heading',
   },
+  // With a mark, one line that keeps the mark and the size whole and cuts the name
+  swapFromLine: {
+    flexWrap: 'nowrap',
+    whiteSpace: 'nowrap',
+    '>:not(s)': { flexShrink: 0 },
+  },
   // Struck line after line as the name wraps: a text decoration, inline, fading in
   strike: {
     minWidth: '0px',
@@ -1168,6 +1174,12 @@ Journey.styles = {
       transition: 'none',
       textDecorationColor: 'currentColor !important',
     },
+  },
+  // Cut short on its line, a plain name: the <wbr> of a Name would break it anyway
+  strikeLine: {
+    textWrap: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   },
   delta: {
     marginLeft: 8,
