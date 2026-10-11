@@ -327,8 +327,9 @@ const UIReleaseState = ({ entity = null }) => (
     </Tippy>
   ) : entity?.from === 'sync' ? (
     <Tippy maxWidth='80vw' content={<code><Trans i18nKey='sensorr.release.synced' values={{ job: entity?.job }} components={[<strong />]} /></code>}>
-      <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default' }}>
-        {/* Plex's tile: bare, its yellow reads on no light background */}
+      <span sx={{ fontSize: 2, paddingX: 4, cursor: 'default', '>svg': { marginX: '-0.125em' } }}>
+        {/* Plex's tile: bare, its yellow reads on no light background. It overflows its box by its extra
+            quarter, so that the titles after it line up with those after an emoji state */}
         <Icon value='plex' width='1.25em' height='1.25em' style={{ display: 'block' }} />
       </span>
     </Tippy>

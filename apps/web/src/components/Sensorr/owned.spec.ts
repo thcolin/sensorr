@@ -1,6 +1,5 @@
 import { ownedMatchOf, ownedOf } from './owned'
 
-// The movie 16391 on Cortex, its record and its Plex file differing by 41 bytes
 const record = { title: 'Le.Narcisse.Noir.1947.MULTi-VFF.1080p.WEB-DL.x264.AAC-1.0-mHDgz', from: 'record', job: 'manual', size: 1527178624 }
 const plex = { title: 'Le.Narcisse.Noir.1947.MULTi.1080p.x264.AAC-1.0-mHDgz', from: 'sync', size: 1527178583 }
 const result = (title: string, size: number) => ({ title, size })
