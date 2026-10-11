@@ -6,6 +6,7 @@ import report from 'new-github-issue-url'
 import { emojize, filesize } from '@sensorr/utils'
 import { Icon, Link } from '@sensorr/ui'
 import { Gestures } from './Gestures'
+import { RECORDED } from './owned'
 import Tippy from '@tippyjs/react'
 
 const UIRelease = ({
@@ -81,8 +82,9 @@ const UIRelease = ({
                     </i>
                   </div>
                 )}
-                {/* A search result the movie already has wears the state of the release it copies */}
-                <ReleaseState entity={owned || entity} />
+                {/* A search result the movie already has wears the state of the release it copies, unless it
+                    is the proposal the drawer was opened for */}
+                <ReleaseState entity={owned && !entity?.proposal ? owned : entity} />
               </div>
               <div sx={UIRelease.styles.head}>
                 <div sx={UIRelease.styles.title}>
@@ -349,7 +351,7 @@ const UIReleaseState = ({ entity = null }) => (
     <Tippy maxWidth='80vw' content={<code><Trans i18nKey='sensorr.release.recorded' values={{ from: entity?.from, job: entity?.job }} components={[<strong />]} /></code>}>
       <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>📼</Link></span>
     </Tippy>
-  ) : ['record', 'refine', 'shrink', 'report', 'airing'].includes(entity?.from) ? (
+  ) : RECORDED.includes(entity?.from) ? (
     <Tippy maxWidth='80vw' content={<code><Trans i18nKey='sensorr.release.recorded' values={{ from: entity?.from, job: entity?.job }} components={[<strong />]} /></code>}>
       <span><Link to={`/jobs/${entity?.job}`} sx={{ fontSize: 2, paddingX: 4 }}>📼</Link></span>
     </Tippy>

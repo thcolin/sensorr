@@ -37,6 +37,19 @@ describe('ownedMatchOf', () => {
     expect(ownedMatchOf(result('Ronin.1998.TRUEFRENCH.1080p.BluRay.x264-GRP', 4e9), owned)).toBe(owned[0])
   })
 
+  it('reads the title rather than the meta a search parses with VO and SD as defaults', () => {
+    const owned = [{ title: 'Ronin.1998.ENGLiSH.1080p.BLURAY.x264-GRP', from: 'sync', size: 4e9 }]
+    const searched = { title: 'Ronin.1998.VO.BLURAY.x264-GRP', size: 4e9, meta: { group: 'GRP', language: 'VO', resolution: 'SD', encoding: 'x264' } }
+
+    expect(ownedMatchOf(searched, owned)).toBe(owned[0])
+  })
+
+  it('reads VFQ as FRENCH, as the Plex sync refines it', () => {
+    const owned = [{ title: 'Ronin.1998.VFQ.1080p.x264-GRP', from: 'sync', size: 4e9 }]
+
+    expect(ownedMatchOf(result('Ronin.1998.FRENCH.1080p.BluRay.x264-GRP', 4e9), owned)).toBe(owned[0])
+  })
+
   it('needs the same group, the same resolution and a size within 1%', () => {
     expect(ownedMatchOf(result('Le.Narcisse.Noir.1947.MULTi.1080p.x264.AAC-Dread', 1527178624), [plex])).toBeNull()
     expect(ownedMatchOf(result('Le.Narcisse.Noir.1947.MULTi.720p.x264.AAC-mHDgz', 1527178624), [plex])).toBeNull()
