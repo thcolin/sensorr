@@ -15,7 +15,7 @@ import { useMoviesMetadataContext } from '../../../contexts/MoviesMetadata/Movie
 import { showStateOf, useShowsMetadataContext } from '../../../contexts/ShowsMetadata/ShowsMetadata'
 import { useGuestsContext } from '../../../contexts/Guests/Guests'
 import { useDeviceContext } from '../../../contexts/Device/Device'
-import { CommandTabs, commandTabsOf } from '../../../components/Sensorr/CommandTabs'
+import { CommandTabs, CommandTabsPlaceholder, commandTabsOf } from '../../../components/Sensorr/CommandTabs'
 import { useSensorr } from '../../../store/sensorr'
 import { ReleaseSize, ReleaseState, ReleaseTag, safeUrl } from '../../../components/Sensorr/Release'
 import { Transition, swapLabelOf } from '../../../components/Sensorr/Proposal'
@@ -36,6 +36,9 @@ const COMMANDS = {
 }
 
 const timestampOf = (notification) => new Date(notification.timestamp).getTime()
+
+// The `all` pill, the movies capsule and the request pill, as wide as they come first once loaded
+const LOADING_TABS = [{ width: '108px' }, { width: '657px', capsule: true }, { width: '132px' }]
 
 const UINotifications = ({ ...props }) => {
   const { t } = useTranslation()
@@ -125,11 +128,7 @@ const UINotifications = ({ ...props }) => {
             </span>
             <div ref={setScroller} sx={UINotifications.styles.container} aria-busy={loading}>
               {loading ? (
-                <div sx={UINotifications.styles.tabs} aria-hidden={true}>
-                  <Bar width='108px' height='28px' pill={true} color='accentDarker' />
-                  <Bar width='657px' height='28px' pill={true} color='accentDarkest' />
-                  <Bar width='132px' height='28px' pill={true} color='accentDarker' />
-                </div>
+                <CommandTabsPlaceholder shape={LOADING_TABS} />
               ) : (
                 <CommandTabs options={options} all={notifications.length} value={filter} onChange={setFilter} />
               )}
@@ -251,21 +250,6 @@ UINotifications.styles = {
           color: 'whitePure',
         },
       },
-    },
-  },
-  // The command tabs as bars, at the size of the `all` pill and the movies capsule that come first
-  tabs: {
-    position: 'sticky',
-    top: '0px',
-    zIndex: 2,
-    display: 'flex',
-    gap: '6px',
-    overflow: 'hidden',
-    backgroundColor: 'primary',
-    paddingX: [4, 3],
-    paddingBottom: 4,
-    '>span': {
-      flexShrink: 0,
     },
   },
   // The tabs stick at its top: a bounce would show the dark ground above them

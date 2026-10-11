@@ -225,6 +225,7 @@ UIEntities.styles = {
   },
   // Clipped only while it folds: a row at rest lets its badges and credits overflow
   folded: {
+    flexGrow: 0,
     gridTemplateRows: '0fr',
     '>div': {
       minHeight: '0px',
