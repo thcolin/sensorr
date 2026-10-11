@@ -36,9 +36,12 @@ const sameAs = (a, b) => !!a.group && !!b.group && Object.entries(FAMILIES).ever
 
 const sameSize = (a, b) => !!a && !!b && Math.abs(a - b) / Math.max(a, b) < SIZE_TOLERANCE
 
+// The same indexer page is the same release, group or not
+const sameLink = (a, b) => (!!a.link && a.link === b.link) || (!!a.id && a.id === b.id)
+
 // The owned release a search result is a copy of, the Plex file first: it is what is on disk
 export const ownedMatchOf = (release, owned) => {
   const meta = metaOf(release)
-  const matches = owned.filter(candidate => sameSize(release.size, candidate.size) && sameAs(meta, metaOf(candidate)))
+  const matches = owned.filter(candidate => sameLink(release, candidate) || (sameSize(release.size, candidate.size) && sameAs(meta, metaOf(candidate))))
   return matches.find(({ from }) => from === 'sync') || matches[0] || null
 }

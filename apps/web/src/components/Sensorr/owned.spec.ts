@@ -50,4 +50,11 @@ describe('ownedMatchOf', () => {
     expect(ownedMatchOf(result('Le.Narcisse.Noir.1947.CRITERION.VOSTFR.1080p.DTS.x264-NOTEAM', 8209578624), owned)).toBeNull()
     expect(ownedMatchOf(result('Le.Narcisse.Noir.1947.VOSTFR.1080p.BLURAY.DTS.x264-GCJM', 8289000000), owned)).toBeNull()
   })
+
+  it('matches the release recorded from the same indexer page, group or not', () => {
+    const link = 'https://tr4ker.net/torrent/le-narcisse-noir-criterion-1947-vostfr-1080p-dts-1ch-x264-abe5d7c2'
+    const owned = [{ title: 'Le.Narcisse.Noir.1947.CRITERION.VOSTFR.1080p.DTS.x264-NOTEAM', from: 'record', size: 8209578624, link }]
+
+    expect(ownedMatchOf({ ...result('Le.Narcisse.Noir.1947.CRITERION.VOSTFR.1080p.DTS.x264-NOTEAM', 8209578624), link }, owned)).toBe(owned[0])
+  })
 })
