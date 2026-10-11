@@ -15,3 +15,4 @@ what each one changed is in the [changelog](CHANGELOG.md).
 - **Rename and move**: file a downloaded movie into a folder and a name built from a template,
   compatible with the tools already in use for it, such as FileBot, tinyMediaManager or mnamer.
 - **Unraid and Qnap**: an Unraid template and a QPKG package.
+- **Jellyfin and Emby**: support them alongside Plex.
