@@ -63,9 +63,10 @@ export const checkPin = async (id: string, app: PlexApp): Promise<PinStatus> => 
 // Returns true when the token is still valid (and its last-seen has been refreshed), false when plex.tv refuses it
 // with a 401. Any other answer says nothing about the token and throws.
 export const pingToken = async (token: string, app: PlexApp): Promise<boolean> => {
-  const res = await fetch(`${PLEX_API_URL}/ping?X-Plex-Token=${encodeURIComponent(token)}`, {
+  // In a header, the token stays out of the URL that node-fetch writes in its network errors
+  const res = await fetch(`${PLEX_API_URL}/ping`, {
     method: 'GET',
-    headers: buildHeaders(app),
+    headers: { ...buildHeaders(app), 'X-Plex-Token': token },
   })
 
   if (res.status === 401) {
