@@ -37,7 +37,7 @@ const COMMANDS = {
 
 const timestampOf = (notification) => new Date(notification.timestamp).getTime()
 
-// Every command while the notifications load, as the jobs' tabs do; built at render, where the labels are translated
+// Every command while the notifications load, built at render, where their labels are translated
 const loadingTabsOf = () => Object.entries(COMMANDS).map(([value, command]) => ({ value, ...command, count: 0 }))
 
 const UINotifications = ({ ...props }) => {
@@ -728,7 +728,7 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal }) => {
   )
 }
 
-// A record notification as bars, each where the glyphs of its text sit, measured on a loaded one
+// A record notification as bars, each where the glyphs of its text sit
 const NotificationPlaceholder = ({ heading, title, subtitle }) => (
   <div sx={{ paddingX: 4 }}>
     <div sx={NotificationPlaceholder.styles.element}>
@@ -822,7 +822,6 @@ NotificationPlaceholder.styles = {
     gap: 6,
     marginTop: ['3px', '9px'],
   },
-  // The links under the tags on a phone, beside them otherwise
   release: {
     display: 'flex',
     flexDirection: ['column', 'row'],
