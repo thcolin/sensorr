@@ -1,7 +1,7 @@
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { Button, DragScroll, Option, Guests, Icon, Link, MovieState, Pane, Picture, ShowState, Warning, reveal } from '@sensorr/ui'
+import { Bar, Button, DragScroll, Option, Guests, Icon, Link, MovieState, Pane, Picture, ShowState, Warning, reveal } from '@sensorr/ui'
 import toast from 'react-hot-toast'
 import { Policy, coverageLabel, jobNameOf, levelOf } from '@sensorr/sensorr'
 import { emojize, filesize } from '@sensorr/utils'
@@ -36,6 +36,9 @@ const COMMANDS = {
 }
 
 const timestampOf = (notification) => new Date(notification.timestamp).getTime()
+
+// Every command while the notifications load, as the jobs' tabs do; built at render, where the labels are translated
+const loadingTabsOf = () => Object.entries(COMMANDS).map(([value, command]) => ({ value, ...command, count: 0 }))
 
 const UINotifications = ({ ...props }) => {
   const { t } = useTranslation()
@@ -85,7 +88,7 @@ const UINotifications = ({ ...props }) => {
 
   return (
     <>
-      <button {...(pwa ? { ref: pointerRef, onPointerDown } : {})} onClick={togglePortal} sx={UINotifications.styles.button} disabled={loading}>
+      <button {...(pwa ? { ref: pointerRef, onPointerDown } : {})} onClick={togglePortal} sx={UINotifications.styles.button}>
         {!!unseen.length && <span sx={reveal}>{unseen.length}</span>}
         🔔
       </button>
@@ -123,9 +126,15 @@ const UINotifications = ({ ...props }) => {
                 <Icon value='clear' active={true} height='1.25em' width='1.25em' />
               </button>
             </span>
-            <div ref={setScroller} sx={UINotifications.styles.container}>
-              <CommandTabs options={options} all={notifications.length} value={filter} onChange={setFilter} />
-              {filtered.length ? (
+            <div ref={setScroller} sx={UINotifications.styles.container} aria-busy={loading}>
+              <CommandTabs options={loading ? loadingTabsOf() : options} all={notifications.length} value={filter} onChange={setFilter} />
+              {loading ? (
+                <div aria-hidden={true}>
+                  {[[13, 9, 7], [10, 6, 8.5], [13, 11, 7], [10, 7.5, 8.5]].map(([heading, title, subtitle], index) => (
+                    <NotificationPlaceholder key={index} heading={heading} title={title} subtitle={subtitle} />
+                  ))}
+                </div>
+              ) : filtered.length ? (
                 <div ref={listRef} style={{ position: 'relative', height: virtualizer.getTotalSize() }}>
                   {virtualizer.getVirtualItems().map((row) => (
                     <div
@@ -717,6 +726,128 @@ const ShowNotification = ({ _id, timestamp, meta, closePortal }) => {
       )}
     </NotificationFrame>
   )
+}
+
+// A record notification as bars, each where the glyphs of its text sit, measured on a loaded one
+const NotificationPlaceholder = ({ heading, title, subtitle }) => (
+  <div sx={{ paddingX: 4 }}>
+    <div sx={NotificationPlaceholder.styles.element}>
+      <span sx={NotificationPlaceholder.styles.emoji}><Bar width='2em' height='2em' radius='50%' /></span>
+      <span sx={{ flexShrink: 0 }}><Bar width='6.5em' height='10em' radius='0px' /></span>
+      <div sx={NotificationPlaceholder.styles.about}>
+        <div sx={NotificationPlaceholder.styles.head}>
+          <span>
+            <Bar width={`${heading}em`} height='0.75em' />
+            <Bar width={`${heading / 2}em`} height='0.75em' />
+          </span>
+          <span>
+            <Bar width='4.5em' height='0.625em' />
+            <Bar width='3.25em' height='0.625em' />
+          </span>
+        </div>
+        <span sx={NotificationPlaceholder.styles.title}>
+          <Bar width='0.75em' height='0.75em' radius='50%' />
+          <Bar width={`${title}em`} height='1em' />
+        </span>
+        <span sx={{ marginTop: '9px' }}><Bar width={`${subtitle}em`} height='0.75em' /></span>
+        <span sx={{ marginTop: '10px' }}><Bar width='100%' height='0.75em' /></span>
+        <span sx={NotificationPlaceholder.styles.release}>
+          <span>
+            {[3, 5.25, 4.125].map((width, index) => <Bar key={index} width={`${width}em`} height='1.375em' />)}
+          </span>
+          <span>
+            <Bar width='1.75em' height='0.75em' />
+            <Bar width='2.75em' height='0.75em' />
+          </span>
+        </span>
+        <span sx={NotificationPlaceholder.styles.buttons}>
+          <Bar width='auto' height='2.375em' />
+          <Bar width='auto' height='2.375em' />
+        </span>
+      </div>
+    </div>
+  </div>
+)
+
+NotificationPlaceholder.styles = {
+  element: {
+    display: 'flex',
+    minHeight: '240px',
+    alignItems: 'center',
+    paddingY: 4,
+    borderBottom: '1px solid',
+    borderColor: 'gray',
+  },
+  // At the font size of the command's emoji, so its margin is the same
+  emoji: {
+    display: ['none', 'flex'],
+    flexShrink: 0,
+    fontSize: 3,
+    marginRight: 6,
+  },
+  about: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    alignSelf: 'stretch',
+    paddingLeft: 4,
+    overflow: 'hidden',
+  },
+  head: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    // A phone wraps the heading on two lines, beside the time
+    '>span:first-of-type': {
+      minWidth: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '5px',
+      marginTop: ['3px', '7px'],
+      marginRight: 8,
+      '>span:last-of-type': {
+        display: ['block', 'none'],
+      },
+    },
+    '>span:last-of-type': {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'flex-end',
+      gap: '5px',
+      paddingTop: '1px',
+    },
+  },
+  title: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: ['3px', '9px'],
+  },
+  // The links under the tags on a phone, beside them otherwise
+  release: {
+    display: 'flex',
+    flexDirection: ['column', 'row'],
+    alignItems: ['stretch', 'center'],
+    justifyContent: 'space-between',
+    marginTop: '9px',
+    '>span:first-of-type': {
+      display: 'flex',
+      gap: 6,
+    },
+    '>span:last-of-type': {
+      display: 'flex',
+      justifyContent: 'center',
+      gap: '13px',
+      marginTop: ['7px', '0px'],
+    },
+  },
+  buttons: {
+    display: 'flex',
+    gap: '14px',
+    marginTop: ['20px', '16px'],
+    '>span': {
+      flex: 1,
+    },
+  },
 }
 
 const NotificationRelease = ({ release, swap = null }) => (
