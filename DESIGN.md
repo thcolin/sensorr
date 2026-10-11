@@ -260,7 +260,7 @@ groups (`libs/sensorr/src/lib/policy.ts:87-113`), and the interface's real job i
 what that policy did — which axis held, which one broke, what a swap would cost. The
 Swaps screen is where the product is most itself: five axes (`resolution`, `source`,
 `encoding`, `dub`, `language`) rendered as an old value tucked under the new one, green when the policy
-still holds, red when it breaks
+still holds or the value climbs its preferences, red when it breaks or goes down them
 (`libs/ui/src/atoms/TransitionPill/TransitionPill.tsx`, colored by the policy in
 `apps/web/src/components/Sensorr/Proposal.tsx`). `Followed`,
 `KeepInTouch`, `Person` and `Calendar` are discovery paths — the part Radarr does not

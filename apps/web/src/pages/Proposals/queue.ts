@@ -49,9 +49,9 @@ export const levelOf = (axis, value, policy) => {
   return { kind: null }
 }
 
-// The three states the colour is allowed to assert, and the one it is not. `prefer`
-// covers only znab, resolution and language in the configured policies, so an axis
-// none of the three volets mentions stays grey and says so with a tilde.
+// The three states the colour is allowed to assert, and the one it is not. A value
+// that climbs the `prefer` ranks is held, one that goes down them is broken, and an
+// axis none of the three volets mentions stays grey and says so with a tilde.
 export const transitionOf = (axis, from, to, policy) => {
   const left = levelOf(axis, from, policy)
   const right = levelOf(axis, to, policy)
@@ -68,8 +68,12 @@ export const transitionOf = (axis, from, to, policy) => {
     return { state: 'held', separator: '→', left, right }
   }
 
-  if (left.kind === 'prefer' && right.kind === 'prefer' && left.rank === right.rank) {
-    return { state: 'quiet', separator: '~', left, right }
+  if (left.kind === 'prefer' || right.kind === 'prefer') {
+    const [before, after] = [left, right].map(({ kind, rank }) => kind === 'prefer' ? rank : Infinity)
+
+    return before === after ? { state: 'quiet', separator: '~', left, right }
+      : after < before ? { state: 'held', separator: '→', left, right }
+      : { state: 'broken', separator: '→', left, right: { ...right, mark: right.mark || '!' } }
   }
 
   if (!left.kind && !right.kind) {

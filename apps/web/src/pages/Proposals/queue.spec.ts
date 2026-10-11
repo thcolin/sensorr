@@ -82,8 +82,8 @@ describe('queue', () => {
 
     expect(item.diff.rows.map(({ axis, state }) => `${axis}:${state}`)).toEqual([
       'encoding:held',
+      'language:held',
       'source:broken',
-      'language:moved',
       'resolution:same',
       'dub:same',
     ])
@@ -234,6 +234,14 @@ describe('transitionOf', () => {
   it('keeps a swap between two values of one prefer rank neutral', () => {
     const ranks = { require: {}, avoid: {}, prefer: { language: [['MULTi-VF2', 'MULTi-VFF'], 'MULTi'] } }
     expect(transitionOf('language', 'MULTi-VF2', 'MULTi-VFF', ranks).state).toBe('quiet')
-    expect(transitionOf('language', 'MULTi-VF2', 'MULTi', ranks).state).toBe('moved')
+  })
+
+  it('holds a value that climbs the prefer ranks and breaks one that goes down them', () => {
+    const ranks = { require: {}, avoid: {}, prefer: { encoding: ['x265', 'x264'] } }
+    expect(transitionOf('encoding', 'x264', 'x265', ranks).state).toBe('held')
+    expect(transitionOf('encoding', 'XviD', 'x264', ranks).state).toBe('held')
+    expect(transitionOf('encoding', 'x265', 'x264', ranks).state).toBe('broken')
+    expect(transitionOf('encoding', 'x264', 'XviD', ranks)).toMatchObject({ state: 'broken', right: { mark: '!' } })
+    expect(transitionOf('encoding', 'XviD', 'h264', ranks).state).toBe('quiet')
   })
 })
