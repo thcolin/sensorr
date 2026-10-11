@@ -284,12 +284,12 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         {!mobile && <StartJob />}
         <div sx={UISidebar.styles.selector}>
           <button ref={ref} type='button' onPointerDown={onPointerDown} onClick={() => setExpanded(e => !e)} aria-expanded={expanded} aria-haspopup='dialog' disabled={loading}>
-            <span><Icon value='chevron' direction={expanded} height='1.125em' width='1.125em' /></span>
             <span aria-hidden={true}>{active ? JOB_EMOJIS[jobNameOf(active.meta)] : <Bar width='1em' height='1em' radius='50%' />}</span>
             <span>
               <span>
                 <code>{label ? label.command : <Bar width='6em' height='0.75em' />}</code>
                 {!!label?.suffix && <span>{label.suffix}</span>}
+                <Icon value='chevron' direction={expanded} height='0.875em' width='0.875em' />
               </span>
               {!!active && (
                 <span>
@@ -402,6 +402,9 @@ UISidebar.styles = {
             textOverflow: 'ellipsis',
             color: 'whitePure',
           },
+          '>svg': {
+            flexShrink: 0,
+          },
           '>span': {
             flexShrink: 0,
             display: 'inline-flex',
@@ -436,13 +439,6 @@ UISidebar.styles = {
             fontWeight: 'semibold',
           },
         },
-      },
-      // Its glyph on the page's edge, its padding left to the thumb
-      '>span:first-of-type': {
-        flexShrink: 0,
-        display: 'flex',
-        padding: 8,
-        marginLeft: -8,
       },
       ':focus-visible': {
         outline: '2px solid',
