@@ -284,10 +284,10 @@ const UISidebar = ({ loading, jobs, job, ...props }) => {
         {!mobile && <StartJob />}
         <div sx={UISidebar.styles.selector}>
           <button ref={ref} type='button' onPointerDown={onPointerDown} onClick={() => setExpanded(e => !e)} aria-expanded={expanded} aria-haspopup='dialog' disabled={loading}>
-            <span aria-hidden={true}>{active ? JOB_EMOJIS[jobNameOf(active.meta)] : <Bar width='1em' height='1em' radius='50%' />}</span>
+            <span aria-hidden={true}>{active ? JOB_EMOJIS[jobNameOf(active.meta)] : <Bar width='1em' height='1em' radius='50%' color='accentDarker' />}</span>
             <span>
               <span>
-                <code>{label ? label.command : <Bar width='6em' height='0.75em' />}</code>
+                <code>{label ? label.command : <Bar width='6em' height='0.75em' color='accentDarker' />}</code>
                 {!!label?.suffix && <span>{label.suffix}</span>}
                 <Icon value='chevron' direction={expanded} height='0.875em' width='0.875em' />
               </span>
