@@ -21,8 +21,7 @@ const FAMILIES = {
 // What oleoo writes in a generated title when the release names no group
 const NO_GROUP = 'NOTEAM'
 
-// Measured on Cortex on 2026-10-11: a record and its Plex file differ by up to 1% in size,
-// the indexer rounding what it announces
+// A record and its Plex file differ by up to 1% in size: the indexer rounds what it announces
 const SIZE_TOLERANCE = 0.01
 
 const metaOf = (release) => {
@@ -36,7 +35,6 @@ const sameAs = (a, b) => !!a.group && !!b.group && Object.entries(FAMILIES).ever
 
 const sameSize = (a, b) => !!a && !!b && Math.abs(a - b) / Math.max(a, b) < SIZE_TOLERANCE
 
-// The same indexer page is the same release, group or not
 const sameLink = (a, b) => (!!a.link && a.link === b.link) || (!!a.id && a.id === b.id)
 
 // The owned release a search result is a copy of, the Plex file first: it is what is on disk
