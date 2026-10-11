@@ -213,3 +213,18 @@ export const requestedAtOf = async (clients, plex_guid, guests) => {
 
   return dates.length ? Math.min(...dates) : null
 }
+
+// A guest's watchlist of one type, 1 for movies and 2 for shows. An empty one comes back without `Metadata`.
+export const watchlistOf = async (plex, type) => {
+  const items = []
+  let page, total
+
+  do {
+    const { MediaContainer: { Metadata, totalSize } } = await plex.query(`/library/sections/watchlist/all?&includeFields=title%2Ctype%2Cguid%2Cslug%2Ckey&sort=watchlistedAt%3Adesc&type=${type}&X-Plex-Container-Start=${items.length}`)
+    total = totalSize
+    page = Metadata || []
+    items.push(...page)
+  } while (page.length && items.length < total)
+
+  return items
+}
