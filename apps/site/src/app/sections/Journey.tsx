@@ -304,13 +304,13 @@ const Shrink = ({ film, seen }: Visual) => {
           {film ? (
             <>
               <li>
-                <span>Better resolution</span>
+                <span>Lighter encoding</span>
                 <TransitionPill
-                  from={film.winner.meta.resolution}
-                  to={film.shrink.meta.resolution}
-                  state={film.shrinked.rows.find(({ axis }) => axis === 'resolution')?.state || 'held'}
+                  from={film.winner.meta.encoding}
+                  to={film.shrink.meta.encoding}
+                  state={film.shrinked.rows.find(({ axis }) => axis === 'encoding')?.state || 'held'}
                   compact={true}
-                  title={`resolution: ${film.winner.meta.resolution} ~ ${film.shrink.meta.resolution}`}
+                  title={`encoding: ${film.winner.meta.encoding} ~ ${film.shrink.meta.encoding}`}
                 />
               </li>
               <li>
@@ -387,7 +387,7 @@ const SCENES = [
   { emoji: '📹', label: 'Record', title: 'Your rules, not a quality profile.', line: 'A scheduled job, like every step after it: on each run Record asks your indexers for the movies you wished, and your policy ranks every release.', Visual: Record },
   { emoji: '📼', label: 'Archived', title: 'Recorded. In your library, in Plex.', line: 'The .torrent goes to the blackhole, your download client does the rest.', Visual: Archived },
   { emoji: '✨', label: 'Refine', title: 'Not your rules yet. Refine keeps looking.', line: 'Until your copy meets your policy, a release that wins on it replaces the one in Plex: here the original and your language together, for a little more space.', Visual: Refine },
-  { emoji: '✂️', label: 'Shrink', title: 'Your rules are met. Shrink takes over.', line: 'Now a lighter release that loses nothing: a better resolution, the same language, the space back on your disk.', Visual: Shrink },
+  { emoji: '✂️', label: 'Shrink', title: 'Your rules are met. Shrink takes over.', line: 'Now a lighter release that loses nothing: x265 at the same resolution, in the same language, the space back on your disk.', Visual: Shrink },
   { emoji: '🚨', label: 'Report', title: 'A friend reports, Sensorr swaps.', line: 'At any step. The copy they watched is banned, another one takes its place.', Visual: Report },
 ]
 

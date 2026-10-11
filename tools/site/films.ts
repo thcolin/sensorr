@@ -4,8 +4,8 @@
 //
 // The films are TMDB's recent and acclaimed ones. Their releases tell the same story for each, once per language the
 // page knows, ranked by the demo's Default policy as the jobs rank them: Record grabs a 1080p in the reader's language,
-// Refine a MULTi 1080p a little heavier, Shrink a MULTi 2160p in x265 lighter than both, and a friend's report swaps that
-// one. TMDB data may not be kept more than 6 months, so the file is not committed: the Demo workflow builds it.
+// Refine a MULTi 1080p a little heavier, Shrink the same in x265 lighter than both, and a friend's report swaps that one.
+// TMDB data may not be kept more than 6 months, so the file is not committed: the Demo workflow builds it.
 
 import fs from 'fs'
 import path from 'path'
@@ -27,18 +27,19 @@ const CANDIDATES = 5
 // English, as an English release names no language
 const LANGUAGES = { en: null, fr: 'FRENCH', de: 'GERMAN', es: 'SPANiSH', it: 'iTALiAN' }
 
-// The demo's Default policy, preferring MULTi then the reader's language and requiring MULTi: a copy in one language
-// falls short of it, so Refine takes the movie, and once the copy is MULTi Shrink does (docs/jobs.md, refine and shrink)
+// The demo's Default policy kept to 1080p, preferring MULTi then the reader's language and requiring MULTi: a copy in one
+// language falls short of it, so Refine takes the movie, and once the copy is MULTi Shrink does (docs/jobs.md, refine and
+// shrink)
 const storyPolicy = (tag: string | null) => ({
   ...POLICIES[0],
-  require: { ...POLICIES[0].require, language: ['MULTi'] },
-  prefer: { ...POLICIES[0].prefer, language: ['MULTi', ...(tag ? [tag] : [])] },
+  require: { ...POLICIES[0].require, resolution: ['1080p'], language: ['MULTi'] },
+  prefer: { ...POLICIES[0].prefer, resolution: ['1080p'], language: ['MULTi', ...(tag ? [tag] : [])] },
 })
 // Bytes a minute of a 1080p encode weighs, as the demo indexer counts it
 const MINUTE = 70e6
 
 // The releases of a film's story, made up as the demo indexer makes them: Record grabs a 1080p in the reader's language,
-// Refine finds the same in MULTi for a little more, Shrink a MULTi 2160p in x265 lighter than both, and a friend's report
+// Refine finds the same in MULTi for a little more, Shrink the MULTi one in x265 lighter than both, and a friend's report
 // swaps that one
 const storyReleases = (title: string, year: number, runtime: number, tag: string | null) => {
   const spoken = tag ? `${tag}.` : ''
@@ -49,8 +50,8 @@ const storyReleases = (title: string, year: number, runtime: number, tag: string
   return {
     owned: item(`${spoken}1080p.WEB-DL.x264.AC3-TAPE`, 1, 212),
     winner: item('MULTi.1080p.BluRay.x264.AC3-VCR', 1.12, 148),
-    shrink: item('MULTi.2160p.WEB-DL.x265.EAC3-REWiND', 0.62, 96),
-    replacement: item('MULTi.2160p.BluRay.x265.EAC3-KINESCOPE', 0.7, 71),
+    shrink: item('MULTi.1080p.BluRay.x265.EAC3-REWiND', 0.62, 96),
+    replacement: item('MULTi.1080p.WEB-DL.x265.EAC3-KINESCOPE', 0.7, 71),
     // What Record saw beside the one it grabbed, before the others came out
     others: [item('720p.HDTV.x264.AAC-DEMO', 0.45, 39), item(`${spoken}1080p.TC.x264.AC3-SPRNG`, 0.9, 54)],
   }
@@ -99,7 +100,7 @@ const storyOf = (details, year: number, tag: string | null) => {
   const strict = policy.apply([story.owned, story.winner], query, true)
   const meets = (guid: string) => strict.find((release) => release.guid === guid)?.valid
 
-  if (![owned, winner, shrink, replacement].every(({ valid }) => valid) || candidates[0].guid !== owned.guid || meets(owned.guid) || !meets(winner.guid)) {
+  if (![owned, winner, shrink, replacement].every(({ valid }) => valid) || candidates[0].guid !== owned.guid || meets(owned.guid) || !meets(winner.guid) || shrink.score <= winner.score) {
     return null
   }
 
