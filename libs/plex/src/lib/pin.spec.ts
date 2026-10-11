@@ -12,6 +12,12 @@ describe('pingToken', () => {
     expect(await pingToken('token', app)).toBe(true)
   })
 
+  it('sends the token in a header, out of the URL', async () => {
+    answer(200)
+    await pingToken('token', app)
+    expect(fetch).toHaveBeenLastCalledWith('https://plex.tv/api/v2/ping', expect.objectContaining({ headers: expect.objectContaining({ 'X-Plex-Token': 'token' }) }))
+  })
+
   it('reads a 401 as a dead token', async () => {
     answer(401)
     expect(await pingToken('token', app)).toBe(false)
