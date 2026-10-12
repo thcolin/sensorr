@@ -1,9 +1,9 @@
 import { GITHUB } from '../data'
 
 const LINKS = [
-  { label: 'GitHub', href: GITHUB },
-  { label: 'Documentation', href: `${GITHUB}#documentation` },
-  { label: 'Releases', href: `${GITHUB}/releases` },
+  { label: 'GitHub', href: GITHUB, event: 'github' },
+  { label: 'Documentation', href: `${GITHUB}#documentation`, event: 'github' },
+  { label: 'Releases', href: `${GITHUB}/releases`, event: 'download' },
   { label: 'Sponsor', href: 'https://github.com/sponsors/thcolin' },
   { label: 'MIT License', href: `${GITHUB}/blob/main/LICENSE` },
 ]
@@ -16,9 +16,9 @@ export const Footer = () => (
       </p>
       <nav aria-label='Sensorr'>
         <ul sx={Footer.styles.links}>
-          {LINKS.map(({ label, href }) => (
+          {LINKS.map(({ label, href, event }) => (
             <li key={label}>
-              <a href={href} sx={Footer.styles.link}>{label}</a>
+              <a href={href} data-track={event} sx={Footer.styles.link}>{label}</a>
             </li>
           ))}
         </ul>

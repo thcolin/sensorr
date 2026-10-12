@@ -125,12 +125,12 @@ const ALSO = [
   {
     emoji: '🔁',
     title: 'Coming from Sonarr.',
-    body: <><a href={`${GITHUB}/blob/main/docs/jobs.md#migrate-sonarr`}><code>migrate sonarr</code></a> takes over your series as Sonarr follows them.</>,
+    body: <><a href={`${GITHUB}/blob/main/docs/jobs.md#migrate-sonarr`} data-track='github'><code>migrate sonarr</code></a> takes over your series as Sonarr follows them.</>,
   },
   {
     emoji: '💾',
     title: 'Backups and updates',
-    body: <>from <em>Settings</em>, with a weekly dump once turned on. See <a href={`${GITHUB}#backup-and-restore`}>backup and restore</a> and <a href={`${GITHUB}#update-from-the-app`}>update from the app</a>.</>,
+    body: <>from <em>Settings</em>, with a weekly dump once turned on. See <a href={`${GITHUB}#backup-and-restore`} data-track='github'>backup and restore</a> and <a href={`${GITHUB}#update-from-the-app`} data-track='github'>update from the app</a>.</>,
   },
   {
     emoji: '🌍',
