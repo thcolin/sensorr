@@ -84,7 +84,7 @@ const Command = () => {
           {SEGMENTS.map((segment, index) => <Fragment key={index}>{index > 0 && <wbr />}{segment}</Fragment>)}
         </code>
       </pre>
-      <button type='button' onClick={copy} sx={{ ...buttonStyles.outline({ color: 'gray' }), ...Install.styles.copy }}>
+      <button type='button' onClick={copy} data-track='install' sx={{ ...buttonStyles.outline({ color: 'gray' }), ...Install.styles.copy }}>
         {{ idle: 'Copy', copied: '✓ Copied', failed: `Press ${shortcut()}` }[state]}
       </button>
       <span sx={Install.styles.status} role='status'>
@@ -118,9 +118,9 @@ export const Install = ({ wall }: { wall?: string[] }) => {
         </p>
         <Command />
         <ul sx={Install.styles.sources}>
-          <li><a href={`${GITHUB}/blob/main/install.sh`} sx={Install.styles.link}>Read the installer</a></li>
-          <li><a href={`${GITHUB}/blob/main/docker-compose.yml`} sx={Install.styles.link}>Read the compose file</a></li>
-          <li><a href={`${GITHUB}#install`} sx={Install.styles.link}>Read the full documentation</a></li>
+          <li><a href={`${GITHUB}/blob/main/install.sh`} data-track='github' sx={Install.styles.link}>Read the installer</a></li>
+          <li><a href={`${GITHUB}/blob/main/docker-compose.yml`} data-track='github' sx={Install.styles.link}>Read the compose file</a></li>
+          <li><a href={`${GITHUB}#install`} data-track='github' sx={Install.styles.link}>Read the full documentation</a></li>
         </ul>
         <a href={DEMO} sx={{ ...buttonStyles.outline({ color: 'white' }), ...Install.styles.demo }}>Try the demo first</a>
       </div>

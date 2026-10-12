@@ -45,6 +45,14 @@ jobs:
       # Alex's wrapped, next to the app, at the one address the demo has: `wrapped/demo`, the folder its data is in
       - run: npx nx run wrapped:build:demo
       - run: cp dist/apps/pages/demo/wrapped/index.html dist/apps/pages/demo/wrapped/demo/index.html
+      # Umami on the published pages only, the production build stays without it. Its address is a repository variable
+      - if: vars.UMAMI_SCRIPT != '' && vars.UMAMI_WEBSITE_ID != ''
+        run: >-
+          find dist/apps/pages -name '*.html' -exec sed -i
+          "s|</head>|<script defer src=\"$UMAMI_SCRIPT\" data-website-id=\"$UMAMI_WEBSITE_ID\" data-domains=\"thcolin.github.io\"></script></head>|" {} +
+        env:
+          UMAMI_SCRIPT: ${{ vars.UMAMI_SCRIPT }}
+          UMAMI_WEBSITE_ID: ${{ vars.UMAMI_WEBSITE_ID }}
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
