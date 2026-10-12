@@ -7,8 +7,9 @@ export const gb = (bytes: number) => `${(Math.abs(bytes) / 1024 ** 3).toFixed(1)
 // The language a release names, or the original version when it names none, as the app's parser reads it
 export const language = (value?: string | null) => value || 'VO'
 
-// A release name stays on one line and scrolls along it, each cut edge fading out as the app's bulk bar does
-export const Name = ({ title, ...props }: { title: string } & React.HTMLAttributes<HTMLSpanElement>) => {
+// A release name stays on one line and scrolls along it, each cut edge fading out as the app's bulk bar does.
+// From its end, it shows what tells one release from another rather than the movie's title
+export const Name = ({ title, end = false, ...props }: { title: string, end?: boolean } & React.HTMLAttributes<HTMLSpanElement>) => {
   const ref = useRef<HTMLSpanElement>(null)
 
   const onScroll = useCallback(() => {
@@ -22,17 +23,25 @@ export const Name = ({ title, ...props }: { title: string } & React.HTMLAttribut
 
   // Its width follows the layout, and its text the font once loaded
   useEffect(() => {
-    const observer = new ResizeObserver(onScroll)
+    const onResize = () => {
+      if (end && ref.current) {
+        ref.current.scrollLeft = ref.current.scrollWidth
+      }
+
+      onScroll()
+    }
+
+    const observer = new ResizeObserver(onResize)
 
     observer.observe(ref.current as HTMLSpanElement)
-    document.fonts.ready.then(onScroll)
-    document.fonts.addEventListener('loadingdone', onScroll)
+    document.fonts.ready.then(onResize)
+    document.fonts.addEventListener('loadingdone', onResize)
 
     return () => {
       observer.disconnect()
-      document.fonts.removeEventListener('loadingdone', onScroll)
+      document.fonts.removeEventListener('loadingdone', onResize)
     }
-  }, [onScroll])
+  }, [end, onScroll])
 
   return <span ref={ref} title={title} onScroll={onScroll} sx={Release.styles.name} {...props}>{title}</span>
 }
