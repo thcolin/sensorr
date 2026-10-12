@@ -1,5 +1,5 @@
 import oleoo from 'oleoo'
-import { languageOf, settleLanguage, dubOf, releaseOf, showFilesOf, unreadItemsOf, episodeVersionsOf, requestedAtOf, watchlistOf, isMassLoss, LOSS_CEILING } from './plex'
+import { languageOf, settleLanguage, dubOf, releaseOf, showFilesOf, unreadItemsOf, episodeVersionsOf, requestedAtOf, watchlistOf, isAutoAccepted, isMassLoss, LOSS_CEILING } from './plex'
 
 const video = { streamType: 1, codec: 'h264', languageTag: 'en' }
 const audio = (languageTag, title = null) => ({ streamType: 2, languageTag, title })
@@ -187,6 +187,30 @@ describe('episodeVersionsOf', () => {
 
     expect(versions['4:23'].map(({ id }) => id)).toEqual(['plex://episode/4-23#3'])
     expect(versions['4:24']).toEqual(versions['4:23'])
+  })
+})
+
+describe('isAutoAccepted', () => {
+  const guests = [
+    { email: 'auto@example.com', auto_accept: ['movie'] },
+    { email: 'manual@example.com', auto_accept: [] },
+    { email: 'legacy@example.com' },
+  ]
+
+  it('accepts a request a guest answering this media automatically newly makes', () => {
+    expect(isAutoAccepted(guests, ['auto@example.com'], [], 'movie')).toBe(true)
+    expect(isAutoAccepted(guests, ['manual@example.com', 'auto@example.com'], ['manual@example.com'], 'movie')).toBe(true)
+  })
+
+  it('leaves it to the owner for another media, a manual guest, a guest without the setting or an unknown one', () => {
+    expect(isAutoAccepted(guests, ['auto@example.com'], [], 'tv')).toBe(false)
+    expect(isAutoAccepted(guests, ['manual@example.com'], [], 'movie')).toBe(false)
+    expect(isAutoAccepted(guests, ['legacy@example.com'], [], 'movie')).toBe(false)
+    expect(isAutoAccepted(guests, ['gone@example.com'], [], 'movie')).toBe(false)
+  })
+
+  it('leaves a request the guest already made as it was answered', () => {
+    expect(isAutoAccepted(guests, ['auto@example.com', 'manual@example.com'], ['auto@example.com'], 'movie')).toBe(false)
   })
 })
 

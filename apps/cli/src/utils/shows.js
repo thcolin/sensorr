@@ -30,9 +30,10 @@ const isOwnerRequest = (requested_by, owner) => !!owner && requested_by.includes
 
 export const isNotedShow = (show, requested_by, owner) => show.state === 'ignored' && isOwnerRequest(requested_by, owner)
 
-export const requestedShowOf = ({ show, episodes }, plex_guid, requested_by, owner = null) => ({
-  show: { ...show, state: isOwnerRequest(requested_by, owner) ? 'wished' : 'ignored', monitored: false, monitor_new_seasons: false, plex_guid, requested_by },
-  episodes: episodes.map((episode) => ({ ...episode, monitored: false })),
+// An accepted request is followed as from the app, every season but the specials and the new ones
+export const requestedShowOf = ({ show, episodes }, plex_guid, requested_by, owner = null, accepted = false) => ({
+  show: { ...show, state: (accepted || isOwnerRequest(requested_by, owner)) ? 'wished' : 'ignored', monitored: accepted, monitor_new_seasons: accepted, plex_guid, requested_by },
+  episodes: episodes.map((episode) => ({ ...episode, monitored: accepted && episode.season_number !== 0 })),
 })
 
 export const showReleaseOf = (release, { from, job, proposal, level }, now) => ({

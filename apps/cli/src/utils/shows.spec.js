@@ -444,6 +444,13 @@ describe('requestedShowOf', () => {
     expect(requestedShowOf(fetched, 'plex://show/5d9c086c46115600200aa2fe', ['guest@example.com'], 'owner@example.com').show.state).toBe('ignored')
   })
 
+  it('follows an accepted request, every episode but the specials, the owner watchlist included', () => {
+    const { show, episodes } = requestedShowOf(fetched, 'plex://show/5d9c086c46115600200aa2fe', ['owner@example.com'], 'owner@example.com', true)
+
+    expect(show).toMatchObject({ state: 'wished', monitored: true, monitor_new_seasons: true })
+    expect(episodes.map(({ season_number, monitored }) => [season_number, monitored])).toEqual([[0, false], [1, true]])
+  })
+
   it('moves only an ignored show the owner adds to the library', () => {
     expect(isNotedShow({ state: 'ignored' }, ['guest@example.com', 'owner@example.com'], 'owner@example.com')).toBe(true)
     expect(isNotedShow({ state: 'ignored' }, ['guest@example.com'], 'owner@example.com')).toBe(false)
