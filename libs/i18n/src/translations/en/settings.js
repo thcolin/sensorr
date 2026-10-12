@@ -309,7 +309,7 @@ export default {
       },
     },
     friends: {
-      intro: 'Fulfill your friends\' movie <0>requests</0> on Sensorr by following their <1>Plex "Watchlist"</1>. Invite them as Sensorr guest, they will be asked to "link" their Plex account to the Sensorr server in order to keep a token for each of them to follow their Plex "Watchlist" regularly through <2>keep-in-touch</2> jobs.',
+      intro: 'Fulfill your friends\' movie and TV <0>requests</0> on Sensorr by following their <1>Plex "Watchlist"</1>. Invite them as Sensorr guest, they will be asked to "link" their Plex account to the Sensorr server in order to keep a token for each of them to follow their Plex "Watchlist" regularly through <2>keep-in-touch</2> jobs. The 🍺 of each friend sets their new requests, movies 🎬 and TV 📺: on Manual they wait for your answer, on Auto they are accepted at once.',
       note: 'Note: You don\'t need to own a Plex Media Server to use this feature, just invite your friends who use Plex.',
       guests: {
         title: 'Guests',
@@ -372,8 +372,6 @@ export default {
       },
       accept: {
         title: 'Requests',
-        movie: 'Movies',
-        tv: 'TV',
         manual: 'Manual',
         auto: 'Auto',
         media: { movie: 'movie', tv: 'TV' },

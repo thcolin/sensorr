@@ -306,7 +306,7 @@ const Friends = ({ ...props }) => {
 
 const MEDIA = [{ value: 'movie', emoji: '🎬' }, { value: 'tv', emoji: '📺' }]
 
-// One half of the pill: the media emoji and its value, as wide as `Manuel` so the pills of every row line up
+// The value as wide as `Manuel`, so the pills of every row line up
 const AcceptValue = ({ emoji, label }: any) => (
   <span sx={Friends.styles.value}>
     <span>{emoji}</span>
@@ -314,8 +314,6 @@ const AcceptValue = ({ emoji, label }: any) => (
   </span>
 )
 
-// How the new requests of a friend are answered, in one pill after the 🍺 of the requests: a native select per media,
-// by hand or accepted at once
 const Accept = ({ guest, value, onChange }: { guest: any, value: string[], onChange: (value: string[]) => Promise<void> }) => {
   const { t } = useTranslation()
   // One write at a time: a second change before the first lands could reach the API out of order
@@ -406,6 +404,7 @@ Friends.styles = {
   },
   avatar: {
     gridArea: 'avatar',
+    alignSelf: ['start', 'center'],
     position: 'relative',
     display: 'grid',
     placeItems: 'center',
@@ -469,7 +468,6 @@ Friends.styles = {
     alignItems: 'center',
     gap: [8, 10],
   },
-  // The grey of the `Déconnecté` pill, its halves lit on hover like it
   accept: {
     gridArea: 'accept',
     display: 'inline-flex',
@@ -486,7 +484,6 @@ Friends.styles = {
       paddingRight: 6,
       lineHeight: 'reset',
     },
-    // A thin line before each select, so the 🍺 and the two media read as three parts
     '>label': {
       height: '100%',
       borderLeft: '1px solid',
@@ -496,6 +493,15 @@ Friends.styles = {
       },
       ':hover:not(:has(select:disabled))': {
         backgroundColor: 'grayDark',
+        '>span': {
+          color: 'text',
+        },
+      },
+      ':has(select:disabled)': {
+        opacity: 0.4,
+      },
+      '>select:disabled': {
+        cursor: 'default',
       },
       ':has(select:focus-visible)': {
         outline: '2px solid',

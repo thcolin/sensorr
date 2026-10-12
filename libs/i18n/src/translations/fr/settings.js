@@ -309,7 +309,7 @@ export default {
       },
     },
     friends: {
-      intro: 'Répondez aux <0>demandes</0> de films de vos amis sur Sensorr en suivant leur <1>« Watchlist » Plex</1>. Invitez-les comme invités Sensorr : ils devront « lier » leur compte Plex au serveur Sensorr, qui garde ainsi un jeton pour chacun et suit régulièrement leur « Watchlist » Plex via les jobs <2>keep-in-touch</2>.',
+      intro: 'Répondez aux <0>demandes</0> de films et de séries de vos amis sur Sensorr en suivant leur <1>« Watchlist » Plex</1>. Invitez-les comme invités Sensorr : ils devront « lier » leur compte Plex au serveur Sensorr, qui garde ainsi un jeton pour chacun et suit régulièrement leur « Watchlist » Plex via les jobs <2>keep-in-touch</2>. Le 🍺 de chaque ami règle ses nouvelles demandes, films 🎬 et séries 📺 : en Manuel elles attendent votre réponse, en Auto elles sont acceptées d’office.',
       note: 'Remarque : pas besoin d’avoir un Plex Media Server pour utiliser cette fonction, invitez simplement vos amis qui utilisent Plex.',
       guests: {
         title: 'Invités',
@@ -372,15 +372,13 @@ export default {
       },
       accept: {
         title: 'Demandes',
-        movie: 'Films',
-        tv: 'TV',
         manual: 'Manuel',
         auto: 'Auto',
         media: { movie: 'films', tv: 'séries' },
-        label: 'Demandes de {media} de {name}, répondues à la main ou acceptées d’office',
+        label: 'Demandes de {media} de {name} : réponse à la main ou acceptation d’office',
         manualHelp: 'Ses nouvelles demandes de {media} attendent votre réponse',
         autoHelp: 'Ses nouvelles demandes de {media} sont acceptées d’office',
-        error: 'Erreur lors de l’enregistrement des demandes de « {name} », réessayez',
+        error: 'Erreur lors de l’enregistrement de la réponse aux demandes de « {name} », réessayez',
       },
     },
     invitation: {
