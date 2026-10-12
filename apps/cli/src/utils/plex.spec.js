@@ -197,20 +197,16 @@ describe('isAutoAccepted', () => {
     { email: 'legacy@example.com' },
   ]
 
-  it('accepts a request a guest answering this media automatically newly makes', () => {
-    expect(isAutoAccepted(guests, ['auto@example.com'], [], 'movie')).toBe(true)
-    expect(isAutoAccepted(guests, ['manual@example.com', 'auto@example.com'], ['manual@example.com'], 'movie')).toBe(true)
+  it('accepts a request one of its guests answers automatically for this media', () => {
+    expect(isAutoAccepted(guests, ['auto@example.com'], 'movie')).toBe(true)
+    expect(isAutoAccepted(guests, ['manual@example.com', 'auto@example.com'], 'movie')).toBe(true)
   })
 
   it('leaves it to the owner for another media, a manual guest, a guest without the setting or an unknown one', () => {
-    expect(isAutoAccepted(guests, ['auto@example.com'], [], 'tv')).toBe(false)
-    expect(isAutoAccepted(guests, ['manual@example.com'], [], 'movie')).toBe(false)
-    expect(isAutoAccepted(guests, ['legacy@example.com'], [], 'movie')).toBe(false)
-    expect(isAutoAccepted(guests, ['gone@example.com'], [], 'movie')).toBe(false)
-  })
-
-  it('leaves a request the guest already made as it was answered', () => {
-    expect(isAutoAccepted(guests, ['auto@example.com', 'manual@example.com'], ['auto@example.com'], 'movie')).toBe(false)
+    expect(isAutoAccepted(guests, ['auto@example.com'], 'tv')).toBe(false)
+    expect(isAutoAccepted(guests, ['manual@example.com'], 'movie')).toBe(false)
+    expect(isAutoAccepted(guests, ['legacy@example.com'], 'movie')).toBe(false)
+    expect(isAutoAccepted(guests, ['gone@example.com'], 'movie')).toBe(false)
   })
 })
 

@@ -56,7 +56,7 @@ export class Guest extends Document {
   welcome_mailed_at: number
 
   // The media, `movie` and `tv`, whose new requests from this guest keep-in-touch accepts at once
-  @Prop({ type: [String], default: [] })
+  @Prop({ type: [{ type: String, enum: ['movie', 'tv'] }], default: [] })
   auto_accept: string[]
 
   // The weekly mail of requests ready to watch lists what reached Plex since then

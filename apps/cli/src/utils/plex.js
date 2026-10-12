@@ -197,10 +197,9 @@ export const showFilesOf = (episodes, items) => {
   }
 }
 
-// A request is accepted at once when a guest it newly names answers this media automatically, from Settings › Friends:
-// a guest already requesting it was answered before
-export const isAutoAccepted = (guests, requested_by, previous, media) => requested_by
-  .filter((email) => !previous.includes(email))
+// A request for a title Sensorr does not know yet is accepted at once when one of its guests answers this media
+// automatically, from Settings › Friends
+export const isAutoAccepted = (guests, requested_by, media) => requested_by
   .some((email) => guests.find((guest) => guest.email === email)?.auto_accept?.includes(media))
 
 // A watchlist lists no date: when a guest added an item is in its `userState`, one item a call.
