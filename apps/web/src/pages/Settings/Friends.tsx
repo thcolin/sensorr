@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { Trans, useTranslation } from 'react-i18next'
 import i18n from '@sensorr/i18n'
 import toast from 'react-hot-toast'
-import { Bar, Button, Icon, Link, Option } from '@sensorr/ui'
+import { Bar, Button, Icon, Link, Option, State } from '@sensorr/ui'
 import { useGuestsContext } from '../../contexts/Guests/Guests'
 import { useAPI, errorOf } from '../../store/api'
 import Body from '../../layout/Body/Body'
@@ -36,7 +36,7 @@ const Friends = ({ ...props }) => {
   const { t } = useTranslation()
   useTitle(t('settings.documentTitle', { page: t('settings.sections.friends') }))
   const api = useAPI()
-  const { loading, guests, deleteGuest } = useGuestsContext() as any
+  const { loading, guests, deleteGuest, setGuestAutoAccept } = useGuestsContext() as any
   const [wrapped, setWrapped] = useState(null)
   const [wrappedError, setWrappedError] = useState(false)
   const [busy, setBusy] = useState({})
@@ -192,25 +192,28 @@ const Friends = ({ ...props }) => {
                     <strong>{guest.name}</strong>
                     <small>{guest.email}</small>
                   </div>
-                  {guest.plex_token_valid === false && (
-                    <button
-                      type='button'
-                      sx={Friends.styles.disconnected}
-                      title={!mailable ? t('settings.friends.reconnect.unmailable') : stopped ? t('settings.friends.reconnect.stopped') : t('settings.friends.reconnect.title')}
-                      // Not `disabled`, which hides the reason in the title from the hover and from screen readers
-                      aria-disabled={!mailable || busy[guest.email] || undefined}
-                      onClick={() => {
-                        if (mailable && !busy[guest.email] && window.confirm(stopped
-                          ? t('settings.friends.reconnect.confirmStopped', { name: guest.name })
-                          : t('settings.friends.reconnect.confirm', { name: guest.name }))) {
-                          mail(guest.email, 'reconnect')
-                        }
-                      }}
-                    >
-                      <i />
-                      {t('settings.friends.disconnected')}
-                    </button>
-                  )}
+                  <div sx={Friends.styles.extra}>
+                    {guest.plex_token_valid === false && (
+                      <button
+                        type='button'
+                        sx={Friends.styles.disconnected}
+                        title={!mailable ? t('settings.friends.reconnect.unmailable') : stopped ? t('settings.friends.reconnect.stopped') : t('settings.friends.reconnect.title')}
+                        // Not `disabled`, which hides the reason in the title from the hover and from screen readers
+                        aria-disabled={!mailable || busy[guest.email] || undefined}
+                        onClick={() => {
+                          if (mailable && !busy[guest.email] && window.confirm(stopped
+                            ? t('settings.friends.reconnect.confirmStopped', { name: guest.name })
+                            : t('settings.friends.reconnect.confirm', { name: guest.name }))) {
+                            mail(guest.email, 'reconnect')
+                          }
+                        }}
+                      >
+                        <i />
+                        {t('settings.friends.disconnected')}
+                      </button>
+                    )}
+                    <Accept guest={guest} value={guest.auto_accept || []} onChange={(value) => setGuestAutoAccept(guest.email, value)} />
+                  </div>
                   <label sx={Friends.styles.more}>
                     <Icon value='chevron' height='0.75em' width='0.75em' />
                     <select
@@ -301,6 +304,56 @@ const Friends = ({ ...props }) => {
   )
 }
 
+const MEDIA = [{ value: 'movie', emoji: '🎬' }, { value: 'tv', emoji: '📺' }]
+
+// One half of the pill: the media emoji and its value, as wide as `Manuel` so the pills of every row line up
+const AcceptValue = ({ emoji, label }: any) => (
+  <span sx={Friends.styles.value}>
+    <span>{emoji}</span>
+    <span>{label}</span>
+  </span>
+)
+
+// How the new requests of a friend are answered, in one pill after the 🍺 of the requests: a native select per media,
+// by hand or accepted at once
+const Accept = ({ guest, value, onChange }: { guest: any, value: string[], onChange: (value: string[]) => Promise<void> }) => {
+  const { t } = useTranslation()
+  // One write at a time: a second change before the first lands could reach the API out of order
+  const [pending, setPending] = useState(false)
+
+  const change = async (next: string[]) => {
+    setPending(true)
+    await onChange(next)
+    setPending(false)
+  }
+
+  return (
+    <div sx={Friends.styles.accept} title={t('settings.friends.accept.title')} aria-busy={pending}>
+      <span aria-hidden={true}>🍺</span>
+      {MEDIA.map(({ value: media, emoji }) => {
+        const auto = value.includes(media)
+        const name = t(`settings.friends.accept.media.${media}`)
+
+        return (
+          <State
+            key={media}
+            value={auto ? 'auto' : 'manual'}
+            options={[
+              { emoji, label: t('settings.friends.accept.manual'), value: 'manual' },
+              { emoji, label: t('settings.friends.accept.auto'), value: 'auto' },
+            ]}
+            onChange={(next) => change(next === 'auto' ? [...value, media] : value.filter((v) => v !== media))}
+            disabled={pending}
+            component={AcceptValue}
+            aria-label={t('settings.friends.accept.label', { media: name, name: guest.name })}
+            title={t(auto ? 'settings.friends.accept.autoHelp' : 'settings.friends.accept.manualHelp', { media: name })}
+          />
+        )
+      })}
+    </div>
+  )
+}
+
 // A linked friend wears a thin Plex ring and the Plex chevron, a disconnected one the reconnect mails sent since their
 // token died, the first one and its 3 reminders, as four arcs filled in red once sent, and a grey chevron
 const Avatar = ({ guest, sent = {} }: { guest: any, sent?: any }) => {
@@ -341,12 +394,12 @@ Friends.styles = {
   // One row per friend, the two squares of a row of Settings › Indexers at its end
   guest: {
     display: 'grid',
-    gridTemplateColumns: ['auto minmax(0, 1fr) auto auto', 'auto minmax(0, 1fr) auto auto auto'],
-    gridTemplateAreas: ['"avatar who more remove" "avatar disconnected more remove"', '"avatar who disconnected more remove"'],
+    gridTemplateColumns: ['auto minmax(0, 1fr) auto auto', 'auto minmax(0, 1fr) auto auto auto auto'],
+    gridTemplateAreas: ['"avatar who more remove" "avatar extra more remove"', '"avatar who disconnected accept more remove"'],
     alignItems: 'center',
     columnGap: 6,
-    rowGap: 10,
-    paddingY: 8,
+    rowGap: [8, 10],
+    paddingY: [6, 8],
     paddingX: 10,
     borderBottom: '1px solid',
     borderColor: 'grayLight',
@@ -408,6 +461,61 @@ Friends.styles = {
       color: 'grayDarkest',
     },
   },
+  // On a phone, the second line under the name; from a tablet up, its pills take their own columns
+  extra: {
+    gridArea: 'extra',
+    display: ['flex', 'contents'],
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: [8, 10],
+  },
+  // The grey of the `Déconnecté` pill, its halves lit on hover like it
+  accept: {
+    gridArea: 'accept',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifySelf: 'start',
+    height: '2em',
+    paddingLeft: 6,
+    borderRadius: '2em',
+    backgroundColor: 'gray',
+    fontSize: 6,
+    whiteSpace: 'nowrap',
+    marginRight: ['0px', 10],
+    '>span': {
+      paddingRight: 6,
+      lineHeight: 'reset',
+    },
+    // A thin line before each select, so the 🍺 and the two media read as three parts
+    '>label': {
+      height: '100%',
+      borderLeft: '1px solid',
+      borderColor: 'grayDark',
+      ':last-of-type': {
+        borderRadius: '0 2em 2em 0',
+      },
+      ':hover:not(:has(select:disabled))': {
+        backgroundColor: 'grayDark',
+      },
+      ':has(select:focus-visible)': {
+        outline: '2px solid',
+        outlineColor: 'primary',
+        outlineOffset: -2,
+      },
+    },
+  },
+  value: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    height: '100%',
+    paddingX: 6,
+    fontFamily: 'monospace',
+    color: 'grayDarkest',
+    '>span:last-of-type': {
+      minWidth: '6ch',
+    },
+  },
   // A grey pill with a red dot, a click mails the friend to reconnect
   disconnected: {
     variant: 'button.reset',
@@ -444,6 +552,7 @@ Friends.styles = {
   // The chevron with a native select over it, like `State` of @sensorr/ui
   more: {
     gridArea: 'more',
+    alignSelf: ['start', 'center'],
     position: 'relative',
     display: 'grid',
     placeItems: 'center',
@@ -481,6 +590,7 @@ Friends.styles = {
   remove: {
     variant: 'button.reset',
     gridArea: 'remove',
+    alignSelf: ['start', 'center'],
     display: 'grid',
     placeItems: 'center',
     width: '2rem',

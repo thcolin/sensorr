@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import i18n from '@sensorr/i18n'
 import { useAuthContext } from '../Auth/Auth'
@@ -11,6 +11,8 @@ export const Provider = ({ ...props }) => {
   const { authenticated } = useAuthContext()
   const [loading, setLoading] = useState(true)
   const [guests, setGuests] = useState({})
+  const ref = useRef(guests)
+  ref.current = guests
 
   const deleteGuest = useCallback((email) => {
     const { uri, params, init } = api.query.guests.deleteGuest({ body: { email } })
@@ -31,6 +33,21 @@ export const Provider = ({ ...props }) => {
         return i18n.t('contexts.guests.delete.error', { email })
       },
     })
+  }, [])
+
+  // Shown at once, put back with a toast when the write fails
+  const setGuestAutoAccept = useCallback(async (email, auto_accept) => {
+    const previous = ref.current[email]?.auto_accept || []
+    setGuests((guests) => ({ ...guests, [email]: { ...guests[email], auto_accept } }))
+
+    try {
+      const { uri, params, init } = api.query.guests.postGuest({ body: { email, auto_accept } })
+      await api.fetch(uri, params, init)
+    } catch (err) {
+      console.warn(err)
+      setGuests((guests) => ({ ...guests, [email]: { ...guests[email], auto_accept: previous } }))
+      toast.error(i18n.t('settings.friends.accept.error', { name: ref.current[email]?.name || email }))
+    }
   }, [])
 
   useEffect(() => {
@@ -54,7 +71,7 @@ export const Provider = ({ ...props }) => {
   }, [authenticated])
 
   return (
-    <guestsContext.Provider {...props} value={{ loading, guests, deleteGuest }} />
+    <guestsContext.Provider {...props} value={{ loading, guests, deleteGuest, setGuestAutoAccept }} />
   )
 }
 
