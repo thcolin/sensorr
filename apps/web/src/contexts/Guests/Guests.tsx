@@ -35,7 +35,6 @@ export const Provider = ({ ...props }) => {
     })
   }, [])
 
-  // Shown at once, put back with a toast when the write fails
   const setGuestAutoAccept = useCallback(async (email, auto_accept) => {
     const previous = ref.current[email]?.auto_accept || []
     setGuests((guests) => ({ ...guests, [email]: { ...guests[email], auto_accept } }))

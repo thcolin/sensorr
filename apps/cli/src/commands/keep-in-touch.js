@@ -461,7 +461,6 @@ const ComputeSensorrShowRequestsTask = ({ ...props }) => {
           const accepted = show.state === 'ignored' && isAutoAccepted(state.guests, guests, show.requested_by || [], 'tv')
 
           if (accepted) {
-            // Followed as from the app: the episodes come again from TMDB, every one of them monitored but the specials
             const requested = requestedShowOf(await fetchShow(state.tmdb, show.id), plex_guid, guests, state.owner, true)
             const shows = api.query.shows.postShows({ body: { [show.id]: { ...requested.show, ...(requested_at ? { requested_at } : {}), refreshed_at: new Date() } } })
             await api.fetch(shows.uri, shows.params, shows.init)
