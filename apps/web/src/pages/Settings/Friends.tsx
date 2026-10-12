@@ -306,7 +306,7 @@ const Friends = ({ ...props }) => {
 
 const MEDIA = [{ value: 'movie', emoji: '🎬' }, { value: 'tv', emoji: '📺' }]
 
-// The value as wide as `Manuel`, so the pills of every row line up
+// The value as wide as the longer of the two, so the pills of every row line up
 const AcceptValue = ({ emoji, label }: any) => (
   <span sx={Friends.styles.value}>
     <span>{emoji}</span>
@@ -314,19 +314,11 @@ const AcceptValue = ({ emoji, label }: any) => (
   </span>
 )
 
-const Accept = ({ guest, value, onChange }: { guest: any, value: string[], onChange: (value: string[]) => Promise<void> }) => {
+const Accept = ({ guest, value, onChange }: { guest: any, value: string[], onChange: (value: string[]) => void }) => {
   const { t } = useTranslation()
-  // One write at a time: a second change before the first lands could reach the API out of order
-  const [pending, setPending] = useState(false)
-
-  const change = async (next: string[]) => {
-    setPending(true)
-    await onChange(next)
-    setPending(false)
-  }
 
   return (
-    <div sx={Friends.styles.accept} title={t('settings.friends.accept.title')} aria-busy={pending}>
+    <div sx={Friends.styles.accept} title={t('settings.friends.accept.title')}>
       <span aria-hidden={true}>🍺</span>
       {MEDIA.map(({ value: media, emoji }) => {
         const auto = value.includes(media)
@@ -340,8 +332,7 @@ const Accept = ({ guest, value, onChange }: { guest: any, value: string[], onCha
               { emoji, label: t('settings.friends.accept.manual'), value: 'manual' },
               { emoji, label: t('settings.friends.accept.auto'), value: 'auto' },
             ]}
-            onChange={(next) => change(next === 'auto' ? [...value, media] : value.filter((v) => v !== media))}
-            disabled={pending}
+            onChange={(next) => onChange(next === 'auto' ? [...value, media] : value.filter((v) => v !== media))}
             component={AcceptValue}
             aria-label={t('settings.friends.accept.label', { media: name, name: guest.name })}
             title={t(auto ? 'settings.friends.accept.autoHelp' : 'settings.friends.accept.manualHelp', { media: name })}
@@ -491,22 +482,16 @@ Friends.styles = {
       ':last-of-type': {
         borderRadius: '0 2em 2em 0',
       },
-      ':hover:not(:has(select:disabled))': {
+      ':hover': {
         backgroundColor: 'grayDark',
         '>span': {
           color: 'text',
         },
       },
-      ':has(select:disabled)': {
-        opacity: 0.4,
-      },
-      '>select:disabled': {
-        cursor: 'default',
-      },
       ':has(select:focus-visible)': {
         outline: '2px solid',
         outlineColor: 'primary',
-        outlineOffset: -2,
+        outlineOffset: '-2px',
       },
     },
   },

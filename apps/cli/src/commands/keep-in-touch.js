@@ -437,13 +437,14 @@ const ComputeSensorrShowRequestsTask = ({ ...props }) => {
               const requested = requestedShowOf(await fetchShow(state.tmdb, tmdb_id), plex_guid, requested_by, state.owner, isAutoAccepted(state.guests, requested_by, [], 'tv'))
               const requested_at = await requestedAtOf(plex, plex_guid, requested_by)
 
-              const shows = api.query.shows.postShows({ body: { [requested.show.id]: { ...requested.show, ...(requested_at ? { requested_at } : {}), refreshed_at: new Date() } } })
-              await api.fetch(shows.uri, shows.params, shows.init)
-
+              // The episodes go first, as from the app: a show posted without them would stay followed with none
               if (requested.episodes.length) {
                 const { uri, params, init } = api.query.episodes.postEpisodes({ body: requested.episodes.reduce((acc, episode) => ({ ...acc, [episode.id]: episode }), {}) })
                 await api.fetch(uri, params, init)
               }
+
+              const shows = api.query.shows.postShows({ body: { [requested.show.id]: { ...requested.show, ...(requested_at ? { requested_at } : {}), refreshed_at: new Date() } } })
+              await api.fetch(shows.uri, shows.params, shows.init)
 
               processed.push(requested.show)
               state.logger.info({ message: `Show "${requested.show.name}" requested by ${requested_by.join(', ')} processed`, metadata: { ...state.metadata, important: true, group: requested.show.id, type: 'show', show: lighten.show(requested.show), processed: true, requested_by } })
@@ -462,13 +463,13 @@ const ComputeSensorrShowRequestsTask = ({ ...props }) => {
 
           if (accepted) {
             const requested = requestedShowOf(await fetchShow(state.tmdb, show.id), plex_guid, guests, state.owner, true)
-            const shows = api.query.shows.postShows({ body: { [show.id]: { ...requested.show, ...(requested_at ? { requested_at } : {}), refreshed_at: new Date() } } })
-            await api.fetch(shows.uri, shows.params, shows.init)
-
             if (requested.episodes.length) {
               const { uri, params, init } = api.query.episodes.postEpisodes({ body: requested.episodes.reduce((acc, episode) => ({ ...acc, [episode.id]: episode }), {}) })
               await api.fetch(uri, params, init)
             }
+
+            const shows = api.query.shows.postShows({ body: { [show.id]: { ...requested.show, ...(requested_at ? { requested_at } : {}), refreshed_at: new Date() } } })
+            await api.fetch(shows.uri, shows.params, shows.init)
           } else if (changed || show.plex_guid !== plex_guid || requested_at || noted) {
             const { uri, params, init } = api.query.shows.postShows({ body: { [show.id]: { plex_guid, requested_by: guests, ...(requested_at ? { requested_at } : {}), ...(noted ? { state: 'wished' } : {}) } } })
             await api.fetch(uri, params, init)

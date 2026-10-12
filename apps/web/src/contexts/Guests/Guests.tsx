@@ -35,18 +35,28 @@ export const Provider = ({ ...props }) => {
     })
   }, [])
 
-  const setGuestAutoAccept = useCallback(async (email, auto_accept) => {
-    const previous = ref.current[email]?.auto_accept || []
+  // Shown at once and written one after the other for a guest, so they land in order. A failed write puts back the
+  // last value the API took, unless a newer change is on its way
+  const writes = useRef<{ [email: string]: { queue: Promise<void>, saved: string[], latest: number } }>({})
+  const setGuestAutoAccept = useCallback((email: string, auto_accept: string[]) => {
+    const write = writes.current[email] ||= { queue: Promise.resolve(), saved: ref.current[email]?.auto_accept || [], latest: 0 }
+    const version = ++write.latest
     setGuests((guests) => ({ ...guests, [email]: { ...guests[email], auto_accept } }))
 
-    try {
-      const { uri, params, init } = api.query.guests.postGuest({ body: { email, auto_accept } })
-      await api.fetch(uri, params, init)
-    } catch (err) {
-      console.warn(err)
-      setGuests((guests) => ({ ...guests, [email]: { ...guests[email], auto_accept: previous } }))
-      toast.error(i18n.t('settings.friends.accept.error', { name: ref.current[email]?.name || email }))
-    }
+    write.queue = write.queue.then(async () => {
+      try {
+        const { uri, params, init } = api.query.guests.postGuest({ body: { email, auto_accept } })
+        await api.fetch(uri, params, init)
+        write.saved = auto_accept
+      } catch (err) {
+        console.warn(err)
+        toast.error(i18n.t('settings.friends.accept.error', { name: ref.current[email]?.name || email }))
+
+        if (version === write.latest) {
+          setGuests((guests) => ({ ...guests, [email]: { ...guests[email], auto_accept: write.saved } }))
+        }
+      }
+    })
   }, [])
 
   useEffect(() => {
