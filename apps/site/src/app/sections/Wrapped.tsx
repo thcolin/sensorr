@@ -203,7 +203,7 @@ export const Wrapped = () => {
       </div>
       <div sx={Wrapped.styles.actions}>
         <a href={WRAPPED} onClick={() => choose(null)} sx={Wrapped.styles.action}>
-          <span sx={Wrapped.styles.underline}>Read Alex's wrapped</span>
+          Read Alex's wrapped
           <span aria-hidden='true' sx={Wrapped.styles.arrow}>→</span>
         </a>
       </div>
@@ -412,17 +412,6 @@ Wrapped.styles = {
     textDecoration: 'none',
     borderRadius: '0.25em',
     ...ring,
-  },
-  underline: {
-    textDecoration: 'underline',
-    textDecorationThickness: '2px',
-    textUnderlineOffset: '0.3em',
-    textDecorationColor: 'textLight',
-    transition: `text-decoration-color 250ms ${EASE}`,
-    'a:hover > &': {
-      textDecorationColor: 'text',
-    },
-    ...decorative,
   },
   arrow: {
     display: 'inline-block',
