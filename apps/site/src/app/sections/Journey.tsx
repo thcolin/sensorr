@@ -204,7 +204,7 @@ const Archived = ({ film, seen, palette }: Visual) => {
           )) : <Bar width='12em' height='1.5em' pill={true} />}
         </div>
         <p sx={Journey.styles.fileName}>
-          {film && file ? <Name title={file.title} /> : <Bar width='100%' height='1em' />}
+          {film && file ? <Name title={file.title} end={true} /> : <Bar width='100%' height='1em' />}
         </p>
         <p sx={Journey.styles.fileMeta}>
           {file ? gb(file.size) : <Bar inline={true} width='4em' height='1em' />}
@@ -240,7 +240,7 @@ const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark, badge }:
         {film && from ? (
           <>
             <s sx={{ ...Journey.styles.strike, textDecorationColor: seen ? 'currentColor' : 'transparent' }}>
-              <Name title={from.title} />
+              <Name title={from.title} end={true} />
             </s>
             <span sx={Journey.styles.swapSize}>{gb(from.size)}</span>
             {mark}
@@ -251,7 +251,7 @@ const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark, badge }:
       <p sx={{ ...Journey.styles.swapTo, ...enter(seen, 'translateY(1em)', 700) }}>
         {film && to ? (
           <>
-            <Name title={to.title} />
+            <Name title={to.title} end={true} />
             <span sx={Journey.styles.swapSize}>{gb(to.size)} <Delta from={from?.size || 0} to={to.size} /></span>
           </>
         ) : <Bar width='80%' height='1em' />}
@@ -1198,7 +1198,7 @@ Journey.styles = {
     margin: '0px',
     fontFamily: 'monospace',
     fontWeight: 600,
-    fontSize: [4, 2],
+    fontSize: [4, 3],
     lineHeight: 'heading',
     color: 'primary',
   },
