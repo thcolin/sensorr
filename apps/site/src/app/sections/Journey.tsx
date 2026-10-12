@@ -304,6 +304,9 @@ const Shrink = ({ film, seen }: Visual) => {
         <p sx={Journey.styles.counter} aria-label={film ? `${gb(film.shrinked.size)} freed` : undefined}>
           {film ? <span aria-hidden='true'>−{gb(freed)}</span> : <Bar inline={true} width='4em' height='0.8em' />}
         </p>
+        <p sx={Journey.styles.swapTo}>
+          {film ? <Name title={film.shrink.title} end={true} /> : <Bar width='80%' height='1em' />}
+        </p>
         <div sx={Journey.styles.gauge} aria-hidden='true'>
           <span sx={{ ...Journey.styles.gaugeFill, transform: seen && film ? `scaleX(${film.shrink.size / film.winner.size})` : 'scaleX(1)' }} />
         </div>
