@@ -255,7 +255,9 @@ const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark, badge, s
           </>
         ) : <Bar width='70%' height='1em' />}
       </p>
-      <span sx={Journey.styles.arrow} aria-hidden='true'>↓</span>
+      <span sx={Journey.styles.arrow} aria-hidden='true'>
+        <Badge emoji={<Icon value='more' sx={Journey.styles.arrowIcon} />} />
+      </span>
       <p sx={{ ...Journey.styles.swapTo, ...enter(seen, 'translateY(1em)', 700) }}>
         {film && to ? (
           <>
@@ -539,13 +541,14 @@ const card = {
   backdropFilter: 'blur(12px)',
 }
 
-// A release name, then its size and whatever follows, on one line: the name narrows, the rest stays whole
+// A release name, then its size and whatever follows, on one line: the name narrows, the rest stays whole, centered on
+// the name without making its line taller, so the lines around keep the same distance to the name's text
 const line = {
   display: 'flex',
   alignItems: 'baseline',
   columnGap: 6,
   whiteSpace: 'nowrap',
-  '>:not(:first-child)': { flexShrink: 0 },
+  '>:not(:first-child)': { flexShrink: 0, alignSelf: 'center', marginY: '-1em' },
 }
 
 Journey.styles = {
@@ -1179,7 +1182,6 @@ Journey.styles = {
   },
   // Drawn as the transition pills under it: rounded, monospace, a translucent fill of its own text color
   size: {
-    alignSelf: 'center',
     paddingX: 6,
     paddingY: 10,
     borderRadius: '1em',
@@ -1188,10 +1190,16 @@ Journey.styles = {
     fontWeight: 'normal',
     fontVariantNumeric: 'tabular-nums',
   },
+  // The app's More badge turned down, centered between the two names
   arrow: {
-    fontSize: 2,
-    lineHeight: 1,
+    alignSelf: 'center',
+    fontSize: [6, 5],
     color: 'textLight',
+  },
+  arrowIcon: {
+    display: 'block',
+    height: '1em',
+    transform: 'rotate(90deg)',
   },
   swapTo: {
     ...line,
@@ -1321,7 +1329,6 @@ Journey.styles = {
   },
   banned: {
     display: 'inline-flex',
-    alignSelf: 'center',
     fontSize: [6, 5],
   },
 }
