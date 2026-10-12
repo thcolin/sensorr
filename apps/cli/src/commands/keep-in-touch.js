@@ -326,7 +326,7 @@ const ComputeSensorrMovieRequestsTask = ({ ...props }) => {
               const requested_at = await requestedAtOf(plex, plex_guid, requested_by)
               movie = {
                 ...body,
-                state: isAutoAccepted(state.guests, requested_by, [], 'movie') ? 'wished' : 'ignored',
+                state: isAutoAccepted(state.guests, requested_by, 'movie') ? 'wished' : 'ignored',
                 plex_guid,
                 requested_by,
                 ...(requested_at ? { requested_at } : {}),
@@ -351,13 +351,11 @@ const ComputeSensorrMovieRequestsTask = ({ ...props }) => {
 
         if (!requested_by.every(guest => (movie.requested_by || []).includes(guest))) {
           setTask((task) => ({ ...task, output: `Movie "${movie.title}" requested by ${requested_by.join(', ')} need to be synced with guests requesting it...` }))
-          const accepted = movie.state === 'ignored' && isAutoAccepted(state.guests, requested_by, movie.requested_by || [], 'movie')
           const { uri, params, init } = api.query.movies.postMovie({
             body: {
               id: movie.id,
               plex_guid,
               requested_by,
-              ...(accepted ? { state: 'wished' } : {}),
               ...(requested_at ? { requested_at } : {}),
               updated_at: new Date().getTime(),
             },
@@ -434,7 +432,7 @@ const ComputeSensorrShowRequestsTask = ({ ...props }) => {
 
             if (!show) {
               setTask((task) => ({ ...task, output: `Show "${plex_guid}" requested by ${requested_by.join(', ')} unknown from library, look up for his TMDB data with TMDB id "${tmdb_id}"...` }))
-              const requested = requestedShowOf(await fetchShow(state.tmdb, tmdb_id), plex_guid, requested_by, state.owner, isAutoAccepted(state.guests, requested_by, [], 'tv'))
+              const requested = requestedShowOf(await fetchShow(state.tmdb, tmdb_id), plex_guid, requested_by, state.owner, isAutoAccepted(state.guests, requested_by, 'tv'))
               const requested_at = await requestedAtOf(plex, plex_guid, requested_by)
 
               // The episodes go first, as from the app: a show posted without them would stay followed with none
@@ -459,18 +457,8 @@ const ComputeSensorrShowRequestsTask = ({ ...props }) => {
           // Once dated, a request keeps its date: a guest joining it later does not make it newer
           const requested_at = show.requested_at ? null : await requestedAtOf(plex, plex_guid, requested_by)
           const noted = isNotedShow(show, guests, state.owner)
-          const accepted = show.state === 'ignored' && isAutoAccepted(state.guests, guests, show.requested_by || [], 'tv')
 
-          if (accepted) {
-            const requested = requestedShowOf(await fetchShow(state.tmdb, show.id), plex_guid, guests, state.owner, true)
-            if (requested.episodes.length) {
-              const { uri, params, init } = api.query.episodes.postEpisodes({ body: requested.episodes.reduce((acc, episode) => ({ ...acc, [episode.id]: episode }), {}) })
-              await api.fetch(uri, params, init)
-            }
-
-            const shows = api.query.shows.postShows({ body: { [show.id]: { ...requested.show, ...(requested_at ? { requested_at } : {}), refreshed_at: new Date() } } })
-            await api.fetch(shows.uri, shows.params, shows.init)
-          } else if (changed || show.plex_guid !== plex_guid || requested_at || noted) {
+          if (changed || show.plex_guid !== plex_guid || requested_at || noted) {
             const { uri, params, init } = api.query.shows.postShows({ body: { [show.id]: { plex_guid, requested_by: guests, ...(requested_at ? { requested_at } : {}), ...(noted ? { state: 'wished' } : {}) } } })
             await api.fetch(uri, params, init)
           }
