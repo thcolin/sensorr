@@ -39,11 +39,16 @@ const Pills = ({ rows }: { rows: Row[] }) => (
   </div>
 )
 
-// What the swap costs or frees on disk: lighter is the machine's yes, heavier stays in the text's color
+// What the swap costs or frees on disk, in the color of the size it follows
 const Delta = ({ from, to }: { from: number, to: number }) => (
-  <span sx={{ ...Journey.styles.delta, color: to < from ? 'primary' : 'text' }}>
+  <span sx={Journey.styles.delta}>
     {to < from ? '−' : '+'}{gb(to - from)}
   </span>
+)
+
+// A size as a pill tinted by its own color: its line's, or the swap's verdict on disk, lighter green and heavier red
+const Size = ({ color, children }: { color?: string, children: React.ReactNode }) => (
+  <span sx={{ ...Journey.styles.size, color }}>{children}</span>
 )
 
 // A movie state badge pinned inside its poster's top-right corner, as the app's Poster pins its own; it pops when it changes
@@ -207,7 +212,7 @@ const Archived = ({ film, seen, palette }: Visual) => {
           {film && file ? (
             <>
               <Name title={file.title} end={true} />
-              <span sx={Journey.styles.fileSize}>{gb(file.size)}</span>
+              <Size>{gb(file.size)}</Size>
             </>
           ) : <Bar width='100%' height='1em' />}
         </p>
@@ -244,7 +249,7 @@ const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark, badge }:
             <s sx={{ ...Journey.styles.strike, textDecorationColor: seen ? 'currentColor' : 'transparent' }}>
               <Name title={from.title} end={true} />
             </s>
-            <span sx={Journey.styles.swapSize}>{gb(from.size)}</span>
+            <Size>{gb(from.size)}</Size>
             {mark}
           </>
         ) : <Bar width='70%' height='1em' />}
@@ -254,7 +259,7 @@ const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark, badge }:
         {film && to ? (
           <>
             <Name title={to.title} end={true} />
-            <span sx={Journey.styles.swapSize}>{gb(to.size)} <Delta from={from?.size || 0} to={to.size} /></span>
+            <Size color={from && to.size < from.size ? 'primary' : 'error'}>{gb(to.size)} <Delta from={from?.size || 0} to={to.size} /></Size>
           </>
         ) : <Bar width='80%' height='1em' />}
       </p>
@@ -327,6 +332,9 @@ const Shrink = ({ film, seen }: Visual) => {
   )
 }
 
+// Red on red, as the size it sits next to; a Badge's palette reads `color` as its fill and `backgroundColor` as its text
+const BANNED = { color: 'color-mix(in srgb, var(--theme-ui-colors-error) 18%, transparent)', backgroundColor: 'error' }
+
 const Report = ({ film, seen }: Visual) => (
   <div sx={Journey.styles.report}>
     <figure sx={{ ...Journey.styles.bubble, ...enter(seen, 'translateY(2em) scale(0.92)', 0, 600) }}>
@@ -346,7 +354,7 @@ const Report = ({ film, seen }: Visual) => (
       struck='error'
       mark={(
         <span sx={{ ...Journey.styles.banned, ...enter(seen, 'scale(1.6)', 450, 400) }}>
-          <Badge emoji='🚫' label='Banned' compact={true} sx={Journey.styles.badge} />
+          <Badge emoji='🚫' label='Banned' compact={true} palette={BANNED} sx={Journey.styles.badge} />
         </span>
       )}
     />
@@ -1103,10 +1111,6 @@ Journey.styles = {
     lineHeight: 'heading',
     color: 'text',
   },
-  fileSize: {
-    color: 'textLightest',
-    fontVariantNumeric: 'tabular-nums',
-  },
   inPlex: {
     display: 'flex',
     alignItems: 'center',
@@ -1168,14 +1172,17 @@ Journey.styles = {
   delta: {
     marginLeft: 8,
     fontWeight: 600,
-    fontVariantNumeric: 'tabular-nums',
-    whiteSpace: 'nowrap',
   },
-  swapSize: {
+  // Drawn as the transition pills under it: rounded, monospace, a translucent fill of its own text color
+  size: {
+    alignSelf: 'center',
+    paddingX: 6,
+    paddingY: 10,
+    borderRadius: '1em',
+    backgroundColor: 'color-mix(in srgb, currentColor 18%, transparent)',
     fontSize: '0.8em',
-    opacity: 0.8,
+    fontWeight: 'normal',
     fontVariantNumeric: 'tabular-nums',
-    whiteSpace: 'nowrap',
   },
   arrow: {
     fontSize: 2,
