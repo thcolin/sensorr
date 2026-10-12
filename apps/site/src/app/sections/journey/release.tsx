@@ -1,4 +1,4 @@
-import { Fragment } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import type { Meta, Release as File } from '../../data'
 import { LANGUAGES, SOURCES } from './logos'
 
@@ -7,14 +7,35 @@ export const gb = (bytes: number) => `${(Math.abs(bytes) / 1024 ** 3).toFixed(1)
 // The language a release names, or the original version when it names none, as the app's parser reads it
 export const language = (value?: string | null) => value || 'VO'
 
-// A release name breaks after its dots only: its hyphens are non-breaking, so a long one wraps on whole parts
-export const Name = ({ title, ...props }: { title: string } & React.HTMLAttributes<HTMLSpanElement>) => (
-  <span title={title} {...props}>
-    {title.replace(/-/g, '‑').split('.').map((part, index, parts) => (
-      <Fragment key={index}>{part}{index < parts.length - 1 && <>.<wbr /></>}</Fragment>
-    ))}
-  </span>
-)
+// A release name stays on one line and scrolls along it, each cut edge fading out as the app's bulk bar does
+export const Name = ({ title, ...props }: { title: string } & React.HTMLAttributes<HTMLSpanElement>) => {
+  const ref = useRef<HTMLSpanElement>(null)
+
+  const onScroll = useCallback(() => {
+    const node = ref.current
+
+    if (node) {
+      node.dataset.start = String(node.scrollLeft > 1)
+      node.dataset.end = String(node.scrollLeft + node.clientWidth < node.scrollWidth - 1)
+    }
+  }, [])
+
+  // Its width follows the layout, and its text the font once loaded
+  useEffect(() => {
+    const observer = new ResizeObserver(onScroll)
+
+    observer.observe(ref.current as HTMLSpanElement)
+    document.fonts.ready.then(onScroll)
+    document.fonts.addEventListener('loadingdone', onScroll)
+
+    return () => {
+      observer.disconnect()
+      document.fonts.removeEventListener('loadingdone', onScroll)
+    }
+  }, [onScroll])
+
+  return <span ref={ref} title={title} onScroll={onScroll} sx={Release.styles.name} {...props}>{title}</span>
+}
 
 // The axes a release row tags, in the app's order
 const TAGGED = ['source', 'encoding', 'resolution', 'dub', 'language'] as const
@@ -72,6 +93,25 @@ export const Statistics = ({ release, range, ...props }: { release: File, range:
 
 export const Release = {
   styles: {
+    name: {
+      display: 'block',
+      maxWidth: '100%',
+      overflowX: 'auto',
+      scrollbarWidth: 'none',
+      whiteSpace: 'nowrap',
+      '::-webkit-scrollbar': {
+        display: 'none',
+      },
+      '&[data-start=true]': {
+        maskImage: 'linear-gradient(to right, transparent, black 2em)',
+      },
+      '&[data-end=true]': {
+        maskImage: 'linear-gradient(to left, transparent, black 2em)',
+      },
+      '&[data-start=true][data-end=true]': {
+        maskImage: 'linear-gradient(to right, transparent, black 2em, black calc(100% - 2em), transparent)',
+      },
+    },
     tags: {
       display: 'flex',
       flexWrap: 'wrap',

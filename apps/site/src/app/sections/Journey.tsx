@@ -239,8 +239,8 @@ const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark, badge }:
       <p sx={{ ...Journey.styles.swapFrom, ...(mark && Journey.styles.swapFromLine), color: struck }}>
         {film && from ? (
           <>
-            <s title={mark ? from.title : undefined} sx={{ ...Journey.styles.strike, ...(mark && Journey.styles.strikeLine), textDecorationColor: seen ? 'currentColor' : 'transparent' }}>
-              {mark ? from.title : <Name title={from.title} />}
+            <s sx={{ ...Journey.styles.strike, textDecorationColor: seen ? 'currentColor' : 'transparent' }}>
+              <Name title={from.title} />
             </s>
             <span sx={Journey.styles.swapSize}>{gb(from.size)}</span>
             {mark}
@@ -1084,12 +1084,12 @@ Journey.styles = {
     fontSize: [4, 3],
   },
   fileName: {
+    maxWidth: '100%',
     margin: '0px',
     fontFamily: 'monospace',
     fontSize: [5, 4],
     lineHeight: 'heading',
     color: 'text',
-    textWrap: 'balance',
   },
   fileMeta: {
     display: 'flex',
@@ -1154,29 +1154,22 @@ Journey.styles = {
     fontSize: [5, 4],
     lineHeight: 'heading',
   },
-  // With a mark, one line that keeps the mark and the size whole and cuts the name
+  // With a mark, one line that keeps the mark and the size whole and narrows the name
   swapFromLine: {
     flexWrap: 'nowrap',
     whiteSpace: 'nowrap',
     '>:not(s)': { flexShrink: 0 },
   },
-  // Struck line after line as the name wraps: a text decoration, inline, fading in
+  // Struck through the Name it holds: a text decoration, fading in
   strike: {
     minWidth: '0px',
     textDecorationLine: 'line-through',
     textDecorationThickness: '2px',
-    textWrap: 'balance',
     transition: `text-decoration-color 600ms ${EASE} 400ms`,
     '@media (prefers-reduced-motion: reduce)': {
       transition: 'none',
       textDecorationColor: 'currentColor !important',
     },
-  },
-  // Cut short on its line, a plain name: the <wbr> of a Name would break it anyway
-  strikeLine: {
-    textWrap: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
   },
   delta: {
     marginLeft: 8,
@@ -1208,10 +1201,6 @@ Journey.styles = {
     fontSize: [4, 2],
     lineHeight: 'heading',
     color: 'primary',
-    '>:first-of-type': {
-      minWidth: '0px',
-      textWrap: 'balance',
-    },
   },
   pills: {
     display: 'flex',
