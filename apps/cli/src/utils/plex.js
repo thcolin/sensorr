@@ -197,6 +197,12 @@ export const showFilesOf = (episodes, items) => {
   }
 }
 
+// A request is accepted at once when a guest it newly names answers this media automatically, from Settings › Friends:
+// a guest already requesting it was answered before
+export const isAutoAccepted = (guests, requested_by, previous, media) => requested_by
+  .filter((email) => !previous.includes(email))
+  .some((email) => guests.find((guest) => guest.email === email)?.auto_accept?.includes(media))
+
 // A watchlist lists no date: when a guest added an item is in its `userState`, one item a call.
 // The earliest guest makes the request date; without every guest's answer there is none yet.
 export const requestedAtOf = async (clients, plex_guid, guests) => {
