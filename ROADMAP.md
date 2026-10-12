@@ -16,3 +16,8 @@ what each one changed is in the [changelog](CHANGELOG.md).
   compatible with the tools already in use for it, such as FileBot, tinyMediaManager or mnamer.
 - **Unraid and Qnap**: an Unraid template and a QPKG package.
 - **Jellyfin and Emby**: support them alongside Plex.
+- **Torrent clients**: talk to qBittorrent, Transmission or rTorrent directly and follow the
+  downloads from Sensorr, which would also make rename and move possible.
+- **Ready-made lists**: lists shipped with Sensorr, such as the Oscars, next to the custom ones.
+- **Weekly selection**: a selection of movies every week, proposed by the community through pull
+  requests.
