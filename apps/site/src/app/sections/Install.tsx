@@ -84,7 +84,7 @@ const Command = () => {
           {SEGMENTS.map((segment, index) => <Fragment key={index}>{index > 0 && <wbr />}{segment}</Fragment>)}
         </code>
       </pre>
-      <button type='button' onClick={copy} sx={{ ...buttonStyles.outline({ color: 'gray' }), ...Install.styles.copy }}>
+      <button type='button' onClick={copy} data-track='install' sx={{ ...buttonStyles.outline({ color: 'gray' }), ...Install.styles.copy }}>
         {{ idle: 'Copy', copied: '✓ Copied', failed: `Press ${shortcut()}` }[state]}
       </button>
       <span sx={Install.styles.status} role='status'>
