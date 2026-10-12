@@ -225,8 +225,8 @@ const Archived = ({ film, seen, palette }: Visual) => {
   )
 }
 
-// One release swapped for another, as the Swaps screen draws it
-const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark, badge }: {
+// One release swapped for another, as the Swaps screen draws it; without sizes when the swap is not about disk space
+const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark, badge, sized = true }: {
   film: Film | null
   seen: boolean
   from?: File
@@ -235,6 +235,7 @@ const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark, badge }:
   struck?: string
   mark?: React.ReactNode
   badge?: React.ReactNode
+  sized?: boolean
 }) => (
   <div sx={Journey.styles.swap}>
     {film?.backdrop && <img src={tmdb('w1280', film.backdrop)} alt='' loading='lazy' decoding='async' sx={Journey.styles.swapBackdrop} />}
@@ -249,7 +250,7 @@ const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark, badge }:
             <s sx={{ ...Journey.styles.strike, textDecorationColor: seen ? 'currentColor' : 'transparent' }}>
               <Name title={from.title} end={true} />
             </s>
-            <Size>{gb(from.size)}</Size>
+            {sized && <Size>{gb(from.size)}</Size>}
             {mark}
           </>
         ) : <Bar width='70%' height='1em' />}
@@ -259,7 +260,7 @@ const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark, badge }:
         {film && to ? (
           <>
             <Name title={to.title} end={true} />
-            <Size color={from && to.size < from.size ? 'primary' : 'error'}>{gb(to.size)} <Delta from={from?.size || 0} to={to.size} /></Size>
+            {sized && <Size color={from && to.size < from.size ? 'primary' : 'error'}>{gb(to.size)} <Delta from={from?.size || 0} to={to.size} /></Size>}
           </>
         ) : <Bar width='80%' height='1em' />}
       </p>
@@ -305,7 +306,9 @@ const Shrink = ({ film, seen }: Visual) => {
           <span sx={{ ...Journey.styles.gaugeFill, transform: seen && film ? `scaleX(${film.shrink.size / film.winner.size})` : 'scaleX(1)' }} />
         </div>
         <p sx={Journey.styles.counterLine}>
-          {film ? <>{gb(film.winner.size)} <span aria-hidden='true'>→</span> {gb(film.shrink.size)}</> : <Bar inline={true} width='10em' height='1em' />}
+          {film ? (
+            <TransitionPill from={gb(film.winner.size)} to={gb(film.shrink.size)} state='held' title={`size: ${gb(film.winner.size)} ~ ${gb(film.shrink.size)}`} />
+          ) : <Bar width='10em' height='1.5em' pill={true} />}
         </p>
         <ul sx={{ ...Journey.styles.kept, ...enter(seen, 'translateY(1em)', 600) }}>
           {film ? (
@@ -332,7 +335,7 @@ const Shrink = ({ film, seen }: Visual) => {
   )
 }
 
-// Red on red, as the size it sits next to; a Badge's palette reads `color` as its fill and `backgroundColor` as its text
+// Red on red, as the struck line it ends; a Badge's palette reads `color` as its fill and `backgroundColor` as its text
 const BANNED = { color: 'color-mix(in srgb, var(--theme-ui-colors-error) 18%, transparent)', backgroundColor: 'error' }
 
 const Report = ({ film, seen }: Visual) => (
@@ -352,6 +355,7 @@ const Report = ({ film, seen }: Visual) => (
       to={film?.replacement}
       rows={film?.reported.rows}
       struck='error'
+      sized={false}
       mark={(
         <span sx={{ ...Journey.styles.banned, ...enter(seen, 'scale(1.6)', 450, 400) }}>
           <Badge emoji='🚫' label='Banned' compact={true} palette={BANNED} sx={Journey.styles.badge} />
@@ -1244,9 +1248,7 @@ Journey.styles = {
   },
   counterLine: {
     margin: '0px',
-    fontFamily: 'monospace',
     fontSize: [5, 4],
-    color: 'text',
     fontVariantNumeric: 'tabular-nums',
   },
   kept: {
