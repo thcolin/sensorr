@@ -370,6 +370,18 @@ export default {
         last: ', last on {day}',
         stopped: ', stopped the reminders',
       },
+      accept: {
+        title: 'Requests',
+        movie: 'Movies',
+        tv: 'TV',
+        manual: 'Manual',
+        auto: 'Auto',
+        media: { movie: 'movie', tv: 'TV' },
+        label: "{media} requests of {name}, answered by hand or accepted at once",
+        manualHelp: 'Their new {media} requests wait for your answer',
+        autoHelp: 'Their new {media} requests are accepted at once',
+        error: 'Error while saving how the requests of "{name}" are answered, try again',
+      },
     },
     invitation: {
       title: 'Invitation',

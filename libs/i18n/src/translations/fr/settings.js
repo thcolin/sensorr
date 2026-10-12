@@ -370,6 +370,18 @@ export default {
         last: ', le dernier le {day}',
         stopped: ', a arrêté les rappels',
       },
+      accept: {
+        title: 'Demandes',
+        movie: 'Films',
+        tv: 'TV',
+        manual: 'Manuel',
+        auto: 'Auto',
+        media: { movie: 'films', tv: 'séries' },
+        label: 'Demandes de {media} de {name}, répondues à la main ou acceptées d’office',
+        manualHelp: 'Ses nouvelles demandes de {media} attendent votre réponse',
+        autoHelp: 'Ses nouvelles demandes de {media} sont acceptées d’office',
+        error: 'Erreur lors de l’enregistrement des demandes de « {name} », réessayez',
+      },
     },
     invitation: {
       title: 'Invitation',
