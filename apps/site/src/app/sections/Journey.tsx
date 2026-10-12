@@ -204,10 +204,12 @@ const Archived = ({ film, seen, palette }: Visual) => {
           )) : <Bar width='12em' height='1.5em' pill={true} />}
         </div>
         <p sx={Journey.styles.fileName}>
-          {film && file ? <Name title={file.title} end={true} /> : <Bar width='100%' height='1em' />}
-        </p>
-        <p sx={Journey.styles.fileMeta}>
-          {file ? gb(file.size) : <Bar inline={true} width='4em' height='1em' />}
+          {film && file ? (
+            <>
+              <Name title={file.title} end={true} />
+              <span sx={Journey.styles.fileSize}>{gb(file.size)}</span>
+            </>
+          ) : <Bar width='100%' height='1em' />}
         </p>
         <p sx={Journey.styles.inPlex}>
           <Icon value='plex' role='img' aria-label='Plex' sx={Journey.styles.plexIcon} />
@@ -236,7 +238,7 @@ const Swap = ({ film, seen, from, to, rows, struck = 'textLight', mark, badge }:
       {badge}
     </div>
     <div sx={Journey.styles.swapBody}>
-      <p sx={{ ...Journey.styles.swapFrom, ...(mark && Journey.styles.swapFromLine), color: struck }}>
+      <p sx={{ ...Journey.styles.swapFrom, color: struck }}>
         {film && from ? (
           <>
             <s sx={{ ...Journey.styles.strike, textDecorationColor: seen ? 'currentColor' : 'transparent' }}>
@@ -523,6 +525,15 @@ const card = {
   borderColor: 'grayDark',
   borderRadius: '0.25em',
   backdropFilter: 'blur(12px)',
+}
+
+// A release name, then its size and whatever follows, on one line: the name narrows, the rest stays whole
+const line = {
+  display: 'flex',
+  alignItems: 'baseline',
+  columnGap: 6,
+  whiteSpace: 'nowrap',
+  '>:not(:first-child)': { flexShrink: 0 },
 }
 
 Journey.styles = {
@@ -1084,6 +1095,7 @@ Journey.styles = {
     fontSize: [4, 3],
   },
   fileName: {
+    ...line,
     maxWidth: '100%',
     margin: '0px',
     fontFamily: 'monospace',
@@ -1091,15 +1103,7 @@ Journey.styles = {
     lineHeight: 'heading',
     color: 'text',
   },
-  fileMeta: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    columnGap: 4,
-    rowGap: 8,
-    margin: '0px',
-    fontFamily: 'monospace',
-    fontSize: [5, 4],
+  fileSize: {
     color: 'textLightest',
     fontVariantNumeric: 'tabular-nums',
   },
@@ -1143,22 +1147,12 @@ Journey.styles = {
     minWidth: '0px',
   },
   swapFrom: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    alignItems: 'baseline',
-    columnGap: 6,
-    rowGap: 10,
+    ...line,
     width: '100%',
     margin: '0px',
     fontFamily: 'monospace',
     fontSize: [5, 4],
     lineHeight: 'heading',
-  },
-  // With a mark, one line that keeps the mark and the size whole and narrows the name
-  swapFromLine: {
-    flexWrap: 'nowrap',
-    whiteSpace: 'nowrap',
-    '>:not(s)': { flexShrink: 0 },
   },
   // Struck through the Name it holds: a text decoration, fading in
   strike: {
@@ -1189,11 +1183,7 @@ Journey.styles = {
     color: 'textLight',
   },
   swapTo: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    alignItems: 'baseline',
-    columnGap: 6,
-    rowGap: 10,
+    ...line,
     width: '100%',
     margin: '0px',
     fontFamily: 'monospace',
