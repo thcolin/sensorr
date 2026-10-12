@@ -4,7 +4,7 @@
 //
 // The films are TMDB's recent and acclaimed ones. Their releases tell the same story for each, once per language the
 // page knows, ranked by the demo's Default policy as the jobs rank them: Record grabs a 1080p in the reader's language,
-// Refine a MULTi 1080p a little heavier, Shrink the same in x265 lighter than both, and a friend's report swaps that one.
+// Refine a MULTi 1080p a little heavier, Shrink the same in x265 lighter than both, and a friend's report swaps that one for the same from another group.
 // TMDB data may not be kept more than 6 months, so the file is not committed: the Demo workflow builds it.
 
 import fs from 'fs'
@@ -40,7 +40,7 @@ const MINUTE = 70e6
 
 // The releases of a film's story, made up as the demo indexer makes them: Record grabs a 1080p in the reader's language,
 // Refine finds the same in MULTi for a little more, Shrink the MULTi one in x265 lighter than both, and a friend's report
-// swaps that one
+// swaps that one for the same from another group, so nothing the policy reads changes
 const storyReleases = (title: string, year: number, runtime: number, tag: string | null) => {
   const spoken = tag ? `${tag}.` : ''
   const name = (rest: string) => `${dotted(title)}.${year}.${rest}`
@@ -51,7 +51,7 @@ const storyReleases = (title: string, year: number, runtime: number, tag: string
     owned: item(`${spoken}1080p.WEB-DL.x264.AC3-TAPE`, 1, 212),
     winner: item('MULTi.1080p.BluRay.x264.AC3-VCR', 1.12, 148),
     shrink: item('MULTi.1080p.BluRay.x265.EAC3-REWiND', 0.62, 96),
-    replacement: item('MULTi.1080p.WEB-DL.x265.EAC3-KINESCOPE', 0.7, 71),
+    replacement: item('MULTi.1080p.BluRay.x265.EAC3-KINESCOPE', 0.7, 71),
     // What Record saw beside the one it grabbed, before the others came out
     others: [item('720p.HDTV.x264.AAC-DEMO', 0.45, 39), item(`${spoken}1080p.TC.x264.AC3-SPRNG`, 0.9, 54)],
   }
