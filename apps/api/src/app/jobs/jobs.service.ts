@@ -68,7 +68,8 @@ export class JobsService {
 
     return merge(
       from(this.logModel.find({ 'meta.summary': { $exists: true } }).lean().exec()).pipe(
-        map(res => res.reduce((acc, doc: any) => ({ ...acc, [doc?.meta.job]: this.transform(doc, acc[doc?.meta.job]) }), {})),
+        // Written in place: copying the accumulator on every log makes the fold quadratic, and it blocks the event loop
+        map(res => res.reduce((acc, doc: any) => Object.assign(acc, { [doc?.meta.job]: this.transform(doc, acc[doc?.meta.job]) }), {})),
       ),
       this.logsService.changes$.pipe(
         filter((change: any) => change?.ns?.coll === 'log' && change?.operationType === 'insert' && change?.fullDocument?.meta?.summary),

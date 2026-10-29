@@ -78,3 +78,73 @@ describe('JobsService.setupCrons', () => {
     expect(untouched.isActive).toBe(false)
   })
 })
+
+describe('JobsService.listenJobs', () => {
+  const at = (minutes: number) => new Date(Date.UTC(2026, 9, 1, 10, minutes))
+  const logs = [
+    { timestamp: at(0), message: 'Start', meta: { job: 'a', summary: { total: 3, treated: 0 } } },
+    { timestamp: at(1), message: 'Start', meta: { job: 'b', summary: { treated: 1 }, type: 'movies' } },
+    { timestamp: at(5), message: 'Searching', meta: { job: 'a', summary: { treated: 2 } } },
+    { timestamp: at(6), meta: { job: 'a', summary: { accepted: 1 } } },
+    { timestamp: at(9), message: 'Done', meta: { job: 'a', summary: true, done: true } },
+  ]
+
+  let service: JobsService
+  let changes: Subject<any>
+
+  beforeEach(async () => {
+    changes = new Subject()
+    const module = await Test.createTestingModule({
+      providers: [
+        JobsService,
+        SchedulerRegistry,
+        { provide: getModelToken(LogDocument.name), useValue: { find: () => ({ lean: () => ({ exec: () => Promise.resolve(logs) }) }) } },
+        { provide: SensorrService, useValue: { exits: new Subject() } },
+        { provide: ConfigService, useValue: {} },
+        { provide: LogsService, useValue: { changes$: changes } },
+      ],
+    }).compile()
+
+    service = module.get(JobsService)
+  })
+
+  it('emits every job folded from its summary logs, then the job a new summary log updates', async () => {
+    const messages = []
+    const subscription = service.listenJobs().subscribe(message => messages.push(message.data))
+    await new Promise(resolve => setImmediate(resolve))
+
+    expect(Object.keys(messages[0])).toEqual(['a', 'b'])
+    expect(messages[0]).toEqual({
+      a: {
+        job: 'a',
+        timestamp: at(9),
+        start: at(0).getTime(),
+        end: at(9).getTime(),
+        messages: ['Start', 'Searching', 'Done'],
+        meta: { done: true, summary: { total: 3, treated: 2, accepted: 1 } },
+      },
+      b: {
+        job: 'b',
+        timestamp: at(1),
+        start: at(1).getTime(),
+        end: at(1).getTime(),
+        messages: ['Start'],
+        meta: { type: 'movies', summary: { treated: 1 } },
+      },
+    })
+
+    changes.next({ ns: { coll: 'log' }, operationType: 'insert', fullDocument: { timestamp: at(2), message: 'Ignored', meta: { job: 'b' } } })
+    changes.next({ ns: { coll: 'log' }, operationType: 'insert', fullDocument: { timestamp: at(3), message: 'Searching', meta: { job: 'b', summary: { treated: 2 } } } })
+    subscription.unsubscribe()
+
+    expect(messages).toHaveLength(2)
+    expect(messages[1]).toEqual({
+      job: 'b',
+      timestamp: at(3),
+      start: at(1).getTime(),
+      end: at(3).getTime(),
+      messages: ['Start', 'Searching'],
+      meta: { type: 'movies', summary: { treated: 3 } },
+    })
+  })
+})
